@@ -80,5 +80,6 @@ export default defineConfig({
       // @ts-ignore
       md.use(tabsMarkdownPlugin)
     }
-  }
+  },
+  metaChunk: true
 })

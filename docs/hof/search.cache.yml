@@ -1057,6 +1057,8 @@
   curseforge: (!) https://www.curseforge.com/minecraft/mc-mods/bettercooldownshud
   internal:
     curseforge_id: 1156416
+- id: pupbrained/dropconfirm-modstitch
+  source: (!) https://github.com/pupbrained/dropconfirm-modstitch
 - id: Qendolin/better-clouds
   name: (!) Better Clouds
   source: (!) https://github.com/Qendolin/better-clouds
@@ -1143,6 +1145,10 @@
   source: (!) https://github.com/rosebudmods/skin-overrides
   modrinth: (!) https://modrinth.com/mod/skin-overrides
   curseforge: /EXCLUDED/
+- id: rosebudmods/styled-renaming
+  name: (!) styled renaming
+  source: (!) https://github.com/rosebudmods/styled-renaming
+  modrinth: (!) https://modrinth.com/mod/styled-renaming
 - id: rotgruengelb/Buoys
   name: (!) Buoys
   source: (!) https://github.com/rotgruengelb/Buoys

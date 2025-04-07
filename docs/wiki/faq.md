@@ -1,6 +1,6 @@
 # Frequently asked questions
 ## Does it support Groovy/Kotlin buildscripts? {#groovy-support}
-> Using Kotlin DSL is recommended for Stonecutter projects,
+> Both types are supported, however, using Kotlin DSL is recommended for Stonecutter projects,
 > as its buildscripts have better IDE integration with method completion and documentation.
 > 
 > You can read more about Kotlin support in Gradle and migration to it here:
