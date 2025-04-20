@@ -72,6 +72,8 @@
   source: (!) https://github.com/axialeaa/Glissando
   modrinth: (!) https://modrinth.com/mod/glissando
   curseforge: /EXCLUDED/
+- id: B4nduty/bsdfwmi-1.21
+  source: (!) https://github.com/B4nduty/bsdfwmi-1.21
 - id: BareMinimumStudios/Guilded
   name: (!) Guilded
   source: (!) https://github.com/BareMinimumStudios/Guilded
@@ -137,6 +139,8 @@
   curseforge: (!) https://www.curseforge.com/minecraft/mc-mods/toggle-visualize
   internal:
     curseforge_id: 1195905
+- id: BluSpring/ModernNetworking
+  source: (!) https://github.com/BluSpring/ModernNetworking
 - id: btwonion/autodrop
   name: (!) autodrop
   source: (!) https://github.com/btwonion/autodrop
@@ -159,6 +163,10 @@
   curseforge: (!) https://www.curseforge.com/minecraft/mc-mods/create-big-cannons
   internal:
     curseforge_id: 646668
+- id: cassiancc/ClickThrough-Plus
+  name: (!) ClickThrough Plus
+  source: (!) https://github.com/cassiancc/ClickThrough-Plus
+  modrinth: (!) https://modrinth.com/mod/clickthrough+
 - id: cassiancc/Item-Descriptions
   name: (!) Item Descriptions
   source: (!) https://github.com/cassiancc/Item-Descriptions
@@ -259,6 +267,8 @@
   name: (!) Rocket Utils
   source: (!) https://github.com/Danrus1100/RocketUtils
   modrinth: (!) https://modrinth.com/mod/rocket-utils
+- id: DeDiamondPro/MineMark
+  source: (!) https://github.com/DeDiamondPro/MineMark
 - id: DeDiamondPro/Resourcify
   name: (!) Resourcify
   source: (!) https://github.com/DeDiamondPro/Resourcify
@@ -266,6 +276,10 @@
   curseforge: (!) https://www.curseforge.com/minecraft/mc-mods/resourcify
   internal:
     curseforge_id: 870076
+- id: DerpDerpling/Immersive-Hotbar
+  name: (!) Immersive Hotbar
+  source: (!) https://github.com/DerpDerpling/Immersive-Hotbar
+  modrinth: (!) https://modrinth.com/mod/immersive-hotbar
 - id: Drathonix/bringhomethebeacon
   name: (?) bringhomethebeacon
   source: (!) https://github.com/Drathonix/bringhomethebeacon
@@ -297,6 +311,10 @@
   source: (!) https://github.com/EmilAhmaBoy/saturative
   modrinth: (!) https://modrinth.com/mod/saturative
   curseforge: /EXCLUDED/
+- id: EnderKill98/ProxLib
+  name: (!) ProxLib
+  source: (!) https://github.com/EnderKill98/ProxLib
+  modrinth: (!) https://modrinth.com/mod/proxlib
 - id: enjarai/cicada-lib
   name: CICADA
   source: (!) https://github.com/enjarai/cicada-lib
@@ -531,6 +549,10 @@
   source: (!) https://github.com/imide/ChatHistoryPlus
   modrinth: (!) https://modrinth.com/mod/chat-history-plus
   curseforge: /EXCLUDED/
+- id: IrisShaders/imgui-mc
+  name: (!) imgui-mc
+  source: (!) https://github.com/IrisShaders/imgui-mc
+  modrinth: (!) https://modrinth.com/mod/imgui-mc
 - id: isXander/armadilloader
   name: (?) armadilloader
   source: (!) https://github.com/isXander/armadilloader
@@ -588,6 +610,9 @@
 - id: JackFredMods/JacksServerSideTweaks
   name: (?) JacksServerSideTweaks
   source: (!) https://github.com/JackFredMods/JacksServerSideTweaks
+- id: Jacks-underscore-username/modstitch-stonecutter-template
+  valid: false
+  source: (!) https://github.com/Jacks-underscore-username/modstitch-stonecutter-template
 - id: JumperOnJava/CustomCursor
   name: (!) Custom Cursor
   source: (!) https://github.com/JumperOnJava/CustomCursor
@@ -660,6 +685,13 @@
   source: (!) https://github.com/Kyagara/fred
   modrinth: (!) https://modrinth.com/mod/fred
   curseforge: /EXCLUDED/
+- id: KyrptonaughtMC/Inventory-Sorter
+  name: (!) Inventory Sorter
+  source: (!) https://github.com/KyrptonaughtMC/Inventory-Sorter
+  modrinth: https://modrinth.com/mod/inventory-sorting
+  curseforge: https://www.curseforge.com/minecraft/mc-mods/inventory-sorting
+  internal:
+    curseforge_id: 240633
 - id: Lemonnik6484/BetterWalls
   name: (!) Better Walls
   source: (!) https://github.com/Lemonnik6484/BetterWalls
@@ -786,6 +818,8 @@
   valid: false
   name: (?) Stonecraft-template
   source: (!) https://github.com/meza/Stonecraft-template
+- id: meza/supporters_core
+  source: (!) https://github.com/meza/supporters_core
 - id: MicrocontrollersDev/BetterNightVision
   name: (!) Better Night Vision
   source: https://codeberg.org/MicrocontrollersDev/BetterNightVision
@@ -857,6 +891,10 @@
   curseforge: https://www.curseforge.com/minecraft/mc-mods/cameraoverhaul
   internal:
     curseforge_id: 423602
+- id: MisterCheezeCake/Amecs-Reborn
+  name: (!) Amecs Reborn
+  source: (!) https://github.com/MisterCheezeCake/Amecs-Reborn
+  modrinth: (!) https://modrinth.com/mod/amecs-reborn
 - id: MisterCheezeCake/SaveMyKeybinds
   name: (!) SaveMyKeybinds
   source: (!) https://github.com/MisterCheezeCake/SaveMyKeybinds
@@ -893,6 +931,10 @@
 - id: natri0/lasers-mod
   name: (?) lasers-mod
   source: (!) https://github.com/natri0/lasers-mod
+- id: NinekoTheCat/BetterWelcomeMessages
+  name: (!) Better Welcome Messages
+  source: (!) https://github.com/NinekoTheCat/BetterWelcomeMessages
+  modrinth: (!) https://modrinth.com/mod/betterwelcomemessages
 - id: nobaboy/FabricModTemplate
   valid: false
   name: (?) FabricModTemplate
@@ -903,8 +945,9 @@
   modrinth: (!) https://modrinth.com/mod/nobaaddons
   curseforge: /EXCLUDED/
 - id: Nolij/TooManyRecipeViewers
-  name: (?) TooManyRecipeViewers
+  name: (!) TooManyRecipeViewers
   source: (!) https://github.com/Nolij/TooManyRecipeViewers
+  modrinth: (!) https://modrinth.com/mod/tmrv
 - id: not-coded/codelib
   name: (!) CodeLib
   source: (!) https://github.com/not-coded/codelib
@@ -996,6 +1039,13 @@
   curseforge: (!) https://www.curseforge.com/minecraft/mc-mods/enchantmentdisabler
   internal:
     curseforge_id: 912326
+- id: pajicadvance/misctweaks
+  name: (!) MiscTweaks
+  source: (!) https://github.com/pajicadvance/misctweaks
+  modrinth: (!) https://modrinth.com/mod/misctweaks
+  curseforge: (!) https://www.curseforge.com/minecraft/mc-mods/misctweaks_
+  internal:
+    curseforge_id: 245603
 - id: pajicadvance/simple-death-improvements
   name: (!) Simple Death Improvements
   source: (!) https://github.com/pajicadvance/simple-death-improvements
@@ -1130,6 +1180,8 @@
   curseforge: https://www.curseforge.com/minecraft/mc-mods/undertale-death-screen
   internal:
     curseforge_id: 1161177
+- id: ravenrockrp/BoltAPI
+  source: (!) https://github.com/ravenrockrp/BoltAPI
 - id: RedRain0o0/legacy-skins
   name: (!) Legacy Skins
   source: (!) https://github.com/RedRain0o0/legacy-skins
@@ -1174,6 +1226,8 @@
   source: (!) https://github.com/sailex428/HudEnhancer
   modrinth: (!) https://modrinth.com/mod/hudenhancer
   curseforge: /EXCLUDED/
+- id: sailex428/SecondBrain
+  source: (!) https://github.com/sailex428/SecondBrain
 - id: Seggan/deathview
   name: (!) DeathView
   source: (!) https://github.com/Seggan/deathview
@@ -1202,6 +1256,10 @@
   curseforge: (!) https://www.curseforge.com/minecraft/mc-mods/automodpack
   internal:
     curseforge_id: 639211
+- id: skycatminepokie/antiscan
+  name: (!) AntiScan
+  source: (!) https://github.com/skycatminepokie/antiscan
+  modrinth: (!) https://modrinth.com/mod/antiscan
 - id: skycatminepokie/autocut
   name: (!) Autocut
   source: (!) https://github.com/skycatminepokie/autocut
@@ -1387,6 +1445,8 @@
 - id: UpcraftLP/mc-data-sync
   name: (?) mc-data-sync
   source: (!) https://github.com/UpcraftLP/mc-data-sync
+- id: VidTu/HCsCR
+  source: (!) https://github.com/VidTu/HCsCR
 - id: ViolaFlower/Legacy-Tweaks
   name: (?) Legacy-Tweaks
   source: (!) https://github.com/ViolaFlower/Legacy-Tweaks
@@ -1402,6 +1462,10 @@
   curseforge: (!) https://www.curseforge.com/minecraft/mc-mods/biome-replacer
   internal:
     curseforge_id: 910274
+- id: Wilyicaro/BetterFurnacesReforged
+  name: (!) Better Furnaces Reforged
+  source: (!) https://github.com/Wilyicaro/BetterFurnacesReforged
+  modrinth: (!) https://modrinth.com/mod/better-furnaces-reforged
 - id: Wilyicaro/FactoryAPI
   name: (!) Factory API
   source: (!) https://github.com/Wilyicaro/FactoryAPI

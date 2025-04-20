@@ -120,3 +120,6 @@ entries:
     source: https://codeberg.org/MicrocontrollersDev/ScrollTweaks
   - id: MicrocontrollersDev/MountOpacity
     source: https://codeberg.org/MicrocontrollersDev/MountOpacity
+  - id: KyrptonaughtMC/Inventory-Sorter
+    modrinth: https://modrinth.com/mod/inventory-sorting
+    curseforge: https://www.curseforge.com/minecraft/mc-mods/inventory-sorting

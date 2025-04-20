@@ -17,7 +17,7 @@ features:
   - title: Setting up Stonecutter
     icon: 🛫
     details: Do you already have a project or want to start from scratch? Take a look on the detailed setup guide.
-    link: /stonecutter/guide/setup
+    link: /wiki/start/
     linkText: Get Started
   - title: Quick start
     icon: ⏳
@@ -27,7 +27,7 @@ features:
   - title: Learn to use Stonecutter
     icon: 🖊
     details: Explore the rich feature set provided by the custom in-comment language used by Stonecutter - Stitcher.
-    link: /stonecutter/guide/comments
+    link: /wiki/config/params
     linkText: Documentation
   - title: Intellij IDEA plugin
     icon: 🧩
