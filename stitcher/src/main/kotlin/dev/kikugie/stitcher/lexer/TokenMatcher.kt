@@ -38,7 +38,7 @@ class TokenMatcher(private val input: CharSequence) {
      * If no token matches, it returns a slice containing all characters
      * after the [offset] assigned a [NullType].
      */
-    fun match(offset: Int): LexSlice = matchInternal(offset, input[offset])
+    fun match(offset: Int): LexSlice = matchInternal(offset, input[offset].lowercase())
         ?: slice(offset..<input.length, NullType)
 
     private fun matchInternal(offset: Int, ch: Char): LexSlice? = when (ch) {
@@ -69,7 +69,7 @@ class TokenMatcher(private val input: CharSequence) {
 
     private fun matchString(offset: Int, pattern: String, type: TokenType): LexSlice? = when {
         offset + pattern.length > input.length -> null
-        input.substring(offset, offset + pattern.length) != pattern -> null
+        !input.substring(offset, offset + pattern.length).equals(pattern, true) -> null
         else -> slice(offset..<offset + pattern.length, type)
     }
 
