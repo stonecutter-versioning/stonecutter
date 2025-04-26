@@ -1,89 +1,31 @@
 import com.github.gradle.node.npm.task.NpmTask
 import org.gradle.kotlin.dsl.register
-import org.jetbrains.dokka.base.DokkaBase
-import org.jetbrains.dokka.base.DokkaBaseConfiguration
-import org.jetbrains.dokka.gradle.AbstractDokkaLeafTask
-import org.jetbrains.dokka.gradle.AbstractDokkaParentTask
 import tasks.HallOfFameTask
 import tasks.UpdateVersionTask
-import java.net.URI
 
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.jvm) apply false
+    alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.kotlin.dokka)
-    alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.node)
+    alias(libs.plugins.extra.node)
 }
 
 group = property("group").toString()
 version = property("version").toString()
 
-val String.URL get() = URI.create(this).toURL()
-
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath(libs.dokka.base)
-        classpath(libs.zip4j)
-    }
-}
-
 repositories {
     mavenCentral()
 }
 
-tasks.register<UpdateVersionTask>("updateVersion") {
-    group = "documentation"
-
-    val ver = project.version.toString()
-    version = ver
-    replacements {
-        file("stonecutter/src/main/kotlin/dev/kikugie/stonecutter/Utilities.kt") replace "val STONECUTTER: String = .+\"" with "val STONECUTTER: String = \"$ver\""
-        file("docs/.vitepress/config.mts") replace "latestVersion: \".+\"" with "latestVersion: \"$ver\""
-        file("docs/wiki/start/settings.md") replace listOf(
-            "stonecutter\"\\ version \".+\"" to "stonecutter\" version \"$ver\"",
-            "stonecutter\"\\) version \".+\"" to "stonecutter\") version \"$ver\""
-        )
-    }
+dependencies {
+    dokka(project(":stonecutter"))
+    dokka(project(":stitcher"))
 }
 
-tasks.register<HallOfFameTask>("updateHallOfFame") {
-    group = "documentation"
-    description = "Updates the Hall of Fame"
-
-    file(".env").takeIf { it.exists() }
-        ?.useLines { it.find { it.startsWith("GITHUB_TOKEN=") }?.substringAfter("=") }
-        ?.let { githubToken.set(it) }
-
-    configFile.set(file("docs/hof/config.yml"))
-    cacheFile.set(file("docs/hof/search.cache.yml"))
-    templateFile.set(file("docs/hof/template.md"))
-    outputFiles.set(files("docs/index.md"))
-}
-
-tasks.register<Sync>("syncDokkaPages") {
-    from(fileTree("build/dokka/htmlMultiModule"))
-    into(file("docs/public/dokka"))
-
-    dependsOn("dokkaHtmlMultiModule")
-}
-
-tasks.register<NpmTask>("buildDocPages") {
-    args = listOf("run", "docs:build")
-    mustRunAfter("updateVersion", "updateHallOfFame", "syncDokkaPages")
-}
-
-tasks.register("composeDocPages") {
-    dependsOn("updateVersion", "updateHallOfFame", "syncDokkaPages", "buildDocPages")
-}
-
-tasks.withType<AbstractDokkaParentTask> {
+dokka {
     moduleName = "Stonecutter KDoc"
 
-    pluginConfiguration<DokkaBase, DokkaBaseConfiguration> {
+    pluginsConfiguration.html {
         homepageLink = "https://stonecutter.codeberg.page/"
         footerMessage = "(c) 2025 KikuGie"
     }
@@ -94,32 +36,58 @@ node {
     version = "23.11.0"
 }
 
-subprojects {
-    tasks.withType<AbstractDokkaLeafTask> {
-        dokkaSourceSets.configureEach {
-            reportUndocumented = true
-            skipEmptyPackages = true
-            suppressObviousFunctions = true
-            suppressInheritedMembers = true
+configurations.configureEach {
+    if (isCanBeConsumed) attributes.attribute(
+        GradlePluginApiVersion.GRADLE_PLUGIN_API_VERSION_ATTRIBUTE,
+        objects.named(GradleVersion.current().version)
+    )
+}
 
-            sourceLink {
-                localDirectory.set(projectDir)
-                remoteUrl.set("https://codeberg.org/stonecutter/stonecutter/src/branch/0.6/${project.name}/".URL)
-                remoteLineSuffix.set("#L")
-            }
+tasks {
+    register<UpdateVersionTask>("updateVersion") {
+        group = "documentation"
 
-            externalDocumentationLink {
-                url = "https://docs.gradle.org/current/kotlin-dsl/".URL
-                packageListUrl = "https://docs.gradle.org/current/kotlin-dsl/gradle/package-list".URL
-            }
-
-            externalDocumentationLink {
-                url = "https://kotlinlang.org/api/core/".URL
-            }
-
-            externalDocumentationLink {
-                url = "https://kotlinlang.org/api/kotlinx.serialization/".URL
-            }
+        val ver = project.version.toString().removeSuffix("-SNAPSHOT")
+        version = ver
+        replacements {
+            file("stonecutter/src/main/entrypoint/dev/kikugie/stonecutter/StonecutterPlugin.kt") replace "VERSION: String = \".+\"" with "VERSION: String = \"$ver\""
+            file("docs/.vitepress/config.mts") replace "latestVersion: \".+\"" with "latestVersion: \"$ver\""
+            file("docs/wiki/start/settings.md") replace listOf(
+                "stonecutter\"\\ version \".+\"" to "stonecutter\" version \"$ver\"",
+                "stonecutter\"\\) version \".+\"" to "stonecutter\") version \"$ver\""
+            )
         }
+    }
+
+    register<HallOfFameTask>("updateHallOfFame") {
+        group = "documentation"
+        description = "Updates the Hall of Fame"
+
+        file(".env").takeIf { it.exists() }
+            ?.useLines { it.find { it.startsWith("GITHUB_TOKEN=") }?.substringAfter("=") }
+            ?.let { githubToken.set(it) }
+
+        configFile = file("docs/hof/config.yml")
+        cacheFile = file("docs/hof/search.cache.yml")
+        templateFile = file("docs/hof/template.md")
+        outputFiles = files("docs/index.md")
+    }
+
+    register<Sync>("syncDokkaPages") {
+        group = "documentation"
+        from(fileTree("build/dokka/html"))
+        into(file("docs/public/dokka"))
+        dependsOn("dokkaGeneratePublicationHtml")
+    }
+
+    register<NpmTask>("buildDocPages") {
+        group = "documentation"
+        args = listOf("run", "docs:build")
+        mustRunAfter("updateVersion", "updateHallOfFame", "syncDokkaPages")
+    }
+
+    register("composeDocPages") {
+        group = "documentation"
+        dependsOn("updateVersion", "updateHallOfFame", "syncDokkaPages", "buildDocPages")
     }
 }

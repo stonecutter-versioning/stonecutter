@@ -3,8 +3,8 @@ package dev.kikugie.stonecutter
 import dev.kikugie.stonecutter.build.StonecutterBuild
 import dev.kikugie.stonecutter.controller.StonecutterController
 import dev.kikugie.stonecutter.controller.manager.controller
-import dev.kikugie.stonecutter.settings.StonecutterSettings
 import dev.kikugie.stonecutter.data.container.ConfigurationService
+import dev.kikugie.stonecutter.settings.StonecutterSettings
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.initialization.Settings
@@ -12,12 +12,16 @@ import org.gradle.api.invocation.Gradle
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.provider.Provider
 
-internal open class StonecutterPlugin : Plugin<ExtensionAware> {
-    internal companion object {
-        lateinit var SERVICE: Provider<ConfigurationService>
+public open class StonecutterPlugin : Plugin<ExtensionAware> {
+    public companion object {
+        /**Current Stonecutter version.*/ // Updated by ':updateVersion' task during build
+        @StonecutterAPI
+        public const val VERSION: String = "0.6-beta.3"
+
+        internal lateinit var SERVICE: Provider<ConfigurationService>
 
         private fun Gradle.createConfigurationService() = sharedServices
-            .registerIfAbsent(ConfigurationService.NAME, ConfigurationService::class.java)
+            .registerIfAbsent(ConfigurationService.Companion.NAME, ConfigurationService::class.java)
             .also { SERVICE = it }
     }
 

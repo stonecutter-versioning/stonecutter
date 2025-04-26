@@ -1,49 +1,96 @@
 [versions]
-# Plugins
-kotlin = "2.1.10"
-gradlepub = "1.2.1"
-shadow = "9.0.0-beta4"
-dokka = "1.9.20"
-ksp = "2.1.10-1.0.31"
-link = "0.2.0"
-node = "7.1.0"
-# Dependencies
-serialization = "1.7.3"
-coroutines = "1.9.0"
-kaml = "0.60.0"
-lz4 = "1.8.0"
+# Kotlin
+kotlin-jvm = { strictly = "2.1.20" }
+kotlin-ksp = { strictly = "2.1.20-1.0.32" }
+kotlin-dokka = { strictly = "2.0.+" }
+kotlin-validator = { strictly = "0.17.+" }
+kotlin-serialization = { prefer = "1.8.+" }
+kotlin-coroutines = { prefer = "1.10.+" }
+kotlin-datetime = { prefer = "0.6.+" }
+
+# Gradle
+gradle-shadow = { strictly = "[9.0.0-beta4,9.1)" }
+gradle-publish = { prefer = "1.+", strictly = "[1.2,)" }
+
 # Testing
-junit = "5.9.2"
-mordant = "2.7.2"
-zip4j = "2.11.5"
+testing-junit = { prefer = "5.+", strictly = "[5.9, 6.0)" }
+testing-kotest = { prefer = "5.+", strictly = "[5.9, 6.0)" }
+
+# Miscellaneous
+extra-halloffame = { prefer = "1.+" }
+extra-kdoclink = { strictly = "0.+" }
+extra-mordant = { prefer = "3.+" }
+extra-kaml = { prefer = "0.+" }
+extra-node = { prefer = "7.+", strictly = "[7,)" }
+extra-text = { prefer = "1.12.+" }
+extra-okhttp = { prefer = "4.12.+", strictly = "[4,)" }
 
 [plugins]
-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-kotlin-dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
-kotlin-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp"}
-gradle-publishing = { id = "com.gradle.plugin-publish", version.ref = "gradlepub" }
-shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
-kdoclink = { id = "dev.kikugie.kdoclink", version.ref = "link" }
-node = { id = "com.github.node-gradle.node", version.ref = "node" }
+# Kotlin
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin-jvm" }
+kotlin-ksp = { id = "com.google.devtools.ksp", version.ref = "kotlin-ksp"}
+kotlin-dokka = { id = "org.jetbrains.dokka", version.ref = "kotlin-dokka" }
+kotlin-dokka-javadoc = { id = "org.jetbrains.dokka-javadoc" }
+kotlin-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "kotlin-validator" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin-jvm" }
+
+# Gradle
+gradle-publish = { id = "com.gradle.plugin-publish", version.ref = "gradle-publish" }
+gradle-shadow = { id = "com.gradleup.shadow", version.ref = "gradle-shadow" }
+
+# Miscellaneous
+extra-kdoclink = { id = "dev.kikugie.kdoclink", version.ref = "extra-kdoclink" }
+extra-node = { id = "com.github.node-gradle.node", version.ref = "extra-node" }
 
 [libraries]
-kotlin-serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core-jvm", version.ref = "serialization" }
-kotlin-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json-jvm", version.ref = "serialization" }
-kotlin-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core-jvm", version.ref = "coroutines" }
-dokka-base = { group = "org.jetbrains.dokka", name = "dokka-base", version.ref = "dokka" }
-dokka-versioning = { group = "org.jetbrains.dokka", name = "versioning-plugin", version.ref = "dokka" }
-kaml = { group = "com.charleskorn.kaml", name = "kaml", version.ref = "kaml" }
-cbor = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-cbor", version.ref = "serialization" }
-junit-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit" }
-junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit" }
-lz4 = { group = "org.lz4", name = "lz4-java", version.ref = "lz4" }
-mordant = { group = "com.github.ajalt.mordant", name = "mordant", version.ref = "mordant" }
-zip4j = { group = "net.lingala.zip4j", name = "zip4j", version.ref = "zip4j" }
+# Kotlin
+kotlin-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlin-datetime" }
+kotlin-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core-jvm", version.ref = "kotlin-coroutines" }
+kotlin-serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core-jvm", version.ref = "kotlin-serialization" }
+kotlin-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json-jvm", version.ref = "kotlin-serialization" }
+kotlin-serialization-yaml = { group = "com.charleskorn.kaml", name = "kaml", version.ref = "extra-kaml" }
+
+# Testing
+junit-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "testing-junit" }
+junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "testing-junit" }
+kotest-runner = { group = "io.kotest", name = "kotest-runner-junit5", version.ref = "testing-kotest" }
+kotest-assertions = { group = "io.kotest", name = "kotest-assertions-core-jvm", version.ref = "testing-kotest" }
+kotest-datatest = { group = "io.kotest", name = "kotest-framework-datatest-jvm", version.ref = "testing-kotest" }
+kotest-property = { group = "io.kotest", name = "kotest-property-jvm", version.ref = "testing-kotest" }
+
+# Miscellaneous
+extra-mordant = { group = "com.github.ajalt.mordant", name = "mordant", version.ref = "extra-mordant" }
+extra-text = { group = "org.apache.commons", name = "commons-text", version.ref = "extra-text" }
+extra-halloffame = { group = "dev.kikugie", name = "hall-of-fame", version.ref = "extra-halloffame" }
+extra-okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "extra-okhttp" }
 
 [bundles]
+buildsrc = [
+    "extra-halloffame",
+    "extra-mordant",
+    "extra-okhttp",
+    "extra-text",
+
+    "kotlin-datetime",
+    "kotlin-coroutines",
+    "kotlin-serialization",
+    "kotlin-serialization-json",
+    "kotlin-serialization-yaml",
+]
+
+stonecutter = [
+    "kotlin-coroutines",
+    "kotlin-serialization",
+    "kotlin-serialization-json",
+    "kotlin-serialization-yaml",
+]
+
+stitcher = [
+    "kotlin-serialization"
+]
+
 test = [
-    "junit-api",
-    "junit-engine",
-    "mordant"
+    "kotest-runner",
+    "kotest-assertions",
+    "kotest-datatest"
 ]

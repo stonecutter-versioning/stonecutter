@@ -21,11 +21,10 @@ import kotlin.reflect.KClass
  */
 public const val BNAN: String = "🍌"
 
-// Updated by the 'updateVersion' task
 /**
  * Currently running Stonecutter version, serialised in [TreeModel].
  */
-public const val STONECUTTER: String = "0.6"
+public const val STONECUTTER: String = StonecutterPlugin.VERSION
 
 internal val LENIENT_JSON = Json {
     ignoreUnknownKeys = true

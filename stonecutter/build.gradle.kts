@@ -1,26 +1,26 @@
 @file:Suppress("UnstableApiUsage")
 @file:OptIn(ExperimentalPathApi::class)
 
-import org.jetbrains.dokka.gradle.AbstractDokkaLeafTask
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.gradle.jvm.tasks.Jar
-import org.jetbrains.dokka.gradle.DokkaTask
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import kotlin.io.path.ExperimentalPathApi
 
 plugins {
     idea
     java
+    signing
     `kotlin-dsl`
-    alias(libs.plugins.shadow)
-    alias(libs.plugins.gradle.publishing)
+    `maven-publish`
+    alias(libs.plugins.gradle.shadow)
+    alias(libs.plugins.gradle.publish)
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.dokka)
+    alias(libs.plugins.kotlin.dokka.javadoc)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.kotlin.ksp)
-    alias(libs.plugins.kdoclink)
+    alias(libs.plugins.kotlin.validator)
 }
 
 idea {
@@ -30,112 +30,111 @@ idea {
     }
 }
 
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    main {
+        files("src/main/entrypoint").builtBy(":updateVersion").let(kotlin::srcDir)
+    }
+}
+
 dependencies {
-    api(project(":stitcher"))
-    implementation(libs.kotlin.serialization)
-    implementation(libs.kotlin.serialization.json)
-    implementation(libs.kotlin.coroutines)
-    implementation(libs.kaml)
-
-    testImplementation(libs.bundles.test)
+//    api(project(path = ":semver"))
+    api(project(path = ":stitcher"))
+    implementation(libs.bundles.stonecutter)
 }
 
-kdoclink {
-    fun wiki(page: String) = "https://stonecutter.kikugie.dev/wiki/$page"
-
-    annotation = "dev.kikugie.stonecutter.SCDocumentation"
-    this["settings"] = wiki("start/settings")
-    this["settings.vcs"] = wiki("start/settings#version-reset-point")
-    this["settings.create"] = wiki("start/settings#specifying-versions")
-    this["settings.json"] = wiki("config/params")
-
-    this["swaps"] = wiki("config/params#string-swaps")
-    this["swaps.spec"] = wiki("config/params#swap-specification")
-
-    this["consts"] = wiki("config/params#condition-constants")
-    this["consts.spec"] = wiki("config/params#constant-specification")
-    this["consts.choice"] = wiki("config/params#choice-selector")
-
-    this["deps"] = wiki("config/params#condition-dependencies")
-    this["deps.spec"] = wiki("config/params#dependency-specification")
-
-    this["utility"] = wiki("guide/setup#checking-versions")
+apiValidation {
+    ignoredPackages += "stonecutter_samples"
+    nonPublicMarkers += "dev.kikugie.stonecutter.StonecutterInternalAPI"
 }
 
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
-}
+dokka {
+    moduleName = "Stonecutter Gradle"
 
-tasks.withType<AbstractDokkaLeafTask>().configureEach {
-    moduleName.set("Stonecutter Gradle")
-}
+    pluginsConfiguration.html {
+        homepageLink = "https://stonecutter.codeberg.page/"
+        footerMessage = "(c) 2025 KikuGie"
+    }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_16
-    targetCompatibility = JavaVersion.VERSION_16
-}
+    dokkaPublications.all {
+        suppressInheritedMembers = true
+        suppressObviousFunctions = true
+    }
 
-tasks.compileKotlin {
-    explicitApiMode = ExplicitApiMode.Strict
-    compilerOptions {
-        languageVersion = KotlinVersion.KOTLIN_2_1
-        apiVersion = KotlinVersion.KOTLIN_2_1
-        jvmTarget.set(JvmTarget.JVM_16)
+    dokkaSourceSets.named("main") {
+        reportUndocumented = true
+        skipEmptyPackages = true
+
+        sourceLink {
+            localDirectory = file("src/main/kotlin")
+            remoteLineSuffix = "#L"
+            remoteUrl("https://codeberg.org/stonecutter/stonecutter/src/branch/0.7/stonecutter/")
+        }
+
+        externalDocumentationLinks.register("gradle-kotlin-dsl") {
+            url("https://docs.gradle.org/current/kotlin-dsl/")
+            packageListUrl("https://docs.gradle.org/current/kotlin-dsl/gradle/package-list")
+        }
+
+        externalDocumentationLinks.register("kotlin-stdlib") {
+            url("https://kotlinlang.org/api/core/")
+        }
+
+        externalDocumentationLinks.register("kotlinx-serialization") {
+            url("https://kotlinlang.org/api/kotlinx.serialization/")
+        }
     }
 }
 
 java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
     withSourcesJar()
     withJavadocJar()
 }
 
-tasks.shadowJar {
-    archiveBaseName.set("shadow")
-    archiveClassifier.set("")
-    archiveVersion.set("")
-}
+tasks {
+    register<ShadowJar>("slimJar") {
+        group = "build"
+        archiveClassifier = "slim"
+        configurations = project.configurations.runtimeClasspath.map(::listOf)
 
-tasks.named<Jar>("javadocJar") {
-    from(tasks.named("dokkaJavadoc"))
-}
-
-tasks.all {
-    if (this is Jar || this is DokkaTask || this is KotlinCompile)
-        dependsOn(rootProject.tasks.findByName("updateVersion"))
-}
-
-tasks.withType<AbstractDokkaLeafTask> {
-    moduleName = "Stonecutter Gradle"
-    dokkaSourceSets.configureEach {
-        samples.from("src/samples/kotlin")
-    }
-}
-
-publishing {
-    repositories {
-        maven {
-            name = "kikugieMaven"
-            url = uri("https://maven.kikugie.dev/releases")
-            credentials(PasswordCredentials::class)
-            authentication {
-                create("basic", BasicAuthentication::class)
-            }
+        from(sourceSets.main.map(SourceSet::getOutput))
+        dependencies {
+//            include(project(":semver"))
+            include(project(":stitcher"))
         }
     }
 
-    publications {
-        register("mavenJava", MavenPublication::class) {
-            groupId = project.group.toString()
-            artifactId = "stonecutter"
-            version = project.version.toString()
-            from(components["java"])
+    register("publishSnapshotLocal") {
+        group = "publishing"
+        dependsOn("publishToMavenLocal")
+    }
+
+    named<Jar>("javadocJar") {
+        from(named("dokkaGeneratePublicationJavadoc"))
+    }
+
+    shadowJar {
+        archiveClassifier = ""
+    }
+
+    compileKotlin {
+        explicitApiMode = ExplicitApiMode.Strict
+        compilerOptions {
+            languageVersion = KotlinVersion.KOTLIN_2_1
+            apiVersion = KotlinVersion.KOTLIN_2_1
+            jvmTarget.set(JvmTarget.JVM_17)
         }
     }
 }
 
 gradlePlugin {
-    website = "https://stonecutter.kikugie.dev/"
-    vcsUrl = "https://github.com/stonecutter-versioning/stonecutter"
+    website = "https://stonecutter.codeberg.page/"
+    vcsUrl = "https://codeberg.org/stonecutter/stonecutter"
 
     plugins {
         create("stonecutter") {
@@ -143,7 +142,74 @@ gradlePlugin {
             implementationClass = "dev.kikugie.stonecutter.StonecutterPlugin"
             displayName = "Stonecutter"
             description = "Modern Gradle plugin for multi-version management"
-            tags = setOf("minecraft", "mods")
         }
     }
+}
+
+publishing {
+    repositories {
+        fun register(type: String, build: MavenArtifactRepository.() -> Unit) {
+            val username = findProperty("mvn.$type.username") as String?
+            val password = findProperty("mvn.$type.password") as String?
+            if (username == null || password == null)
+                return println("Missing credentials for $type maven repository")
+
+            maven {
+                build()
+                credentials {
+                    this.username = username
+                    this.password = password
+                }
+            }
+        }
+
+        register("kikugie") {
+            name = "KikuGieMaven"
+            url = when {
+                '-' in project.version.toString() -> uri("https://maven.kikugie.dev/snapshots")
+                else -> uri("https://maven.kikugie.dev/releases")
+            }
+        }
+    }
+
+    publications {
+        register<MavenPublication>("maven") {
+            groupId = "dev.kikugie"
+            artifactId = "stonecutter"
+            version = project.version.toString()
+            from(components["java"])
+            artifact(tasks.named("slimJar"))
+
+            pom {
+                name = "Stonecutter"
+                description = "Modern Gradle plugin for multi-version management"
+                url = "https://stonecutter.kikugie.dev/"
+
+                developers {
+                    developer {
+                        id = "kikugie"
+                        name = "KikuGie"
+                        email = "kikugie@duck.com"
+                    }
+                }
+
+                licenses {
+                    license {
+                        name = "GNU Lesser Public License 3.0"
+                        url = "https://www.gnu.org/licenses/lgpl-3.0.en.html"
+                    }
+                }
+
+                scm {
+                    connection = "scm:git:git:https://codeberg.org/stonecutter/stonecutter.git"
+                    developerConnection = "scm:git:ssh://codeberg.org:stonecutter/stonecutter.git"
+                    url = "https://codeberg.org/stonecutter/stonecutter"
+                }
+            }
+        }
+    }
+}
+
+signing {
+    sign(configurations.runtimeElements.get())
 }

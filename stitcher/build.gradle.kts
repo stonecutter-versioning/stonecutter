@@ -1,67 +1,80 @@
-import org.jetbrains.dokka.gradle.AbstractDokkaLeafTask
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     java
-    `maven-publish`
-    kotlin("jvm")
-    kotlin("plugin.serialization")
+    alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.dokka)
+    alias(libs.plugins.kotlin.serialization)
 }
+
+version = "SNAPSHOT"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
+//    api(project(path = ":semver"))
     implementation(kotlin("reflect"))
-    implementation(libs.kotlin.serialization)
+    implementation(libs.bundles.stitcher)
 
-    testImplementation(libs.kaml)
-    testImplementation(libs.bundles.test)
+    testImplementation(libs.junit.api)
+    testImplementation(libs.extra.mordant)
+    testImplementation(libs.kotlin.serialization.yaml)
 }
 
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
+dokka {
+    moduleName = "Stitcher Processor"
+    dokkaPublications.html {
+        suppressInheritedMembers = true
+        suppressObviousFunctions = true
+    }
+
+    pluginsConfiguration.html {
+        homepageLink = "https://stonecutter.codeberg.page/"
+        footerMessage = "(c) 2025 KikuGie"
+    }
+
+    dokkaSourceSets.named("main") {
+        reportUndocumented = false
+        skipEmptyPackages = true
+
+        sourceLink {
+            localDirectory = file("src/main/kotlin")
+            remoteLineSuffix = "#L"
+            remoteUrl("https://codeberg.org/stonecutter/stonecutter/src/branch/0.7/stitcher/")
+        }
+
+        externalDocumentationLinks.register("kotlin-stdlib") {
+            url("https://kotlinlang.org/api/core/")
+        }
+
+        externalDocumentationLinks.register("kotlinx-serialization") {
+            url("https://kotlinlang.org/api/kotlinx.serialization/")
+        }
+    }
 }
 
-tasks.withType<AbstractDokkaLeafTask> {
-    moduleName = "Stitcher"
+tasks {
+//    withType<Test> {
+//        useJUnitPlatform()
+//    }
+
+    withType<KotlinCompile> {
+        compilerOptions {
+            languageVersion = KotlinVersion.KOTLIN_2_1
+            apiVersion = KotlinVersion.KOTLIN_2_1
+            jvmTarget = JvmTarget.JVM_17
+        }
+    }
 }
 
 java {
     withSourcesJar()
     withJavadocJar()
 
-    sourceCompatibility = JavaVersion.VERSION_16
-    targetCompatibility = JavaVersion.VERSION_16
-}
-
-tasks.withType<KotlinCompile> {
-    compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_16)
-    }
-}
-
-publishing {
-    repositories {
-        maven {
-            name = "kikugieMaven"
-            url = uri("https://maven.kikugie.dev/releases")
-            credentials(PasswordCredentials::class)
-            authentication {
-                create("basic", BasicAuthentication::class)
-            }
-        }
-    }
-
-    publications {
-        register("mavenJava", MavenPublication::class) {
-            groupId = project.group.toString()
-            artifactId = "stitcher"
-            version = project.version.toString()
-            artifact(tasks.getByName("jar"))
-        }
-    }
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
