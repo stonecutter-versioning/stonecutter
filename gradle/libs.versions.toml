@@ -17,11 +17,9 @@ testing-junit = { prefer = "5.+", strictly = "[5.9, 6.0)" }
 testing-kotest = { prefer = "5.+", strictly = "[5.9, 6.0)" }
 
 # Miscellaneous
-extra-halloffame = { prefer = "1.+" }
 extra-kdoclink = { strictly = "0.+" }
 extra-mordant = { prefer = "3.+" }
 extra-kaml = { prefer = "0.+" }
-extra-node = { prefer = "7.+", strictly = "[7,)" }
 extra-text = { prefer = "1.12.+" }
 extra-okhttp = { prefer = "4.12.+", strictly = "[4,)" }
 
@@ -40,7 +38,6 @@ gradle-shadow = { id = "com.gradleup.shadow", version.ref = "gradle-shadow" }
 
 # Miscellaneous
 extra-kdoclink = { id = "dev.kikugie.kdoclink", version.ref = "extra-kdoclink" }
-extra-node = { id = "com.github.node-gradle.node", version.ref = "extra-node" }
 
 [libraries]
 # Kotlin
@@ -60,24 +57,8 @@ kotest-property = { group = "io.kotest", name = "kotest-property-jvm", version.r
 
 # Miscellaneous
 extra-mordant = { group = "com.github.ajalt.mordant", name = "mordant", version.ref = "extra-mordant" }
-extra-text = { group = "org.apache.commons", name = "commons-text", version.ref = "extra-text" }
-extra-halloffame = { group = "dev.kikugie", name = "hall-of-fame", version.ref = "extra-halloffame" }
-extra-okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "extra-okhttp" }
 
 [bundles]
-buildsrc = [
-    "extra-halloffame",
-    "extra-mordant",
-    "extra-okhttp",
-    "extra-text",
-
-    "kotlin-datetime",
-    "kotlin-coroutines",
-    "kotlin-serialization",
-    "kotlin-serialization-json",
-    "kotlin-serialization-yaml",
-]
-
 stonecutter = [
     "kotlin-coroutines",
     "kotlin-serialization",
