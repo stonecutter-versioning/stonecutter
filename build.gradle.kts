@@ -42,11 +42,6 @@ tasks {
         version = ver
         replacements {
             file("stonecutter/src/main/entrypoint/dev/kikugie/stonecutter/StonecutterPlugin.kt") replace "VERSION: String = \".+\"" with "VERSION: String = \"$ver\""
-            file("docs/.vitepress/config.mts") replace "latestVersion: \".+\"" with "latestVersion: \"$ver\""
-            file("docs/wiki/start/settings.md") replace listOf(
-                "stonecutter\"\\ version \".+\"" to "stonecutter\" version \"$ver\"",
-                "stonecutter\"\\) version \".+\"" to "stonecutter\") version \"$ver\""
-            )
         }
     }
 }
