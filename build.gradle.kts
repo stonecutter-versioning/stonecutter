@@ -20,7 +20,6 @@ dependencies {
 
 dokka {
     moduleName = "Stonecutter KDoc"
-
     pluginsConfiguration.html {
         homepageLink = "https://stonecutter.codeberg.page/"
         footerMessage = "(c) 2025 KikuGie"
