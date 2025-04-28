@@ -16,7 +16,7 @@ public open class StonecutterPlugin : Plugin<ExtensionAware> {
     public companion object {
         /**Current Stonecutter version.*/ // Updated by ':updateVersion' task during build
         @StonecutterAPI
-        public const val VERSION: String = "0.6-beta.3"
+        public const val VERSION: String = "0.6"
 
         internal lateinit var SERVICE: Provider<ConfigurationService>
 

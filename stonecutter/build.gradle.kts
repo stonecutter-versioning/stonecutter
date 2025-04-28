@@ -109,11 +109,6 @@ tasks {
         }
     }
 
-    register("publishSnapshotLocal") {
-        group = "publishing"
-        dependsOn("publishToMavenLocal")
-    }
-
     named<Jar>("javadocJar") {
         from(named("dokkaGeneratePublicationJavadoc"))
     }
@@ -142,6 +137,7 @@ gradlePlugin {
             implementationClass = "dev.kikugie.stonecutter.StonecutterPlugin"
             displayName = "Stonecutter"
             description = "Modern Gradle plugin for multi-version management"
+            tags = listOf("stonecutter")
         }
     }
 }
