@@ -1,3 +1,7 @@
+> [!IMPORTANT]
+> Stonecutter has moved to [Codeberg](https://codeberg.org/stonecutter/stonecutter).
+> This repository will not be updated.
+
 # Stonecutter
 Modern Gradle plugin for multi-version management.
 
