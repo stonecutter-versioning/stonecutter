@@ -119,10 +119,10 @@ value class ReplacementList(internal val delegate: MutableList<Replacement> = mu
         require(pattern.pattern.isNotEmpty()) { "Can't replace empty pattern" }
         require(target.isNotEmpty()) { "Replacing with an empty string is not reversible" }
         if (isEmpty() || identifier != null) delegate += RegexReplacement(pattern, target, phase, identifier)
-        else find { it.identifier == identifier }?.let {
-            val message = "Replacement '${identifier}' is already registered for $it"
-            throw IllegalArgumentException(message)
-        } ?: delegate += RegexReplacement(pattern, target, phase, null)
+        else find { it.identifier == identifier }.let {
+            if (it != null) throw IllegalArgumentException("Replacement '${identifier}' is already registered for $it")
+            delegate += RegexReplacement(pattern, target, phase, null)
+        }
     }
 
     /**
@@ -241,11 +241,12 @@ class ReplacementExecutor(replacements: ReplacementList, phase: ReplacementPhase
          * ```
          */
         fun CharSequence.getReplacementTokens(recognizers: Iterable<CommentRecognizer>): Set<String> = buildSet {
-            for (token in Scanner(this@getReplacementTokens, recognizers)) when (token.type as ContentType) {
+            for (token in Scanner(this@getReplacementTokens, recognizers)) when (token.type as? ContentType) {
                 ContentType.COMMENT_START, ContentType.COMMENT_END -> continue
                 ContentType.CONTENT -> if (token.value.isNotBlank()) break
                 ContentType.COMMENT -> if (token.value.getOrSpace(0) == PREFIX)
                     this += token.value.substring(1).trim()
+                else -> break
             }
         }
 
