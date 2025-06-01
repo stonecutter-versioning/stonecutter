@@ -62,9 +62,8 @@ public abstract class BuildAbstraction(protected val hierarchy: ProjectHierarchy
             "last" -> ReplacementPhase.LAST
             else -> throw IllegalArgumentException("Invalid phase: '$phase', must be either 'FIRST' or 'LAST'")
         }
-        val sourceRegex = sourcePattern.toRegex()
-        if (direction) data.replacements.addRegex(sourceRegex, targetValue, realPhase, identifier)
-        else data.replacements.addRegex(sourceRegex, targetValue, realPhase, identifier)
+        if (direction) data.replacements.addRegex(sourcePattern.toRegex(), targetValue, realPhase, identifier)
+        else data.replacements.addRegex(targetPattern.toRegex(), sourceValue, realPhase, identifier)
     }
 
     override fun allowExtensions(extensions: Iterable<String>) {
