@@ -31,6 +31,7 @@ public open class StonecutterController(root: Project) :
 
     init {
         prepareConfiguration()
+        createDelegateTasks()
         root.afterEvaluate { configureProject() }
     }
 
@@ -54,6 +55,25 @@ public open class StonecutterController(root: Project) :
         for (it in tree.nodes) {
             it.project.pluginManager.apply(StonecutterPlugin::class.java)
             syncTask.dependsOn("${it.hierarchy}:setupChiseledBuild")
+        }
+    }
+
+    private fun createDelegateTasks() {
+        for (it in versions) root.tasks.register<StonecutterTask>("stonecutterSwitchTo${it.project}") {
+            group = "stonecutter-impl"
+            description = "Internal Stonecutter task. Do not call manually."
+
+            instance(project.hierarchy)
+
+            fromVersion(current)
+            toVersion(it)
+
+            input("src")
+            output("src")
+            sources.set(tree.branches.map { it.light })
+
+            parameters(StonecutterPlugin.SERVICE().snapshot())
+            doLast { updateController(it) }
         }
     }
 
@@ -91,35 +111,20 @@ public open class StonecutterController(root: Project) :
         }
     }
 
-    private fun createStonecutterTask(name: String, version: StonecutterProject, desc: () -> String) =
-        root.tasks.register<StonecutterTask>(name) {
-            group = "Stonecutter"
-            description = desc()
+    private fun createStonecutterTask(name: String, version: StonecutterProject, desc: () -> String) = root.tasks.register(name) {
+        group = "Stonecutter"
+        description = desc()
 
-            instance(project.hierarchy)
-
-            fromVersion(current)
-            toVersion(version)
-
-            input("src")
-            output("src")
-            sources.set(tree.branches.map { it.light })
-
-            parameters(StonecutterPlugin.SERVICE().snapshot())
-            doLast { updateController(version) }
-        }
+        dependsOn("${ProjectHierarchy(root.path).orBlank()}:stonecutterSwitchTo${version.project}")
+    }
 
     private fun serializeTree() = with(tree) {
         TreeModel(
             STONECUTTER,
             vcsVersion,
             current,
-            branches.map {
-                BranchInfo(it.id, location cut it.location)
-            },
-            nodes.map {
-                NodeInfo(it.metadata, location cut it.location, it.metadata.isActive)
-            },
+            branches.map { BranchInfo(it.id, it.location) },
+            nodes.map { NodeInfo(it.metadata, it.location) },
             parameters
         ).save(tree.location.resolve("build/stonecutter-cache")).onFailure {
             root.logger.warn("Failed to save tree model", it)
@@ -132,14 +137,10 @@ public open class StonecutterController(root: Project) :
         }.onFailure {
             root.logger.warn("Failed to delete outdated active version model for '$id'", it)
         }
-        BranchModel(
-            id,
-            location.relativize(tree.location),
-            nodes.map {
-                NodeInfo(it.metadata, location cut it.location, it.metadata.isActive)
+        BranchModel(id, location, nodes.map { NodeInfo(it.metadata, it.location) })
+            .save(tree.location.resolve("build/stonecutter-cache"))
+            .onFailure {
+                root.logger.warn("Failed to save branch model for '$id'", it)
             }
-        ).save(tree.location.resolve("build/stonecutter-cache")).onFailure {
-            root.logger.warn("Failed to save branch model for '$id'", it)
-        }
     }
 }

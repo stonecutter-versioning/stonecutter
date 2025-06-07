@@ -114,14 +114,7 @@ public open class StonecutterBuild(private val project: Project) : BuildAbstract
     }
 
     private fun serializeNode() {
-        val model = NodeModel(
-            current,
-            node.location.relativize(tree.location),
-            BranchInfo(branch.id, node.location.relativize(branch.location)),
-            current.isActive,
-            data
-        )
-
+        val model = NodeModel(current.project, current.version, current.isActive, BranchInfo(branch.id, branch.location), node.location, data)
         model.save(node.location.resolve("build/stonecutter-cache")).onFailure {
             project.logger.warn("Failed to save node model for '${branch.id}:${current.project}'", it)
         }

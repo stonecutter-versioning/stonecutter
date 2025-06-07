@@ -3,7 +3,13 @@ package dev.kikugie.stonecutter.data.parameters
 import dev.kikugie.stonecutter.Identifier
 import dev.kikugie.stonecutter.controller.GlobalParametersAccess
 import dev.kikugie.stonecutter.controller.StonecutterController
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
@@ -15,7 +21,7 @@ import kotlin.reflect.KProperty
  * @property receiver Default dependency used by the file processor, set by [StonecutterController.defaultReceiver]
  * @property chiseled Registered chiseled tasks, set by [StonecutterController.registerChiseled]
  */
-@Serializable
+@Serializable(with = GlobalParameters.GlobalParametersSerializer::class)
 public data class GlobalParameters(
     var debug: Boolean = false,
     var process: Boolean = true,
@@ -72,5 +78,16 @@ public data class GlobalParameters(
             "receiver" -> receiver = value as Identifier
             else -> throw UnsupportedOperationException("Checked at init")
         }
+    }
+
+    private object GlobalParametersSerializer : KSerializer<GlobalParameters> {
+        val delegate = MapSerializer(String.serializer(), String.serializer())
+        override val descriptor: SerialDescriptor get() = delegate.descriptor
+
+        override fun serialize(encoder: Encoder, value: GlobalParameters) =
+            delegate.serialize(encoder, mapOf("implicit_receiver" to value.receiver))
+
+        override fun deserialize(decoder: Decoder): GlobalParameters =
+            delegate.deserialize(decoder).let { GlobalParameters(receiver = it.getOrDefault("implicit_receiver", "minecraft")) }
     }
 }

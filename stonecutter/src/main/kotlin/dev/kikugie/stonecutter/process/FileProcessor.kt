@@ -1,8 +1,5 @@
 package dev.kikugie.stonecutter.process
 
-import com.charleskorn.kaml.Yaml
-import com.charleskorn.kaml.YamlConfiguration
-import com.charleskorn.kaml.encodeToStream
 import dev.kikugie.stitcher.data.replacement.ReplacementExecutor.Companion.replaceWithScannedTokens
 import dev.kikugie.stitcher.data.replacement.ReplacementPhase
 import dev.kikugie.stitcher.data.scope.Scope
@@ -24,11 +21,6 @@ internal class FileProcessor(private val params: ProcessParameters) {
     private val inPlace = params.dirs.input == params.dirs.output
 
     internal companion object {
-        val YAML = Yaml(
-            configuration = YamlConfiguration(
-                strictMode = false
-            )
-        )
         val LOGGER: Logger = LoggerFactory.getLogger(FileProcessor::class.java)
         fun Path.withExtension(ext: String): Path =
             parent.resolve("${fileName.nameWithoutExtension}.$ext")
@@ -53,9 +45,7 @@ internal class FileProcessor(private val params: ProcessParameters) {
             var result: CharSequence = text
             result = result.replaceWithScannedTokens(replacements, ReplacementPhase.FIRST, params.recognizers)
             val parser = FileParser.create(result, handler, params.recognizers, params.parameters)
-            val ast = parser.parse().also {
-                if (params.debug) writeDebugAst(it)
-            }
+            val ast = parser.parse()
             collector.push("Parsed AST, ${handler.errors.size} errors")
             handler.throwIfHasErrors()
 
@@ -67,14 +57,6 @@ internal class FileProcessor(private val params: ProcessParameters) {
             return if (result == text) null logging "Skipping, matches input"
             else result logging "Successfully processed"
         }
-
-        private fun writeDebugAst(ast: Scope) = params.dirs.debug
-            .resolveChecked(source.withExtension("yml"))
-            .runReporting("Failed to save debug AST") {
-                outputStream(StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING).use {
-                    YAML.encodeToStream(ast, it)
-                }
-            }
 
         private inline fun <T, R> T.runReporting(message: String, action: T.() -> R): R? = kotlin.runCatching {
             action()

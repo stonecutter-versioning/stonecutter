@@ -2,34 +2,28 @@
 
 package dev.kikugie.stonecutter.data.tree
 
-import com.charleskorn.kaml.Yaml
-import com.charleskorn.kaml.YamlConfiguration
 import dev.kikugie.stonecutter.StonecutterAPI
 import dev.kikugie.stonecutter.data.parameters.BuildParameters
 import dev.kikugie.stitcher.util.PathSerializer
+import dev.kikugie.stonecutter.Identifier
 import dev.kikugie.stonecutter.data.StonecutterProject
 import dev.kikugie.stonecutter.data.parameters.GlobalParameters
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
+import kotlinx.serialization.json.Json
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import kotlin.io.path.createDirectories
 import kotlin.io.path.notExists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
-private val YAML = Yaml(
-    configuration = YamlConfiguration(
-        encodeDefaults = false,
-        strictMode = false
-    )
-)
 
 private fun <T> save(location: Path, model: T, serializer: KSerializer<T>): Result<Unit> = location.runCatching {
-    val yaml = YAML.encodeToString(serializer, model)
+    val json = Json.encodeToString(serializer, model)
     parent.createDirectories()
     writeText(
-        yaml,
+        json,
         Charsets.UTF_8,
         StandardOpenOption.WRITE,
         StandardOpenOption.CREATE,
@@ -40,15 +34,19 @@ private fun <T> save(location: Path, model: T, serializer: KSerializer<T>): Resu
 private fun <T> load(location: Path, serializer: KSerializer<T>): Result<T> = location.runCatching {
     if (location.notExists()) throw NoSuchFileException(location.toFile())
     val text = readText(Charsets.UTF_8)
-    YAML.decodeFromString(serializer, text)
+    Json.decodeFromString(serializer, text)
 }
 
 @Serializable
 public data class NodeInfo(
-    val metadata: StonecutterProject,
-    val path: Path,
+    val project: Identifier,
+    val version: String = project,
     val active: Boolean = false,
-)
+    val path: Path,
+) {
+    public constructor(metadata: StonecutterProject, path: Path)
+        : this(metadata.project, metadata.version, metadata.isActive, path)
+}
 
 @Serializable
 public data class BranchInfo(
@@ -59,22 +57,23 @@ public data class BranchInfo(
 /**
  * Represents serialised information about a versioned subproject.
  * This is stored in:
- * - `build/stonecutter-cache/node.yml` for the active node.
- * - `versions/{project}/build/stonecutter-cache/node.yml` for each node in the branch.
+ * - `build/stonecutter-cache/node.json` for the active node.
+ * - `versions/{project}/build/stonecutter-cache/node.json` for each node in the branch.
  */
 @Serializable
 public data class NodeModel(
-    val metadata: StonecutterProject,
-    val root: Path,
+    val project: Identifier,
+    val version: String = project,
+    val active: Boolean = false,
     val branch: BranchInfo,
-    val active: Boolean,
+    val root: Path,
     val parameters: BuildParameters
 ) {
     public companion object {
-        /**Literally `node.yml`.*/
-        public const val FILENAME: String = "node.yml"
+        /**Literally `node.json`.*/
+        public const val FILENAME: String = "node.json"
 
-        /**Loads the `node.yml` file as [NodeModel] from the given [directory].*/
+        /**Loads the `node.json` file as [NodeModel] from the given [directory].*/
         @JvmStatic @StonecutterAPI
         public fun load(directory: Path): Result<NodeModel> =
             load(directory.resolve(FILENAME), serializer())
@@ -91,10 +90,10 @@ public data class BranchModel(
     val nodes: List<NodeInfo>,
 ) {
     public companion object {
-        /**Literally `branch.yml`.*/
-        public const val FILENAME: String = "branch.yml"
+        /**Literally `branch.json`.*/
+        public const val FILENAME: String = "branch.json"
 
-        /**Loads the `branch.yml` file as [BranchModel] from the given [directory].*/
+        /**Loads the `branch.json` file as [BranchModel] from the given [directory].*/
         @JvmStatic @StonecutterAPI
         public fun load(directory: Path): Result<BranchModel> =
             load(directory.resolve(FILENAME), serializer())
@@ -111,13 +110,13 @@ public data class TreeModel(
     val current: StonecutterProject,
     val branches: List<BranchInfo>,
     val nodes: List<NodeInfo>,
-    val parameters: GlobalParameters,
+    val flags: GlobalParameters,
 ) {
     public companion object {
-        /**Literally `tree.yml`.*/
-        public const val FILENAME: String = "tree.yml"
+        /**Literally `tree.json`.*/
+        public const val FILENAME: String = "tree.json"
 
-        /**Loads the `tree.yml` file as [TreeModel] from the given [directory].*/
+        /**Loads the `tree.json` file as [TreeModel] from the given [directory].*/
         @JvmStatic @StonecutterAPI
         public fun load(directory: Path): Result<TreeModel> =
             load(directory.resolve(FILENAME), serializer())
