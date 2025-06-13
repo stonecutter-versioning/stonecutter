@@ -106,8 +106,8 @@ public data class BranchModel(
 @Serializable
 public data class TreeModel(
     val stonecutter: String,
-    val vcs: StonecutterProject,
-    val current: StonecutterProject,
+    val vcs: Identifier,
+    val current: Identifier,
     val branches: List<BranchInfo>,
     val nodes: List<NodeInfo>,
     val flags: GlobalParameters,

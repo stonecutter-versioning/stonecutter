@@ -121,8 +121,8 @@ public open class StonecutterController(root: Project) :
     private fun serializeTree() = with(tree) {
         TreeModel(
             STONECUTTER,
-            vcsVersion,
-            current,
+            vcsVersion.project,
+            current.project,
             branches.map { BranchInfo(it.id, it.location) },
             nodes.map { NodeInfo(it.metadata, it.location) },
             parameters
