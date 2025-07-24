@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://stonecutter.kikugie.dev/sitemap.xml 
