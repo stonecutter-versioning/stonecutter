@@ -19,14 +19,14 @@ import kotlin.contracts.contract
 import kotlin.reflect.full.functions
 
 private fun kotlinCompilerShittingItselfWorkaround(decoder: JsonDecoder): JsonObject {
-//    return decoder.decodeJsonElement().jsonObject
+    return decoder.decodeJsonElement().jsonObject
 
-    val function = checkNotNull(decoder::class.functions.find { it.name == "decodeJsonElement" })
-    { "No 'decodeJsonElement' function found" }
-
-    val result = function.call(decoder)
-    return checkNotNull(result as? JsonObject)
-    { "Result is ${if (result == null) null else result::class.qualifiedName}" }
+//    val function = checkNotNull(decoder::class.functions.find { it.name == "decodeJsonElement" })
+//    { "No 'decodeJsonElement' function found" }
+//
+//    val result = function.call(decoder)
+//    return checkNotNull(result as? JsonObject)
+//    { "Result is ${if (result == null) null else result::class.qualifiedName}" }
 }
 
 private inline fun <T> serCheckNotNull(value: T?, message: () -> String): T {
