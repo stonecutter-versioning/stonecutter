@@ -28,3 +28,4 @@ run
 /.env
 /docs/public/dokka/
 /docs/.vitepress/dist/
+/stitcher_antlr/src/main/antlr/dev/kikugie/stitcher/antlr/scanner/gen/
