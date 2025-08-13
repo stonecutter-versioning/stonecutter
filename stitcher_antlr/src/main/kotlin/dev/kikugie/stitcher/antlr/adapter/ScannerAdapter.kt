@@ -7,6 +7,7 @@ import dev.kikugie.stitcher.antlr.StitcherLightBaseVisitor
 import dev.kikugie.stitcher.antlr.StitcherLightLexer
 import dev.kikugie.stitcher.antlr.StitcherLightParser
 import dev.kikugie.stitcher.util.get
+import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.Lexer
@@ -16,7 +17,8 @@ import org.antlr.v4.runtime.TokenSource
 import org.antlr.v4.runtime.Vocabulary
 import org.antlr.v4.runtime.misc.Pair
 
-class ScannerAdapter(private val scanner: Lexer, private val vocabulary: Vocabulary, private val openers: IntArray, private val closers: IntArray) : TokenSource by scanner {
+class ScannerAdapter(private val scanner: Lexer, private val openers: IntArray, private val closers: IntArray) : TokenSource by scanner {
+    fun interface Factory { fun create(input: CharStream): ScannerAdapter }
     private val queue: FixedQueue<Token> = FixedQueue(4)
     private var checkpoint: Checkpoint = Checkpoint(0, 0, 0, false)
 
@@ -63,7 +65,7 @@ class ScannerAdapter(private val scanner: Lexer, private val vocabulary: Vocabul
         }
 
         val message = """
-            Token of type ${vocabulary.getDisplayName(next.type)} is not a valid comment marker.
+            Token ${scanner.vocabulary.getDisplayName(next.type)} of ${scanner.grammarFileName} is not a valid comment marker.
             Comment scanners should only yield tokens matching comment start and end.
         """.trimIndent()
         throw RecognitionException(message, scanner, inputStream, null)
