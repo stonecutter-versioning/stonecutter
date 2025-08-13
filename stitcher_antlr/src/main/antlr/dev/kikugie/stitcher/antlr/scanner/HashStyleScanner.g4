@@ -19,12 +19,8 @@ SLASH_COMMENT_END: LINE_BREAK -> popMode;
 
 mode IN_CHAR;
 CH_END: '\'' -> popMode, skip;
-CH_ESC_END: '\\\'' -> skip;
-CH_ESC_SLASH: DOUBLE_SLASH -> skip;
-CH_THE_REST: ~'\'' -> skip;
+CH_ESC_END: (~'\'' | '\\\'' | DOUBLE_SLASH) -> skip;
 
 mode IN_STRING;
 STR_END: '"' -> popMode, skip;
-STR_ESC_END: '\\"' -> skip;
-STR_ESC_SLASH: DOUBLE_SLASH -> skip;
-STR_THE_REST: ~'"' -> skip;
+STR_ESC_END: (~'"' | '\\"' | DOUBLE_SLASH)-> skip;
