@@ -40,7 +40,7 @@ class ScannerAdapter(private val scanner: Lexer, private val openers: IntArray, 
         queue.poll() then queue.element()!!
 
     private fun readNextTokens(): Boolean {
-        if (scanner._hitEOF) throw NoSuchElementException()
+        if (checkpoint.line < 0) throw NoSuchElementException()
 
         val next = scanner.nextToken()
         if (next.type == Token.EOF) {
@@ -50,6 +50,7 @@ class ScannerAdapter(private val scanner: Lexer, private val openers: IntArray, 
             } else if (checkpoint.cursor < next.startIndex)
                 addContent(next)
 
+            checkpoint = Checkpoint(0, -1, 0, false)
             return queue.add(next)
         }
 

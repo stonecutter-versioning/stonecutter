@@ -4,6 +4,11 @@ lexer grammar SlashStyleScanner;
 package dev.kikugie.stitcher.antlr.scanner;
 }
 
+@members {
+public boolean nestMultiLineComments = false;
+private byte commentDepth = 0;
+}
+
 fragment LINE_BREAK: '\r'|'\n'|'\r\n';
 fragment DOUBLE_SLASH: '\\\\';
 
@@ -20,7 +25,14 @@ SLASH_COMMENT_END: LINE_BREAK -> popMode;
 SLASH_THE_REST: . -> skip;
 
 mode IN_STAR;
-STAR_COMMENT_END: '*/' -> popMode;
+STAR_COMMENT_NEST: '/*' {
+    if (nestMultiLineComments) commentDepth++;
+} -> skip;
+STAR_COMMENT_END: '*/' {
+    if (!nestMultiLineComments) popMode();
+    else if (commentDepth-- <= 0) popMode();
+    else skip();
+};
 STAR_THE_REST: . -> skip;
 
 mode IN_CHAR;
@@ -29,4 +41,4 @@ CH_ESC_END: (~'\'' | '\\\'' | DOUBLE_SLASH) -> skip;
 
 mode IN_STRING;
 STR_END: '"' -> popMode, skip;
-STR_ESC_END: (~'"' | '\\"' | DOUBLE_SLASH)-> skip;
+STR_ESC_END: (~'"' | '\\"' | DOUBLE_SLASH) -> skip;
