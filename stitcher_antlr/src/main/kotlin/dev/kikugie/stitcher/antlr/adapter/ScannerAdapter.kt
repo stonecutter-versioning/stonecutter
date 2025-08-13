@@ -11,10 +11,12 @@ import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.Lexer
+import org.antlr.v4.runtime.LexerNoViableAltException
 import org.antlr.v4.runtime.RecognitionException
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.TokenSource
 import org.antlr.v4.runtime.Vocabulary
+import org.antlr.v4.runtime.atn.ATNConfigSet
 import org.antlr.v4.runtime.misc.Pair
 
 class ScannerAdapter(private val scanner: Lexer, private val openers: IntArray, private val closers: IntArray) : TokenSource by scanner {
@@ -68,7 +70,7 @@ class ScannerAdapter(private val scanner: Lexer, private val openers: IntArray, 
             Token ${scanner.vocabulary.getDisplayName(next.type)} of ${scanner.grammarFileName} is not a valid comment marker.
             Comment scanners should only yield tokens matching comment start and end.
         """.trimIndent()
-        throw RecognitionException(message, scanner, inputStream, null)
+        throw UnregisteredTokenException(message, scanner, inputStream, next)
     }
 
     private fun addContent(next: Token) =
