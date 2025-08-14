@@ -7,6 +7,7 @@ import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.Token
+import org.antlr.v4.runtime.TokenSource
 import org.antlr.v4.runtime.misc.Interval
 import org.antlr.v4.runtime.tree.TerminalNode
 
@@ -30,3 +31,5 @@ internal operator fun CharStream.get(range: IntRange) =
 
 internal operator fun CharStream.get(start: Int, end: Int) =
     getText(Interval.of(start, end - 1))
+
+internal fun TokenSource.asSequence() = generateSequence { nextToken()?.takeIf { it.type != Token.EOF } }

@@ -1,5 +1,6 @@
 import dev.kikugie.commons.collections.present
 import dev.kikugie.stitcher.antlr.LayoutParser
+import dev.kikugie.stitcher.antlr.adapter.ScannerAdapterV2
 import dev.kikugie.stitcher.antlr.converter.BlockBuilder
 import dev.kikugie.stitcher.antlr.scanner.SlashStyleScanner
 import dev.kikugie.stitcher.api.ScannerBuilder
@@ -10,6 +11,7 @@ import dev.kikugie.stitcher.debug.PresentationCollector
 import dev.kikugie.stitcher.transformer.ReplaceTransformation
 import dev.kikugie.stitcher.transformer.SourceTransformation
 import dev.kikugie.stitcher.transformer.TransformationBuilder
+import dev.kikugie.stitcher.util.asSequence
 import io.kotest.core.spec.style.AnnotationSpec
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
@@ -22,6 +24,26 @@ class Experiments : AnnotationSpec() {
 
         closingTokens += SlashStyleScanner.SLASH_COMMENT_END
         closingTokens += SlashStyleScanner.STAR_COMMENT_END
+    }
+
+    @Test
+    fun v2() {
+        val factory = ScannerAdapterV2.Factory {
+            ScannerAdapterV2(
+                SlashStyleScanner(it),
+                intArrayOf(SlashStyleScanner.SLASH_COMMENT_START, SlashStyleScanner.STAR_COMMENT_START),
+                intArrayOf(SlashStyleScanner.SLASH_COMMENT_END, SlashStyleScanner.STAR_COMMENT_END),
+            )
+        }
+
+        val input = """
+            //? if thingy
+            
+        """.trimIndent()
+        val adapter = factory.create(CharStreams.fromString(input))
+        for (token in adapter.asSequence()) {
+            println("${token.startIndex}..<${token.stopIndex + 1}")
+        }
     }
 
     @Test
