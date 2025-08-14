@@ -10,7 +10,6 @@ sealed interface BlockToken : StitcherToken {
         fun visitContent(it: Content): T
         fun visitComment(it: Comment): T
         fun visitCode(it: Code): T
-
         fun visitRoot(it: Root): T
     }
 

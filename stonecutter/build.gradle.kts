@@ -45,8 +45,8 @@ sourceSets {
 
 dependencies {
     api(project(path = ":stitcher"))
-    api("dev.kikugie:semver:1.1.0")
-    implementation(common.misc.commons)
+    api("dev.kikugie:semver:2.0.0")
+    api("dev.kikugie:commons:0.3.0")
     implementation(common.kotlin.serialization)
     implementation(common.kotlin.serialization.json)
 
