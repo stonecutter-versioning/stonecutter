@@ -18,7 +18,7 @@ repositories {
 dependencies {
     antlr("org.antlr:antlr4:4.13.2")
     api("dev.kikugie:semver:2.0.0")
-    api("dev.kikugie:commons:0.3.0")
+    api("dev.kikugie:commons:0.3.1")
     implementation(common.misc.mordant)
     testImplementation(common.kotest.runner)
     testImplementation(common.kotest.assertions)
