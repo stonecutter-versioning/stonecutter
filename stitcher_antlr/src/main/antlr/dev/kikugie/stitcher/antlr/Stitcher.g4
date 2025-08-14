@@ -54,7 +54,7 @@ semanticComparator
     ;
 
 stringComparator
-    : /*OP_NOT?*/ COMP_EQUAL // Semver doesn't support inequality yet
+    : OP_NOT? COMP_EQUAL
     | COMP_MORE COMP_EQUAL?
     | COMP_LESS COMP_EQUAL?
     ;
