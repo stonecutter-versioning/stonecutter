@@ -1,9 +1,11 @@
+import org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     antlr
     alias(common.plugins.kotlin.jvm)
+    alias(common.plugins.kotlin.dokka)
 }
 
 group = "dev.kikugie"
@@ -24,6 +26,43 @@ dependencies {
     testImplementation(common.kotest.assertions)
 }
 
+dokka {
+    moduleName = "Stitcher Processor"
+    dokkaPublications.html {
+        suppressInheritedMembers = true
+        suppressObviousFunctions = true
+    }
+
+    pluginsConfiguration.html {
+        homepageLink = "https://stonecutter.codeberg.page/"
+        footerMessage = "(c) 2025 KikuGie"
+    }
+
+    dokkaSourceSets.named("main") {
+        reportUndocumented = false
+        skipEmptyPackages = true
+        documentedVisibilities = setOf(VisibilityModifier.Public, VisibilityModifier.Internal)
+
+        sourceLink {
+            localDirectory = file("src/main/kotlin")
+            remoteLineSuffix = "#L"
+            remoteUrl("https://codeberg.org/stonecutter/stonecutter/src/branch/0.8/stitcher_antlr/")
+        }
+
+        externalDocumentationLinks.register("antlr") {
+            url("https://javadoc.io/doc/org.antlr/antlr4-runtime/latest/index.html")
+        }
+
+        externalDocumentationLinks.register("kotlin-stdlib") {
+            url("https://kotlinlang.org/api/core/")
+        }
+
+        externalDocumentationLinks.register("kotlinx-serialization") {
+            url("https://kotlinlang.org/api/kotlinx.serialization/")
+        }
+    }
+}
+
 tasks {
     test {
         useJUnitPlatform()
@@ -40,15 +79,6 @@ tasks {
     compileTestKotlin {
         dependsOn(generateTestGrammarSource)
     }
-
-    withType<KotlinCompile> {
-        compilerOptions {
-            languageVersion = KotlinVersion.KOTLIN_2_2
-            apiVersion = KotlinVersion.KOTLIN_2_2
-
-            freeCompilerArgs.addAll("-Xnested-type-aliases", "-Xcontext-sensitive-resolution", "-Xwhen-guards")
-        }
-    }
 }
 
 tasks.test {
@@ -56,4 +86,12 @@ tasks.test {
 }
 kotlin {
     jvmToolchain(21)
+    explicitApiWarning()
+
+    compilerOptions {
+        languageVersion = KotlinVersion.KOTLIN_2_2
+        apiVersion = KotlinVersion.KOTLIN_2_2
+
+        freeCompilerArgs.addAll("-Xnested-type-aliases", "-Xcontext-sensitive-resolution", "-Xwhen-guards")
+    }
 }
