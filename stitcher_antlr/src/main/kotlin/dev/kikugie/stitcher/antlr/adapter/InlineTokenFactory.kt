@@ -1,21 +1,51 @@
 package dev.kikugie.stitcher.antlr.adapter
 
 import dev.kikugie.stitcher.util.get
+import dev.kikugie.stitcher.util.range
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CommonToken
 import org.antlr.v4.runtime.CommonTokenFactory
+import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.TokenSource
 import org.antlr.v4.runtime.misc.Pair
 
-class InlineTokenFactory(source: TokenSource, stream: CharStream?, val cursor: Int, val line: Int, val offset: Int) : CommonTokenFactory() {
-    private val source = Pair(source, stream)
+/**
+ * Factory for creating tokens inside injected code blocks.
+ *
+ * Created tokens have their position properties adjusted
+ * to the corresponding values in the host [stream].
+ *
+ * @property stream The outer input stream, which will be used to query the token text.
+ * @property position The position of the inlined fragment in the outer [stream],
+ * corresponding to [Token.startIndex][org.antlr.v4.runtime.Token.getStartIndex].
+ * @property line The line of the inlined fragment in the outer [stream],
+ * corresponding to [Token.line][org.antlr.v4.runtime.Token.getLine].
+ * @property offset The column of the inlined fragment in the outer [stream],
+ * corresponding to [Token.charPositionInLine][org.antlr.v4.runtime.Token.getCharPositionInLine].
+ */
+internal class InlineTokenFactory(val stream: CharStream, val position: Int, val line: Int, val offset: Int) : CommonTokenFactory() {
+    constructor(host: Token) : this(host.inputStream, host.startIndex, host.line, host.charPositionInLine)
 
-    override fun create(x1: Pair<TokenSource, CharStream?>, type: Int, text: String?, channel: Int, start: Int, stop: Int, x2: Int, offset: Int) =
-        CommonToken(source, type, channel, start + cursor, stop + cursor).apply {
-            line = this@InlineTokenFactory.line
-            charPositionInLine = offset + this@InlineTokenFactory.offset
+    /**
+     * Creates a new [CommonToken], with its position being relative to the host of the injected fragment.
+     */
+    override fun create(
+        src: Pair<TokenSource, CharStream?>,
+        type: Int,
+        text: String?,
+        channel: Int,
+        start: Int,
+        stop: Int,
+        line: Int,
+        charPositionInLine: Int
+    ): CommonToken = CommonToken(Pair(src.a, stream), type, channel, start + position, stop + position)
+        .configure(line, charPositionInLine, text)
 
-            if (text != null) this.text = text
-            else if (copyText && source.b != null) this.text = source.b!![start + cursor, stop + cursor]
-        }
+    private fun CommonToken.configure(localLine: Int, localOffset: Int, str: String?) = apply {
+        line = this@InlineTokenFactory.line + localLine - 1
+        charPositionInLine = if (localLine > 1) this@InlineTokenFactory.offset + localOffset else localOffset
+
+        if (str != null) text = str
+        else if (copyText) text = stream[range]
+    }
 }

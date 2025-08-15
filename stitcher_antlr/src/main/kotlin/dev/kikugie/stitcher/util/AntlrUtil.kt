@@ -11,6 +11,7 @@ import org.antlr.v4.runtime.TokenSource
 import org.antlr.v4.runtime.misc.Interval
 import org.antlr.v4.runtime.tree.TerminalNode
 
+internal inline val Token.length get() = stopIndex - startIndex
 internal inline val Token.range get() = startIndex..stopIndex
 internal inline val ParserRuleContext.range get() = start.startIndex..stop.stopIndex
 internal inline val TerminalNode.range get() = symbol.range
