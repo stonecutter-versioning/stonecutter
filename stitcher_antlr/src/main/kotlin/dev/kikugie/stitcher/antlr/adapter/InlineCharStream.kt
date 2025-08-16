@@ -15,8 +15,15 @@ import org.antlr.v4.runtime.misc.Interval
  * @property start The starting index of the substream in the host stream.
  * @property end The ending index (exclusive) of the substream in the host stream.
  */
-internal class InlineCharStream(private val host: CharStream, val start: Int, val end: Int) : CharStream by host {
+internal class InlineCharStream(private val host: CharStream, val start: Int, val end: Int) : AutoCloseable, CharStream by host {
     constructor(host: Token) : this(host.inputStream, host.startIndex, host.stopIndex + 1)
+    private val marker: Int = host.mark()
+    private val index: Int = host.index()
+
+    init {
+        host.seek(start)
+    }
+
     override fun size(): Int = end - start + 1 // With the EOF
     override fun index(): Int = host.index() - start
 
@@ -36,5 +43,10 @@ internal class InlineCharStream(private val host: CharStream, val start: Int, va
     override fun seek(index: Int) {
         require(index >= 0) { "Index must not be negative" }
         host.seek(index.coerceAtMost(end - start) + start)
+    }
+
+    override fun close() {
+        host.seek(index)
+        host.release(marker)
     }
 }

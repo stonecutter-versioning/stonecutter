@@ -15,6 +15,7 @@ import org.antlr.v4.runtime.TokenStream
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.util.ArrayDeque
 import java.util.Deque
+import kotlin.text.compareTo
 
 
 internal class LayoutBuilder(private val stream: TokenStream) {
@@ -95,22 +96,21 @@ internal class LayoutBuilder(private val stream: TokenStream) {
         blocks += BlockToken.Code(marker.toLeaf(), context.accept(DefinitionBuilder))
     }
 
-    private fun definition(token: Token): StitcherParser.DefinitionContext? = with(token.inputStream) {
+    private fun definition(token: Token): StitcherParser.DefinitionContext? {
         if (token.stopIndex < token.startIndex)
             return null // Empty comment body
 
-        val mark = mark()
-        seek(token.startIndex)
+        return InlineCharStream(token).use {
+            when (it.LA(1).toChar()) {
+                '?', '$', '~' -> { /* continue */ }
+                else -> return@use null
+            }
 
-        when (LA(1).toChar()) {
-            '?', '$', '~' -> { /* continue */ }
-            else -> { release(mark); return null }
+            val lexer = StitcherLexer(it).apply {
+                tokenFactory = InlineTokenFactory(token)
+            }
+            val parser = StitcherParser(CommonTokenStream(lexer))
+            parser.definition()
         }
-
-        val lexer = StitcherLexer(InlineCharStream(token)).apply {
-            tokenFactory = InlineTokenFactory(token)
-        }
-        val parser = StitcherParser(CommonTokenStream(lexer))
-        return parser.definition().also { release(mark) }
     }
 }
