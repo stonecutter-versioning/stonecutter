@@ -11,6 +11,7 @@ HASH_COMMENT_START: '#' -> pushMode(IN_HASH);
 
 SINGLE_QUOTE: '\'' -> pushMode(IN_CHAR), skip;
 DOUBLE_QUOTE: '"' -> pushMode(IN_STRING), skip;
+BLOCK_QUOTE: '"""' -> pushMode(IN_BLOCK), skip;
 
 THE_REST: . -> skip;
 
@@ -24,3 +25,7 @@ CH_ESC_END: (~'\'' | '\\\'' | DOUBLE_SLASH) -> skip;
 mode IN_STRING;
 STR_END: '"' -> popMode, skip;
 STR_ESC_END: (~'"' | '\\"' | DOUBLE_SLASH)-> skip;
+
+mode IN_BLOCK;
+BLOCK_END: '"""' -> popMode, skip;
+BLOCK_ESC_END: (. | '\\"' | DOUBLE_SLASH) -> skip;
