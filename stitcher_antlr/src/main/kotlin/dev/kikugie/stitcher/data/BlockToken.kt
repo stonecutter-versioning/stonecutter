@@ -3,7 +3,7 @@ package dev.kikugie.stitcher.data
 import dev.kikugie.stitcher.util.merge
 import org.antlr.v4.runtime.CharStream
 
-sealed interface BlockToken : StitcherToken {
+internal sealed interface BlockToken : StitcherToken {
     fun <T> accept(visitor: Visitor<T>): T
 
     interface Visitor<T> {
@@ -25,7 +25,7 @@ sealed interface BlockToken : StitcherToken {
     }
 
     // FIXME: add a proper range
-    data class Code(val marker: LeafToken, val definition: DefinitionToken, var scope: List<BlockToken> = emptyList()) : BlockToken {
+    data class Code(val marker: LeafToken, val definition: DefinitionToken, val scope: List<BlockToken> = emptyList()) : BlockToken {
         override val range: IntRange get() = merge(marker.range, definition.range, scope.lastOrNull()?.range)
         override val source: CharStream get() = throw UnsupportedOperationException("Code blocks may have inconsistent sources")
         override fun <T> accept(visitor: Visitor<T>): T = visitor.visitCode(this)

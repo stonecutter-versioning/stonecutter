@@ -3,7 +3,7 @@ package dev.kikugie.stitcher.data
 import dev.kikugie.stitcher.util.get
 import org.antlr.v4.runtime.CharStream
 
-interface StitcherToken {
+internal interface StitcherToken {
     val range: IntRange
 
     val source: CharStream

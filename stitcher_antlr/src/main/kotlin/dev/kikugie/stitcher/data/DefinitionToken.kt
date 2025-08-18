@@ -1,12 +1,19 @@
 package dev.kikugie.stitcher.data
 
-import dev.kikugie.stitcher.data.ExpressionToken
+import dev.kikugie.stitcher.antlr.StitcherParser
 import dev.kikugie.stitcher.util.merge
 import org.antlr.v4.runtime.CharStream
 
-sealed interface DefinitionToken : StitcherToken {
+internal sealed interface DefinitionToken : StitcherToken {
     val closer: LeafToken? get() = null
     val opener: LeafToken? get() = null
+
+    val type: ScopeType get() = when(opener?.type ?: -1) {
+        -1 -> if (closer == null) LINE else CLOSED
+        StitcherParser.SCOPE_WORD -> WORD
+        StitcherParser.SCOPE_OPEN -> CLOSED
+        else -> error("Invalid scope token ${opener?.typeName}")
+    }
 
     fun <T> accept(visitor: Visitor<T>): T
 
