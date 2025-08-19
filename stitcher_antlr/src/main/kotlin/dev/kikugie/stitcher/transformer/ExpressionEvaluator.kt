@@ -6,7 +6,7 @@ import dev.kikugie.stitcher.data.ExpressionToken
 import dev.kikugie.stitcher.util.unsupported
 import dev.kikugie.stitcher.util.verify
 
-class ExpressionEvaluator(val parameters: TransformParameters) : ExpressionToken.Visitor<Boolean> {
+internal class ExpressionEvaluator(val parameters: TransformParameters) : ExpressionToken.Visitor<Boolean> {
     override fun visitGroup(it: ExpressionToken.Group): Boolean = it.body.accept(this)
 
     override fun visitUnary(it: ExpressionToken.Unary): Boolean = when (it.operator.type) {

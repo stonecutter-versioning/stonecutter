@@ -5,9 +5,9 @@ import dev.kikugie.stitcher.data.StitcherToken
 import dev.kikugie.stitcher.util.get
 import org.antlr.v4.runtime.Vocabulary
 
-typealias NamedPresentation = Pair<String, TokenPresentation>
+internal typealias NamedPresentation = Pair<String, TokenPresentation>
 
-interface TokenPresentation {
+internal interface TokenPresentation {
     val type: String
     val range: IntRange
 

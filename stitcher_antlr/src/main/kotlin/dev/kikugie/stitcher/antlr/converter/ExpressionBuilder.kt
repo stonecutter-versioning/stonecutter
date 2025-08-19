@@ -5,7 +5,7 @@ import dev.kikugie.stitcher.antlr.StitcherParser
 import dev.kikugie.stitcher.data.ExpressionToken
 import dev.kikugie.stitcher.util.toLeaf
 
-object ExpressionBuilder : StitcherBaseVisitor<ExpressionToken>() {
+internal object ExpressionBuilder : StitcherBaseVisitor<ExpressionToken>() {
     override fun visitConditionExpression(ctx: StitcherParser.ConditionExpressionContext): ExpressionToken {
         ctx.LEFT_BRACE()?.let {
             val lb = it.toLeaf()

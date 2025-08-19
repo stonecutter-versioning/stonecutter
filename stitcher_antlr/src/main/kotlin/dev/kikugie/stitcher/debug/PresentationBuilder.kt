@@ -5,7 +5,7 @@ import com.github.ajalt.mordant.rendering.TextColors.*
 private val TokenPresentation.kind get() = brightMagenta(type)
 private val TokenPresentation.bounds get() = brightMagenta("[${range.first},${range.last})")
 
-class PresentationBuilder() : TokenPresentation.Visitor<String> {
+internal class PresentationBuilder() : TokenPresentation.Visitor<String> {
     private var indent = 0
 
     override fun visitLeaf(it: TokenPresentation.Leaf) = visitGeneric(it)

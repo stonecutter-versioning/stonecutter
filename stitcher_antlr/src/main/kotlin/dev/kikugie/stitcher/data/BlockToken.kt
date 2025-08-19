@@ -27,7 +27,7 @@ internal sealed interface BlockToken : StitcherToken {
     // FIXME: add a proper range
     data class Code(val marker: LeafToken, val definition: DefinitionToken, val scope: List<BlockToken> = emptyList()) : BlockToken {
         override val range: IntRange get() = merge(marker.range, definition.range, scope.lastOrNull()?.range)
-        override val source: CharStream get() = throw UnsupportedOperationException("Code blocks may have inconsistent sources")
+        override val source: CharStream get() = marker.source
         override fun <T> accept(visitor: Visitor<T>): T = visitor.visitCode(this)
     }
 

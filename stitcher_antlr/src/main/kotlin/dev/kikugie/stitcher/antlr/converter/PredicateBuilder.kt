@@ -12,7 +12,7 @@ import dev.kikugie.stitcher.util.range
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.util.concurrent.ConcurrentHashMap
 
-object PredicateBuilder : StitcherBaseVisitor<Predicate>() {
+internal object PredicateBuilder : StitcherBaseVisitor<Predicate>() {
     private val SEMVER_CACHE: MutableMap<String, SemanticVersion> = ConcurrentHashMap()
     private val STRVER_CACHE: MutableMap<String, StringVersion> = ConcurrentHashMap()
 

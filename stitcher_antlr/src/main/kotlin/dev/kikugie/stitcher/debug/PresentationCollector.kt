@@ -23,7 +23,7 @@ private fun primitive(name: String, source: CharStream, range: IntRange) = objec
     override val value: String get() = source[range].takeNEpsilon(50).replace("\n", "\\n")
 }
 
-object PresentationCollector :
+internal object PresentationCollector :
     BlockToken.Visitor<TokenPresentation>,
     DefinitionToken.Visitor<TokenPresentation>,
     ExpressionToken.Visitor<TokenPresentation>

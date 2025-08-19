@@ -113,12 +113,12 @@ internal class LayoutBuilder(private val stream: TokenStream) {
     }
 
     private inner class ScopeStackWalker : BlockToken.Visitor<Unit> {
-        override fun visitContent(it: BlockToken.Content) = when (val last = blocks.last) {
+        override fun visitContent(it: BlockToken.Content) = when (val last = blocks.peekLast()) {
             is BlockToken.Code if (last.definition.type != CLOSED) -> appendContent(it, last)
             else -> blocks += it
         }
 
-        override fun visitComment(it: BlockToken.Comment) = when (val last = blocks.last) {
+        override fun visitComment(it: BlockToken.Comment) = when (val last = blocks.peekLast()) {
             is BlockToken.Code if (last.definition.type != CLOSED) -> appendComment(it, last)
             else -> blocks += it
         }
@@ -167,6 +167,7 @@ internal class LayoutBuilder(private val stream: TokenStream) {
                     error("TODO: make an error for this")
 
                 if (it.definition.type != CLOSED)
+                    // TODO this breaks with nested conditions aaaa
                     error("TODO: make an error for this")
 
                 break

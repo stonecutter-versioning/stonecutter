@@ -5,7 +5,7 @@ import dev.kikugie.semver.data.VersionOperator
 import dev.kikugie.stitcher.util.merge
 import org.antlr.v4.runtime.CharStream
 
-sealed interface ExpressionToken : StitcherToken {
+internal sealed interface ExpressionToken : StitcherToken {
     fun <T> accept(visitor: Visitor<T>): T
     interface Visitor<T> {
         fun visitGroup(it: Group): T

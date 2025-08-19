@@ -7,7 +7,7 @@ import dev.kikugie.stitcher.util.get
 import dev.kikugie.stitcher.util.merge
 import dev.kikugie.stitcher.util.verify
 
-data class TransformationBuilder(
+internal data class TransformationBuilder(
     val parameters: TransformParameters,
     val changes: MutableList<SourceTransformation> = mutableListOf()
 ) : BlockToken.Visitor<Unit> {

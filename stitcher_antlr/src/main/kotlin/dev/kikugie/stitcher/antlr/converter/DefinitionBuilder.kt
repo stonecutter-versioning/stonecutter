@@ -7,7 +7,7 @@ import dev.kikugie.stitcher.data.DefinitionToken
 import dev.kikugie.stitcher.util.toLeaf
 import org.antlr.v4.runtime.tree.TerminalNode
 
-object DefinitionBuilder : StitcherBaseVisitor<DefinitionToken>() {
+internal object DefinitionBuilder : StitcherBaseVisitor<DefinitionToken>() {
     override fun visitReplacement(ctx: StitcherParser.ReplacementContext): DefinitionToken =
         DefinitionToken.Replacement(ctx.IDENTIFIER().toLeaf())
 
