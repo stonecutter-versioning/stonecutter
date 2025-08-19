@@ -19,3 +19,7 @@ inline fun missing(message: String): Nothing {
 inline fun <T : Any> verify(value: T?, message: () -> String): T {
     return value ?: missing(message())
 }
+
+@TerminationDSL
+inline fun checkNot(value: Boolean, message: () -> String) =
+    check(!value, message)

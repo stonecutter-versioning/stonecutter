@@ -1,54 +1,129 @@
 package dev.kikugie.stitcher.antlr.layout
 
+import dev.kikugie.commons.takeAs
+import dev.kikugie.commons.takeAsOrNull
+import dev.kikugie.commons.then
 import dev.kikugie.stitcher.antlr.StitcherLexer
 import dev.kikugie.stitcher.antlr.StitcherParser
 import dev.kikugie.stitcher.antlr.adapter.InlineCharStream
 import dev.kikugie.stitcher.antlr.adapter.InlineTokenFactory
 import dev.kikugie.stitcher.antlr.converter.DefinitionBuilder
 import dev.kikugie.stitcher.data.BlockToken
-import dev.kikugie.stitcher.data.ScopeType.*
-import dev.kikugie.stitcher.util.*
-import org.antlr.v4.runtime.*
+import dev.kikugie.stitcher.data.DefinitionToken
+import dev.kikugie.stitcher.data.DefinitionType
+import dev.kikugie.stitcher.data.LeafToken
+import dev.kikugie.stitcher.util.LC
+import dev.kikugie.stitcher.util.checkNot
+import dev.kikugie.stitcher.util.skipLeadingSpaces
+import dev.kikugie.stitcher.util.skipWhile
+import dev.kikugie.stitcher.util.toLeaf
+import org.antlr.v4.runtime.CommonTokenStream
+import org.antlr.v4.runtime.IntStream
+import org.antlr.v4.runtime.ParserRuleContext
+import org.antlr.v4.runtime.Token
+import org.antlr.v4.runtime.TokenStream
 import org.antlr.v4.runtime.tree.TerminalNode
-import java.util.*
 
-private val SKIPPABLE_SPACES = charArrayOf(' ', '\t', '\r', '\n')
+private val SKIPPABLE_SPACES: CharArray = charArrayOf(' ', '\t', '\r', '\n')
 
-internal class LayoutBuilder(private val stream: TokenStream) {
-    private val blocks: Deque<BlockToken> = ArrayDeque()
-    private val walker: ScopeStackWalker = ScopeStackWalker()
+private val ScopeBuilder.Code.isUnoccupied: Boolean
+    get() = definition.type.isOpen && entries.isEmpty()
 
-    private val current: Token
-        get() = stream.LT(1)
+internal class LayoutBuilder(val stream: TokenStream) {
+    private var builder: ScopeBuilder = ScopeBuilder.Root()
+    private val current: Token get() = stream.LT(1)
 
-    fun build(): BlockToken.Root {
-        while (stream.LA(1) != IntStream.EOF) next()
-        return BlockToken.Root(blocks.toList())
+    fun collect(): BlockToken.Root {
+        while (stream.LA(1) != IntStream.EOF) when (current.type) {
+            LayoutTokens.CONTENT -> handleContent(consume())
+            LayoutTokens.COMMENT_OPEN -> handleComment(consume(), consume(), consume())
+            else -> error("Unexpected token $current")
+        }
+
+        check(builder is ScopeBuilder.Root) { "The scope was not properly closed" }
+        return builder.build() as BlockToken.Root
     }
 
-    private fun next() = when (current.type) {
-        LayoutTokens.CONTENT -> handleContent()
-        LayoutTokens.COMMENT_OPEN -> handleCommentEntry()
-        else -> TODO("Should be impossible to trigger")
+    private fun consume(): Token = current.also { stream.consume() }
+    private fun handleContent(token: Token): Unit = when (val it = builder) {
+        is ScopeBuilder.Code if it.isUnoccupied -> appendContent(token)
+        else -> it.content(token)
     }
 
-    private fun handleContent() = advancing {
-        content(it)
-        updateStack()
+    private fun appendContent(token: Token): Unit = InlineCharStream(token).invoke {
+        if (!skipLeadingSpaces(*SKIPPABLE_SPACES))
+            return@invoke builder.content(token)
+
+        val unfinished = consumeScope(builder.takeAsOrNull<ScopeBuilder.Code>()?.definition?.type ?: INDEPENDENT)
+        val range = if (unfinished) start..<host.index() else start..<end
+        builder.content(range, host)
+        builder = builder.parent!!
+
+        if (unfinished) builder.content(host.index()..<end, host)
     }
 
-    private fun handleCommentEntry() = advancing { opener ->
-        val definition = advancing { body ->
-            definition(body)?.let { return@advancing it }
-            comment(opener, body, consume())
-            updateStack()
+    private fun handleComment(opener: Token, body: Token, closer: Token) {
+        val (marker, definition) = parseComment(body)
+            ?: return appendComment(opener, body, closer)
+        appendDefinition(marker, definition)
+    }
+
+    private fun appendComment(opener: Token, body: Token, closer: Token) {
+        builder.comment(opener, body, closer)
+        if (builder is ScopeBuilder.Code && builder.takeAs<ScopeBuilder.Code>().definition.type.isOpen)
+            builder = builder.parent!!
+    }
+
+    private fun appendDefinition(marker: LeafToken, definition: DefinitionToken) = when(val it = builder) {
+        is ScopeBuilder.Root -> appendRootDefinition(marker, definition)
+        is ScopeBuilder.Code -> appendNestedDefinition(it, marker, definition)
+        else -> error("Shouldn't be a builder")
+    }
+
+    private fun appendRootDefinition(marker: LeafToken, definition: DefinitionToken) {
+        checkNot(definition.type.isExtension) { "Closes nothing" }
+        val code = builder.code(marker, definition)
+        if (!definition.type.isEmpty) builder = code
+    }
+
+    private fun appendNestedDefinition(host: ScopeBuilder.Code, marker: LeafToken, definition: DefinitionToken) {
+        if (definition.type == INDEPENDENT) {
+            builder.code(marker, definition)
             return
         }
 
+        checkNot(definition.type.isExtension && host.marker.type != marker.type) { "Closes invalid scope" }
+        checkNot(definition.type.isExtension && host.definition.type.isScoped) { "Closes unscoped scope" }
+
+        builder = builder.parent!!
+        val code = builder.code(marker, definition)
+        if (!definition.type.isEmpty) builder = code
+    }
+
+    private fun parseComment(body: Token): Pair<LeafToken, DefinitionToken>? {
+        if (body.stopIndex < body.startIndex)
+            return null // Empty comment body
+
+        return InlineCharStream(body).invoke {
+            when (LC(1)) {
+                '?', '$', '~' -> {}
+                else -> return@invoke null
+            }
+
+            val lexer = StitcherLexer(this).apply {
+                tokenFactory = InlineTokenFactory(token)
+            }
+            val parser = StitcherParser(CommonTokenStream(lexer))
+            val context = parser.definition()
+            constructCode(context)
+        }
+    }
+
+    private fun constructCode(def: StitcherParser.DefinitionContext): Pair<LeafToken, DefinitionToken> {
         var marker: TerminalNode
         var context: ParserRuleContext
 
-        with(definition) {
+        with(def) {
             COND_MARK()?.let {
                 marker = it
                 context = condition()
@@ -70,120 +145,18 @@ internal class LayoutBuilder(private val stream: TokenStream) {
             error("Unreachable")
         }
 
-        advancing { code(marker, context) }
-        updateStack()
+        return marker.toLeaf() to context.accept(DefinitionBuilder)
     }
 
-    private fun consume(): Token = advancing { it }
-    private inline fun <T> advancing(action: (Token) -> T): T =
-        current.let { stream.consume(); action(it) }
-
-    private fun content(token: Token) {
-        blocks += BlockToken.Content(token.range, token.inputStream)
-    }
-
-    private fun comment(opener: Token, body: Token, closer: Token) {
-        blocks += BlockToken.Comment(BlockToken.Content(body.range, body.inputStream), opener.startIndex..closer.stopIndex)
-    }
-
-    private fun code(marker: TerminalNode, context: ParserRuleContext) {
-        blocks += BlockToken.Code(marker.toLeaf(), context.accept(DefinitionBuilder))
-    }
-
-    private fun updateStack() {
-        blocks.removeLast().accept(walker)
-    }
-
-    private fun definition(token: Token): StitcherParser.DefinitionContext? {
-        if (token.stopIndex < token.startIndex)
-            return null // Empty comment body
-
-        return InlineCharStream(token).use {
-            when (it.LA(1).toChar()) {
-                '?', '$', '~' -> Unit // Continue
-                else -> return@use null
-            }
-
-            val lexer = StitcherLexer(it).apply {
-                tokenFactory = InlineTokenFactory(token)
-            }
-            val parser = StitcherParser(CommonTokenStream(lexer))
-            parser.definition()
-        }
-    }
-
-    private inner class ScopeStackWalker : BlockToken.Visitor<Unit> {
-        override fun visitContent(it: BlockToken.Content) = when (val last = blocks.peekLast()) {
-            is BlockToken.Code if (last.definition.type != CLOSED) -> appendContent(it, last)
-            else -> blocks += it
+    private fun InlineCharStream.consumeScope(type: DefinitionType): Boolean = when (type) {
+        LINE_OPENER, LINE_EXTENSION -> skipWhile {
+            it != '\n' && it != '\r'
         }
 
-        override fun visitComment(it: BlockToken.Comment) = when (val last = blocks.peekLast()) {
-            is BlockToken.Code if (last.definition.type != CLOSED) -> appendComment(it, last)
-            else -> blocks += it
+        WORD_OPENER, WORD_EXTENSION -> skipWhile {
+            it !in SKIPPABLE_SPACES
         }
 
-        override fun visitCode(it: BlockToken.Code) {
-            blocks += if (it.definition.closer == null) it
-            else it.copy(scope = collectScope(it))
-        }
-
-        override fun visitRoot(it: BlockToken.Root) {
-            error("Shouldn't be called on root")
-        }
-
-        private fun appendComment(it: BlockToken.Comment, last: BlockToken.Code) {
-            blocks.replaceLast(last.copy(scope = listOf(it)))
-        }
-
-        private fun appendContent(it: BlockToken.Content, last: BlockToken.Code) {
-            InlineCharStream(it).use { stream ->
-                if (!stream.skipLeadingSpaces(*SKIPPABLE_SPACES)) {
-                    // The entire block is whitespace - there's nothing to comment
-                    blocks += it; return@use
-                }
-
-                val scopeStart = stream.index() + stream.start
-                val hasMore = stream.consumeScope(last)
-                val scopeEnd = stream.index() + stream.start
-                val scopeContent =
-                    if (!hasMore) it
-                    else BlockToken.Content(scopeStart..<scopeEnd, it.source)
-                blocks.replaceLast(last.copy(scope = listOf(scopeContent)))
-
-                if (hasMore)
-                    blocks += BlockToken.Content(scopeEnd..<stream.end, it.source)
-            }
-        }
-
-        private fun collectScope(ref: BlockToken.Code): List<BlockToken> = buildList {
-            while (true) {
-                val it = blocks.removeLast()
-                if (it !is BlockToken.Code) {
-                    this += it; continue
-                }
-
-                if (it.marker.type != ref.marker.type)
-                    error("TODO: make an error for this")
-
-                if (it.definition.type != CLOSED)
-                    // TODO this breaks with nested conditions aaaa
-                    error("TODO: make an error for this")
-
-                break
-            }
-        }
-
-        private fun CharStream.consumeScope(code: BlockToken.Code) = when (code.definition.type) {
-            LINE -> skipWhile {
-                it != '\n' && it != '\r'
-            }
-
-            WORD -> skipWhile {
-                it !in SKIPPABLE_SPACES
-            }
-
-            else -> LA(1) != IntStream.EOF
-        }
+        else -> seek(end) then false
     }
 }

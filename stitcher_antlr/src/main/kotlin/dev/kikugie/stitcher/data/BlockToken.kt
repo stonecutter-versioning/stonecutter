@@ -1,7 +1,9 @@
 package dev.kikugie.stitcher.data
 
 import dev.kikugie.stitcher.util.merge
+import dev.kikugie.stitcher.util.range
 import org.antlr.v4.runtime.CharStream
+import org.antlr.v4.runtime.Token
 
 internal sealed interface BlockToken : StitcherToken {
     fun <T> accept(visitor: Visitor<T>): T
@@ -14,10 +16,12 @@ internal sealed interface BlockToken : StitcherToken {
     }
 
     data class Content(override val range: IntRange, override val source: CharStream) : BlockToken {
+        constructor(source: Token) : this(source.range, source.inputStream)
         override fun <T> accept(visitor: Visitor<T>): T = visitor.visitContent(this)
     }
 
     data class Comment(val body: Content, override val range: IntRange) : BlockToken {
+        constructor(opener: Token, body: Token, closer: Token) : this(Content(body), opener.startIndex..closer.stopIndex)
         val opener: IntRange get() = range.first..<body.range.first
         val closer: IntRange get() = body.range.last + 1..range.last
         override val source: CharStream get() = body.source
