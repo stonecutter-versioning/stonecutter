@@ -93,9 +93,9 @@ internal class LayoutBuilder(val stream: TokenStream) {
         }
 
         checkNot(definition.type.isExtension && host.marker.type != marker.type) { "Closes invalid scope" }
-        checkNot(definition.type.isExtension && host.definition.type.isScoped) { "Closes unscoped scope" }
+        checkNot(definition.type.isExtension && !host.definition.type.isScoped) { "Closes unscoped scope" }
 
-        builder = builder.parent!!
+        if (definition.type.isExtension) builder = builder.parent!!
         val code = builder.code(marker, definition)
         if (!definition.type.isEmpty) builder = code
     }
@@ -111,7 +111,7 @@ internal class LayoutBuilder(val stream: TokenStream) {
             }
 
             val lexer = StitcherLexer(this).apply {
-                tokenFactory = InlineTokenFactory(token)
+                tokenFactory = InlineTokenFactory(body)
             }
             val parser = StitcherParser(CommonTokenStream(lexer))
             val context = parser.definition()
