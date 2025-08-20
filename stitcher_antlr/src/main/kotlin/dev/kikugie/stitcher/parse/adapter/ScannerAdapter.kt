@@ -1,10 +1,10 @@
-package dev.kikugie.stitcher.parser.adapter
+package dev.kikugie.stitcher.parse.adapter
 
 import dev.kikugie.commons.collections.FixedQueue
 import dev.kikugie.commons.collections.plusAssign
 import dev.kikugie.commons.collections.first
 import dev.kikugie.commons.then
-import dev.kikugie.stitcher.parser.layout.LayoutTokens
+import dev.kikugie.stitcher.parse.layout.LayoutTokens
 import dev.kikugie.stitcher.issue.ProblemCollector
 import dev.kikugie.stitcher.issue.ProblemTemplate
 import dev.kikugie.stitcher.issue.at

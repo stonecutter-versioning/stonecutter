@@ -1,4 +1,4 @@
-package dev.kikugie.stitcher.transformer
+package dev.kikugie.stitcher.transform
 
 import dev.kikugie.stitcher.antlr.StitcherParser
 import dev.kikugie.stitcher.api.TransformParameters

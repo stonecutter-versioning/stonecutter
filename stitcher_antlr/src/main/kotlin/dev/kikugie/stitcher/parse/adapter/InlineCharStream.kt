@@ -1,4 +1,4 @@
-package dev.kikugie.stitcher.parser.adapter
+package dev.kikugie.stitcher.parse.adapter
 
 import dev.kikugie.stitcher.data.StitcherToken
 import org.antlr.v4.runtime.CharStream

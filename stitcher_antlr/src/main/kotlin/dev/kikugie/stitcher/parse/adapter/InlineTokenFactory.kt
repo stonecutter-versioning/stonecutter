@@ -1,4 +1,4 @@
-package dev.kikugie.stitcher.parser.adapter
+package dev.kikugie.stitcher.parse.adapter
 
 import dev.kikugie.stitcher.util.get
 import dev.kikugie.stitcher.util.range

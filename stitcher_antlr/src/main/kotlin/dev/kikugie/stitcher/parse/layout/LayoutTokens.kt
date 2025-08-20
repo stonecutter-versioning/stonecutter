@@ -1,4 +1,4 @@
-package dev.kikugie.stitcher.parser.layout
+package dev.kikugie.stitcher.parse.layout
 
 import org.antlr.v4.runtime.Vocabulary
 import org.antlr.v4.runtime.VocabularyImpl
