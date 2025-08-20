@@ -16,7 +16,7 @@ BLOCK_QUOTE: '"""' -> pushMode(IN_BLOCK), skip;
 THE_REST: . -> skip;
 
 mode IN_HASH;
-SLASH_COMMENT_END: LINE_BREAK -> popMode;
+HASH_COMMENT_END: LINE_BREAK -> popMode;
 
 mode IN_CHAR;
 CH_END: '\'' -> popMode, skip;

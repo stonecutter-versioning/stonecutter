@@ -12,6 +12,8 @@ import dev.kikugie.stitcher.data.BlockToken
 import dev.kikugie.stitcher.data.DefinitionToken
 import dev.kikugie.stitcher.data.DefinitionType
 import dev.kikugie.stitcher.data.LeafToken
+import dev.kikugie.stitcher.issue.ProblemCollector
+import dev.kikugie.stitcher.issue.ProblemTemplate
 import dev.kikugie.stitcher.util.LC
 import dev.kikugie.stitcher.util.checkNot
 import dev.kikugie.stitcher.util.skipLeadingSpaces
@@ -25,11 +27,12 @@ import org.antlr.v4.runtime.TokenStream
 import org.antlr.v4.runtime.tree.TerminalNode
 
 private val SKIPPABLE_SPACES: CharArray = charArrayOf(' ', '\t', '\r', '\n')
+private val LOST_ROOT_CLOSER: ProblemTemplate = ProblemTemplate("Unexpected scope closer")
 
 private val ScopeBuilder.Code.isUnoccupied: Boolean
     get() = definition.type.isOpen && entries.isEmpty()
 
-internal class LayoutBuilder(val stream: TokenStream) {
+internal class LayoutBuilder(val stream: TokenStream, val problems: ProblemCollector) {
     private var builder: ScopeBuilder = ScopeBuilder.Root()
     private val current: Token get() = stream.LT(1)
 
@@ -74,14 +77,14 @@ internal class LayoutBuilder(val stream: TokenStream) {
             builder = builder.parent!!
     }
 
-    private fun appendDefinition(marker: LeafToken, definition: DefinitionToken) = when(val it = builder) {
+    private fun appendDefinition(marker: LeafToken, definition: DefinitionToken): Unit = when (val it = builder) {
         is ScopeBuilder.Root -> appendRootDefinition(marker, definition)
         is ScopeBuilder.Code -> appendNestedDefinition(it, marker, definition)
         else -> error("Shouldn't be a builder")
     }
 
     private fun appendRootDefinition(marker: LeafToken, definition: DefinitionToken) {
-        checkNot(definition.type.isExtension) { "Closes nothing" }
+        problems.checkNot(definition.type.isExtension, { LOST_ROOT_CLOSER.at(definition.closer!!.range.first) })
         val code = builder.code(marker, definition)
         if (!definition.type.isEmpty) builder = code
     }

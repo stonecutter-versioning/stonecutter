@@ -5,11 +5,22 @@ import dev.kikugie.commons.collections.plusAssign
 import dev.kikugie.commons.collections.first
 import dev.kikugie.commons.then
 import dev.kikugie.stitcher.antlr.layout.LayoutTokens
+import dev.kikugie.stitcher.issue.ProblemCollector
+import dev.kikugie.stitcher.issue.ProblemSeverity
+import dev.kikugie.stitcher.issue.ProblemTemplate
+import dev.kikugie.stitcher.issue.at
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.Lexer
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.TokenSource
 import org.antlr.v4.runtime.misc.Pair
+
+private val DUPLICATE_COMMENT_ENTRY: ProblemTemplate =
+    ProblemTemplate("Invalid comment opener; a closer must only follow openers", WARNING)
+private val UNMATCHED_COMMENT_EXIT: ProblemTemplate =
+    ProblemTemplate("Unmatched comment closer; closers outside a comment mode must be skipped", WARNING)
+private val UNRECOGNIZED_TYPE: ProblemTemplate =
+    ProblemTemplate("Unknown token type %s; emitted token types must be registered as openers or closers", WARNING)
 
 /**
  * Adapts the output of a user-defined comment [Lexer],
@@ -42,15 +53,16 @@ import org.antlr.v4.runtime.misc.Pair
 public class ScannerAdapter internal constructor(
     private val scanner: Lexer,
     private val openers: IntArray,
-    private val closers: IntArray
+    private val closers: IntArray,
+    private val problems: ProblemCollector
 ) : TokenSource by scanner {
 
     /**
      * Encapsulates the creation of a [ScannerAdapter] configured with
      * a specific [Lexer], [openers][ScannerAdapter.openers] and [closers][ScannerAdapter.closers].
      */
-    public fun interface Factory {
-        public fun create(input: CharStream): ScannerAdapter
+    internal fun interface Factory {
+        fun create(input: CharStream, problems: ProblemCollector): ScannerAdapter
     }
 
     private data class Checkpoint(val cursor: Int, val line: Int, val offset: Int, val comment: Boolean)
@@ -70,51 +82,58 @@ public class ScannerAdapter internal constructor(
         else -> next()
     }
 
-    private fun next() = queue.run { remove(); first() }
+    private fun next(): Token = queue.run { remove(); first() }
 
     private fun advance() {
         if (checkpoint.line < 0) throw NoSuchElementException()
-
-        val next = scanner.nextToken()
-        when (next.type) {
-            Token.EOF -> handleEOF(next)
-            in openers -> handleCommentStart(next)
-            in closers -> handleCommentEnd(next)
-            else -> reportUnknown(next)
+        do {
+            val next = scanner.nextToken()
+            val consumed = when (next.type) {
+                Token.EOF -> handleEOF(next)
+                in openers -> handleCommentStart(next)
+                in closers -> handleCommentEnd(next)
+                else -> reportUnknown(next)
+            }
         }
+        while (!consumed)
     }
 
-    private fun handleEOF(token: Token) {
+    private fun handleEOF(token: Token): Boolean {
         if (checkpoint.comment) handleCommentEnd(token)
         else if (checkpoint.cursor < token.startIndex)
             push(LayoutTokens.CONTENT, token.startIndex)
         queue += token
         checkpoint = Checkpoint(-1, -1, -1, false)
+        return true
     }
 
-    private fun handleCommentStart(token: Token) {
-        // TODO: register a warning if we're already in a comment
-        if (checkpoint.comment) return
+    private fun handleCommentStart(token: Token): Boolean {
+        problems.checkNot(checkpoint.comment, { DUPLICATE_COMMENT_ENTRY.at(token) }) {
+            return false
+        }
         if (checkpoint.cursor < token.startIndex)
             push(LayoutTokens.CONTENT, token.startIndex)
         push(LayoutTokens.COMMENT_OPEN, token)
         checkpoint = Checkpoint(token, true)
+        return true
     }
 
-    private fun handleCommentEnd(token: Token) {
-        // TODO: register a warning if we're outside a comment
-        if (!checkpoint.comment) return
-        // TODO: should it really possibly create an empty token?
+    private fun handleCommentEnd(token: Token): Boolean {
+        problems.check(checkpoint.comment, { UNMATCHED_COMMENT_EXIT.at(token) }) {
+            return false
+        }
         push(LayoutTokens.COMMENT_BODY, token.startIndex)
         push(LayoutTokens.COMMENT_CLOSE, token)
         checkpoint = Checkpoint(token, false)
+        return true
     }
 
-    private fun reportUnknown(token: Token) {
-        // TODO: register a warning for it
+    private fun reportUnknown(token: Token): Boolean {
+        problems.report(UNRECOGNIZED_TYPE.at(token).format(scanner.vocabulary.getDisplayName(token.type)))
+        return false
     }
 
-    private fun push(type: Int, endExclusive: Int) =
+    private fun push(type: Int, endExclusive: Int): Unit =
         push(type, checkpoint.cursor, endExclusive)
 
     private fun push(type: Int, start: Int, endExclusive: Int) {

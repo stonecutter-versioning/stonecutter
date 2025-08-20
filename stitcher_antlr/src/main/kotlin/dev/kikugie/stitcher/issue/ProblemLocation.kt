@@ -8,7 +8,7 @@ internal sealed interface ProblemLocation {
 
     data class Direct(override val line: Int, override val offset: Int) : ProblemLocation
 
-    class Lazy(val index: Int) : ProblemLocation {
+    data class Lazy(val index: Int) : ProblemLocation {
         override var line by Delegates.notNull<Int>()
         override var offset by Delegates.notNull<Int>()
     }
