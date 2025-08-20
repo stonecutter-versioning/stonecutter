@@ -1,4 +1,4 @@
-package dev.kikugie.stitcher.antlr.adapter
+package dev.kikugie.stitcher.parser.adapter
 
 import dev.kikugie.stitcher.util.get
 import dev.kikugie.stitcher.util.range
@@ -17,11 +17,11 @@ import org.antlr.v4.runtime.misc.Pair
  *
  * @property stream The outer input stream, which will be used to query the token text.
  * @property position The position of the inlined fragment in the outer [stream],
- * corresponding to [Token.startIndex][org.antlr.v4.runtime.Token.getStartIndex].
+ * corresponding to [Token.startIndex][Token.getStartIndex].
  * @property line The line of the inlined fragment in the outer [stream],
- * corresponding to [Token.line][org.antlr.v4.runtime.Token.getLine].
+ * corresponding to [Token.line][Token.getLine].
  * @property offset The column of the inlined fragment in the outer [stream],
- * corresponding to [Token.charPositionInLine][org.antlr.v4.runtime.Token.getCharPositionInLine].
+ * corresponding to [Token.charPositionInLine][Token.getCharPositionInLine].
  */
 internal class InlineTokenFactory(val stream: CharStream, val position: Int, val line: Int, val offset: Int) : CommonTokenFactory() {
     constructor(host: Token) : this(host.inputStream, host.startIndex, host.line, host.charPositionInLine)

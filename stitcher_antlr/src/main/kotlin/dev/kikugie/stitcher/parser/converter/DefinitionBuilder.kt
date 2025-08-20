@@ -1,4 +1,4 @@
-package dev.kikugie.stitcher.antlr.converter
+package dev.kikugie.stitcher.parser.converter
 
 import dev.kikugie.stitcher.antlr.StitcherBaseVisitor
 import dev.kikugie.stitcher.antlr.StitcherParser

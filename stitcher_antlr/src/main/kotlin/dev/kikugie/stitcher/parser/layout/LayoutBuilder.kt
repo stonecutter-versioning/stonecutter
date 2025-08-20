@@ -1,13 +1,13 @@
-package dev.kikugie.stitcher.antlr.layout
+package dev.kikugie.stitcher.parser.layout
 
 import dev.kikugie.commons.takeAs
 import dev.kikugie.commons.takeAsOrNull
 import dev.kikugie.commons.then
 import dev.kikugie.stitcher.antlr.StitcherLexer
 import dev.kikugie.stitcher.antlr.StitcherParser
-import dev.kikugie.stitcher.antlr.adapter.InlineCharStream
-import dev.kikugie.stitcher.antlr.adapter.InlineTokenFactory
-import dev.kikugie.stitcher.antlr.converter.DefinitionBuilder
+import dev.kikugie.stitcher.parser.adapter.InlineCharStream
+import dev.kikugie.stitcher.parser.adapter.InlineTokenFactory
+import dev.kikugie.stitcher.parser.converter.DefinitionBuilder
 import dev.kikugie.stitcher.data.BlockToken
 import dev.kikugie.stitcher.data.DefinitionToken
 import dev.kikugie.stitcher.data.DefinitionType

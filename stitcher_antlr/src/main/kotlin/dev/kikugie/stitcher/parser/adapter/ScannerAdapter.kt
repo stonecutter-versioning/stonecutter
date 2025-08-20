@@ -1,12 +1,11 @@
-package dev.kikugie.stitcher.antlr.adapter
+package dev.kikugie.stitcher.parser.adapter
 
 import dev.kikugie.commons.collections.FixedQueue
 import dev.kikugie.commons.collections.plusAssign
 import dev.kikugie.commons.collections.first
 import dev.kikugie.commons.then
-import dev.kikugie.stitcher.antlr.layout.LayoutTokens
+import dev.kikugie.stitcher.parser.layout.LayoutTokens
 import dev.kikugie.stitcher.issue.ProblemCollector
-import dev.kikugie.stitcher.issue.ProblemSeverity
 import dev.kikugie.stitcher.issue.ProblemTemplate
 import dev.kikugie.stitcher.issue.at
 import org.antlr.v4.runtime.CharStream

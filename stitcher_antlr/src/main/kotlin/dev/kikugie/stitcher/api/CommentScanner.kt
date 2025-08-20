@@ -1,6 +1,6 @@
 package dev.kikugie.stitcher.api
 
-import dev.kikugie.stitcher.antlr.adapter.ScannerAdapter
+import dev.kikugie.stitcher.parser.adapter.ScannerAdapter
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.Lexer
 import org.antlr.v4.tool.LexerGrammar

@@ -1,4 +1,4 @@
-package dev.kikugie.stitcher.antlr.layout
+package dev.kikugie.stitcher.parser.layout
 
 import dev.kikugie.stitcher.data.BlockToken
 import dev.kikugie.stitcher.data.DefinitionToken
