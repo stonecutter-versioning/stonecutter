@@ -1,6 +1,7 @@
 package dev.kikugie.stitcher.api
 
 import dev.kikugie.semver.data.Version
+import dev.kikugie.stitcher.transform.TransformParameters
 
 fun parameters(action: TransformParametersBuilder.() -> Unit): TransformParameters =
     TransformParametersBuilder().apply(action).build()
@@ -22,8 +23,3 @@ class TransformParametersBuilder @PublishedApi internal constructor(){
     )
 }
 
-data class TransformParameters(
-    val swaps: Map<String, String> = emptyMap(),
-    val constants: Map<String, Boolean> = emptyMap(),
-    val dependencies: Map<String, Version> = emptyMap(),
-)

@@ -1,8 +1,10 @@
 package dev.kikugie.stitcher.issue
 
+import dev.kikugie.stitcher.data.StitcherToken
 import org.antlr.v4.runtime.Token
 
 internal fun ProblemTemplate.at(token: Token): ProblemTemplate = at(token.line, token.charPositionInLine)
+internal fun ProblemTemplate.at(token: StitcherToken): ProblemTemplate = at(token.range.first)
 
 internal data class ProblemTemplate(val message: String, val severity: ProblemSeverity = ERROR, val location: ProblemLocation? = null) {
     fun at(line: Int, offset: Int) = copy(location = ProblemLocation.Direct(line, offset))
