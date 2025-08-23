@@ -41,7 +41,7 @@ dokka {
     dokkaSourceSets.named("main") {
         reportUndocumented = false
         skipEmptyPackages = true
-        documentedVisibilities = setOf(VisibilityModifier.Public, VisibilityModifier.Internal)
+//        documentedVisibilities = setOf(VisibilityModifier.Public, VisibilityModifier.Internal)
 
         sourceLink {
             localDirectory = file("src/main/kotlin")
@@ -92,6 +92,6 @@ kotlin {
         languageVersion = KotlinVersion.KOTLIN_2_2
         apiVersion = KotlinVersion.KOTLIN_2_2
 
-        freeCompilerArgs.addAll("-Xnested-type-aliases", "-Xcontext-sensitive-resolution", "-Xwhen-guards")
+        freeCompilerArgs.addAll("-Xcontext-parameters", "-Xnested-type-aliases", "-Xcontext-sensitive-resolution", "-Xwhen-guards")
     }
 }

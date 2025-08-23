@@ -1,12 +1,11 @@
 package dev.kikugie.stitcher.data
 
-import dev.kikugie.semver.data.Version
-import dev.kikugie.semver.data.VersionOperator
 import dev.kikugie.stitcher.util.merge
 import org.antlr.v4.runtime.CharStream
 
 internal sealed interface ExpressionToken : StitcherToken {
     fun <T> accept(visitor: Visitor<T>): T
+
     interface Visitor<T> {
         fun visitGroup(it: Group): T
         fun visitUnary(it: Unary): T
@@ -43,27 +42,24 @@ internal sealed interface ExpressionToken : StitcherToken {
     sealed interface Assignment : ExpressionToken {
         val target: LeafToken? get() = null
         val operator: LeafToken? get() = null
-        val predicates: List<Predicate>
+        val predicates: List<PredicateToken>
 
-        data class Predicate(val comparator: VersionOperator, val version: Version,
-                             override val range: IntRange, override val source: CharStream) : StitcherToken
-
-        data class Implicit(override val predicates: List<Predicate>) : Assignment {
+        data class Implicit(override val predicates: List<PredicateToken>) : Assignment {
             override val range: IntRange get() = merge(predicates.firstOrNull()?.range, predicates.lastOrNull()?.range)
             override val source: CharStream get() = predicates.first().source
             override fun <T> accept(visitor: Visitor<T>): T = visitor.visitAssignment(this)
         }
 
-        data class Explicit(override val target: LeafToken, override val operator: LeafToken, override val predicates: List<Predicate>) : Assignment {
+        data class Explicit(override val target: LeafToken, override val operator: LeafToken, override val predicates: List<PredicateToken>) : Assignment {
             override val range: IntRange get() = merge(target.range, operator.range, predicates.lastOrNull()?.range)
             override val source: CharStream get() = target.source
             override fun <T> accept(visitor: Visitor<T>): T = visitor.visitAssignment(this)
         }
 
         companion object {
-            operator fun invoke(predicates: List<Predicate>): Assignment =
+            operator fun invoke(predicates: List<PredicateToken>): Assignment =
                 Implicit(predicates)
-            operator fun invoke(target: LeafToken, operator: LeafToken, predicates: List<Predicate>): Assignment =
+            operator fun invoke(target: LeafToken, operator: LeafToken, predicates: List<PredicateToken>): Assignment =
                 Explicit(target, operator, predicates)
         }
     }
