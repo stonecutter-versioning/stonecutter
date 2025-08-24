@@ -29,10 +29,10 @@ internal fun String.toStream(): CharStream =
 internal fun String.toStream(source: String): CharStream =
     CharStreams.fromString(this, source)
 
-internal operator fun CharStream.get(range: IntRange) =
+internal inline operator fun CharStream.get(range: IntRange) =
     getText(range.asInterval())
 
-internal operator fun CharStream.get(start: Int, end: Int) =
+internal inline operator fun CharStream.get(start: Int, end: Int) =
     getText(Interval.of(start, end - 1))
 
 internal fun TokenSource.asSequence() = generateSequence { nextToken()?.takeIf { it.type != Token.EOF } }

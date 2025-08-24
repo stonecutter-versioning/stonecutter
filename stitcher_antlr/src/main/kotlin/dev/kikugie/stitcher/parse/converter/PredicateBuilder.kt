@@ -7,31 +7,31 @@ import dev.kikugie.semver.data.VersionOperator
 import dev.kikugie.semver.impl.VersionParsingException
 import dev.kikugie.stitcher.antlr.StitcherBaseVisitor
 import dev.kikugie.stitcher.antlr.StitcherParser
-import dev.kikugie.stitcher.data.ExpressionToken.Assignment.Predicate
+import dev.kikugie.stitcher.data.PredicateToken
 import dev.kikugie.stitcher.util.range
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.util.concurrent.ConcurrentHashMap
 
-internal object PredicateBuilder : StitcherBaseVisitor<Predicate>() {
+internal object PredicateBuilder : StitcherBaseVisitor<PredicateToken>() {
     private val SEMVER_CACHE: MutableMap<String, SemanticVersion> = ConcurrentHashMap()
     private val STRVER_CACHE: MutableMap<String, StringVersion> = ConcurrentHashMap()
 
-    override fun visitVersionPredicate(ctx: StitcherParser.VersionPredicateContext): Predicate =
+    override fun visitVersionPredicate(ctx: StitcherParser.VersionPredicateContext): PredicateToken =
         (ctx.semanticPredicate() ?: ctx.stringPredicate()).accept(this)
 
-    override fun visitSemanticPredicate(ctx: StitcherParser.SemanticPredicateContext): Predicate {
+    override fun visitSemanticPredicate(ctx: StitcherParser.SemanticPredicateContext): PredicateToken {
         val comparator = ctx.semanticComparator()?.resolve()
             ?: ctx.stringComparator().resolve()
         val node = ctx.LOOSE_VERSION()
         val version = cacheVersion(SEMVER_CACHE, SemanticVersion, node)
-        return Predicate(comparator, version, ctx.range, node.symbol.inputStream)
+        return PredicateToken(comparator, version, ctx.range, node.symbol.inputStream)
     }
 
-    override fun visitStringPredicate(ctx: StitcherParser.StringPredicateContext): Predicate {
+    override fun visitStringPredicate(ctx: StitcherParser.StringPredicateContext): PredicateToken {
         val comparator = ctx.stringComparator().resolve()
         val node = ctx.IDENTIFIER()
         val version = cacheVersion(STRVER_CACHE, StringVersion, node)
-        return Predicate(comparator, version, ctx.range, node.symbol.inputStream)
+        return PredicateToken(comparator, version, ctx.range, node.symbol.inputStream)
     }
 
     private fun StitcherParser.SemanticComparatorContext.resolve(): VersionOperator? = when {

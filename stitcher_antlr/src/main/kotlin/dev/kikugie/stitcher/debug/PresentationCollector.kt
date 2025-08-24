@@ -4,7 +4,7 @@ import dev.kikugie.stitcher.antlr.StitcherParser
 import dev.kikugie.stitcher.data.BlockToken
 import dev.kikugie.stitcher.data.DefinitionToken
 import dev.kikugie.stitcher.data.ExpressionToken
-import dev.kikugie.stitcher.data.ExpressionToken.Assignment.Predicate
+import dev.kikugie.stitcher.data.PredicateToken
 import dev.kikugie.stitcher.data.LeafToken
 import dev.kikugie.stitcher.data.StitcherToken
 import dev.kikugie.stitcher.debug.TokenPresentation.Leaf
@@ -12,7 +12,7 @@ import dev.kikugie.stitcher.util.get
 import org.antlr.v4.runtime.CharStream
 
 private fun LeafToken.acceptThis() = PresentationCollector.visitLeaf(this)
-private fun Predicate.acceptThis() = PresentationCollector.visitPredicate(this)
+private fun PredicateToken.acceptThis() = PresentationCollector.visitPredicate(this)
 private fun composite(token: StitcherToken, builder: suspend SequenceScope<NamedPresentation>.() -> Unit) = TokenPresentation.Struct(token, sequence(builder))
 private fun String.takeNEpsilon(n: Int, epsilon: String = "…"): String =
     if (this.length > n) this.take(n) + epsilon else this
@@ -94,8 +94,8 @@ internal object PresentationCollector :
 
     fun visitLeaf(it: LeafToken): TokenPresentation = Leaf(it, StitcherParser.VOCABULARY)
 
-    fun visitPredicate(it: Predicate): TokenPresentation = object : TokenPresentation {
-        override val type: String = "Predicate"
+    fun visitPredicate(it: PredicateToken): TokenPresentation = object : TokenPresentation {
+        override val type: String = "PredicateToken"
         override val range: IntRange = it.range
         override val value: String = "${it.comparator.literal}${it.version}"
     }
