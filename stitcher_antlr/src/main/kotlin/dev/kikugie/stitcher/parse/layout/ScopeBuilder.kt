@@ -12,7 +12,7 @@ internal sealed interface ScopeBuilder {
 
     fun build(): BlockToken
 
-    fun code(marker: LeafToken, definition: DefinitionToken) = Code(this, marker, definition).also {
+    fun code(marker: LeafToken, definition: DefinitionToken, range: IntRange) = Code(this, marker, definition, range).also {
         entries += it
     }
     fun content(token: Token) {
@@ -31,9 +31,9 @@ internal sealed interface ScopeBuilder {
         override fun build(): BlockToken = BlockToken.Root(entries.map(ScopeBuilder::build))
     }
 
-    class Code(override val parent: ScopeBuilder, val marker: LeafToken, val definition: DefinitionToken) : ScopeBuilder {
+    class Code(override val parent: ScopeBuilder, val marker: LeafToken, val definition: DefinitionToken, val range: IntRange) : ScopeBuilder {
         override val entries: MutableList<ScopeBuilder> = mutableListOf()
-        override fun build(): BlockToken = BlockToken.Code(marker, definition, entries.map(ScopeBuilder::build))
+        override fun build(): BlockToken = BlockToken.Code(marker, definition, range, entries.map(ScopeBuilder::build))
     }
 
     class Entry(override val parent: ScopeBuilder, val block: BlockToken) : ScopeBuilder {
