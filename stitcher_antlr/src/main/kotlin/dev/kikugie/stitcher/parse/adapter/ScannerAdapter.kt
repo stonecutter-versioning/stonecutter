@@ -8,6 +8,8 @@ import dev.kikugie.stitcher.parse.layout.LayoutTokens
 import dev.kikugie.stitcher.issue.ProblemCollector
 import dev.kikugie.stitcher.issue.ProblemTemplate
 import dev.kikugie.stitcher.issue.at
+import dev.kikugie.stitcher.issue.check
+import dev.kikugie.stitcher.issue.checkNot
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.Lexer
 import org.antlr.v4.runtime.Token
@@ -66,7 +68,7 @@ public class ScannerAdapter internal constructor(
 
     private data class Checkpoint(val cursor: Int, val line: Int, val offset: Int, val comment: Boolean)
 
-    private val queue: FixedQueue<Token> = FixedQueue(3)
+    private val queue: FixedQueue<Token> = FixedQueue(4)
     private var checkpoint: Checkpoint = Checkpoint(0, 0, 0, false)
 
     override fun getLine(): Int =
