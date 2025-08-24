@@ -2,15 +2,11 @@ package dev.kikugie.stitcher.transform
 
 import dev.kikugie.stitcher.data.BlockToken
 import dev.kikugie.stitcher.data.DefinitionToken
-import dev.kikugie.stitcher.data.StitcherToken
+import dev.kikugie.stitcher.data.DefinitionToken.*
 import dev.kikugie.stitcher.data.acceptThis
 import dev.kikugie.stitcher.util.get
 import dev.kikugie.stitcher.util.merge
-import dev.kikugie.stitcher.util.verify
 
-private fun StringBuilder.appendToken(token: StitcherToken): StringBuilder = append(token.text)
-
-/** Skips the empty line after the comment. */
 private fun CharSequence.countOffset(): Int {
     var count = 0
     var seenNewLine = false
@@ -23,55 +19,29 @@ private fun CharSequence.countOffset(): Int {
     return if (seenNewLine) count else 0
 }
 
-internal class FileTransformer(
-    val parameters: TransformParameters,
-    val builder: StringBuilder = StringBuilder()
-) : BlockToken.Visitor<Unit> {
-    override fun visitRoot(it: BlockToken.Root) {
-        for (block in it.scope) block.acceptThis()
-    }
+internal class FileTransformer(val parameters: TransformParameters) : BlockToken.Visitor<String> {
+    override fun visitRoot(it: BlockToken.Root): String = it.scope.joinToString("") { it.acceptThis() }
+    override fun visitContent(it: BlockToken.Content): String = it.text
+    override fun visitComment(it: BlockToken.Comment): String = it.text
+    override fun visitCode(it: BlockToken.Code) = it.text + it.definition.accept(DefinitionTransformer(it))
 
-    override fun visitCode(it: BlockToken.Code) {
-        builder.appendToken(it)
-        it.definition.accept(ScopeTransformer(it, parameters, builder))
-    }
+    private inner class DefinitionTransformer(val host: BlockToken.Code) : DefinitionToken.Visitor<String> {
+        override fun visitSwap(it: Swap): String {
+            if (it !is Swap.Opener) return ""
 
-    override fun visitContent(it: BlockToken.Content) {
-        builder.appendToken(it)
-    }
-
-    override fun visitComment(it: BlockToken.Comment) {
-        builder.appendToken(it)
-    }
-}
-
-private class ScopeTransformer(
-    val host: BlockToken.Code,
-    val parameters: TransformParameters,
-    val builder: StringBuilder
-) : DefinitionToken.Visitor<Unit> {
-    override fun visitReplacement(it: DefinitionToken.Replacement) {
-        TODO("Not yet implemented")
-    }
-
-    override fun visitSwap(it: DefinitionToken.Swap) = with(builder) {
-        if (it !is DefinitionToken.Swap.Opener) return
-
-        val replacement = verify(parameters.swaps[it.identifier.text]) { "Skill issue" }
-        val text = host.scope.run {
-            if (isEmpty()) "" else host.source[merge(first().range, last().range)]
+            val template = parameters.swaps[it.identifier.text]!!
+            val text = host.scope.run { if (isEmpty()) "" else host.source[merge(first().range, last().range)] }
+            val range = text.run { countOffset()..<(length - reversed().countOffset()) }
+            val replacement = parameters.replacer.replace(text.substring(range), template)
+            return text.replaceRange(range, replacement)
         }
-        val start = text.countOffset()
-        val end = text.length - text.reversed().countOffset()
-        val fragment = parameters.replacer.replace(text.substring(start, end), replacement)
-        appendRange(text, 0, start)
-        append(fragment)
-        appendRange(text, end, text.length)
-        Unit
-    }
 
-    override fun visitCondition(it: DefinitionToken.Condition) {
-        TODO("Not yet implemented")
-    }
+        override fun visitReplacement(it: Replacement): String {
+            TODO("Not yet implemented")
+        }
 
+        override fun visitCondition(it: Condition): String {
+            TODO("Not yet implemented")
+        }
+    }
 }
