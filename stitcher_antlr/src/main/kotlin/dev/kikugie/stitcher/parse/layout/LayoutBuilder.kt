@@ -14,6 +14,7 @@ import dev.kikugie.stitcher.data.DefinitionType
 import dev.kikugie.stitcher.data.LeafToken
 import dev.kikugie.stitcher.issue.ProblemCollector
 import dev.kikugie.stitcher.issue.ProblemTemplate
+import dev.kikugie.stitcher.issue.checkNot
 import dev.kikugie.stitcher.util.LC
 import dev.kikugie.stitcher.util.checkNot
 import dev.kikugie.stitcher.util.skipLeadingSpaces
@@ -68,7 +69,7 @@ internal class LayoutBuilder(val stream: TokenStream, val problems: ProblemColle
     private fun handleComment(opener: Token, body: Token, closer: Token) {
         val (marker, definition) = parseComment(body)
             ?: return appendComment(opener, body, closer)
-        appendDefinition(marker, definition)
+        appendDefinition(marker, definition, opener.startIndex..closer.stopIndex)
     }
 
     private fun appendComment(opener: Token, body: Token, closer: Token) {
@@ -77,21 +78,21 @@ internal class LayoutBuilder(val stream: TokenStream, val problems: ProblemColle
             builder = builder.parent!!
     }
 
-    private fun appendDefinition(marker: LeafToken, definition: DefinitionToken): Unit = when (val it = builder) {
-        is ScopeBuilder.Root -> appendRootDefinition(marker, definition)
-        is ScopeBuilder.Code -> appendNestedDefinition(it, marker, definition)
+    private fun appendDefinition(marker: LeafToken, definition: DefinitionToken, range: IntRange): Unit = when (val it = builder) {
+        is ScopeBuilder.Root -> appendRootDefinition(marker, definition, range)
+        is ScopeBuilder.Code -> appendNestedDefinition(it, marker, definition, range)
         else -> error("Shouldn't be a builder")
     }
 
-    private fun appendRootDefinition(marker: LeafToken, definition: DefinitionToken) {
+    private fun appendRootDefinition(marker: LeafToken, definition: DefinitionToken, range: IntRange) {
         problems.checkNot(definition.type.isExtension, { LOST_ROOT_CLOSER.at(definition.closer!!.range.first) })
-        val code = builder.code(marker, definition)
+        val code = builder.code(marker, definition, range)
         if (!definition.type.isEmpty) builder = code
     }
 
-    private fun appendNestedDefinition(host: ScopeBuilder.Code, marker: LeafToken, definition: DefinitionToken) {
+    private fun appendNestedDefinition(host: ScopeBuilder.Code, marker: LeafToken, definition: DefinitionToken, range: IntRange) {
         if (definition.type == INDEPENDENT) {
-            builder.code(marker, definition)
+            builder.code(marker, definition, range)
             return
         }
 
@@ -99,7 +100,7 @@ internal class LayoutBuilder(val stream: TokenStream, val problems: ProblemColle
         checkNot(definition.type.isExtension && !host.definition.type.isScoped) { "Closes unscoped scope" }
 
         if (definition.type.isExtension) builder = builder.parent!!
-        val code = builder.code(marker, definition)
+        val code = builder.code(marker, definition, range)
         if (!definition.type.isEmpty) builder = code
     }
 

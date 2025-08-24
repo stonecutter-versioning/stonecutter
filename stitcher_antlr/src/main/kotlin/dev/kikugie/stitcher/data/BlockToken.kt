@@ -1,6 +1,5 @@
 package dev.kikugie.stitcher.data
 
-import dev.kikugie.stitcher.util.merge
 import dev.kikugie.stitcher.util.range
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.Token
@@ -28,15 +27,13 @@ internal sealed interface BlockToken : StitcherToken {
         override fun <T> accept(visitor: Visitor<T>): T = visitor.visitComment(this)
     }
 
-    // FIXME: add a proper range
-    data class Code(val marker: LeafToken, val definition: DefinitionToken, val scope: List<BlockToken> = emptyList()) : BlockToken {
-        override val range: IntRange get() = merge(marker.range, definition.range, scope.lastOrNull()?.range)
+    data class Code(val marker: LeafToken, val definition: DefinitionToken, override val range: IntRange, val scope: List<BlockToken> = emptyList()) : BlockToken {
         override val source: CharStream get() = marker.source
         override fun <T> accept(visitor: Visitor<T>): T = visitor.visitCode(this)
     }
 
     data class Root(var scope: List<BlockToken>) : BlockToken {
-        override val range: IntRange get() = merge(scope.first().range, scope.last().range)
+        override val range: IntRange get() = IntRange.EMPTY
         override val source: CharStream get() = scope.first().source
         override fun <T> accept(visitor: Visitor<T>): T = visitor.visitRoot(this)
     }
