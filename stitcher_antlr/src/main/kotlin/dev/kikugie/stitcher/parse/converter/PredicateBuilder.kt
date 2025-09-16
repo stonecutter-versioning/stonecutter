@@ -14,6 +14,7 @@ import dev.kikugie.stitcher.issue.BailException
 import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.issue.bail
+import dev.kikugie.stitcher.issue.problem
 import dev.kikugie.stitcher.util.range
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.tree.TerminalNode
@@ -64,6 +65,6 @@ internal class PredicateBuilder(val sink: ProblemSink) : StitcherBaseVisitor<Pre
     private fun <T> parseVersion(parser: Version.Operations, input: String, token: Token): T where T : Version = try {
         parser.parse(input).getOrThrow() as T
     } catch (e: VersionParsingException) {
-        sink.bail(at(token), e) { "Failed to parse version '$input'" }
+        sink.at(token) bail problem(e) { "Failed to parse version '$input'" }
     }
 }

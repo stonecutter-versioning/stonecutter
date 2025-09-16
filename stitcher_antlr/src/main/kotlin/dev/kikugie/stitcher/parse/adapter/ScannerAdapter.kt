@@ -1,27 +1,19 @@
 package dev.kikugie.stitcher.parse.adapter
 
 import dev.kikugie.commons.collections.FixedQueue
-import dev.kikugie.commons.collections.plusAssign
 import dev.kikugie.commons.collections.first
+import dev.kikugie.commons.collections.plusAssign
 import dev.kikugie.commons.then
-import dev.kikugie.stitcher.parse.layout.LayoutTokens
-import dev.kikugie.stitcher.issue.ProblemCollector
-import dev.kikugie.stitcher.issue.ProblemTemplate
+import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.issue.at
-import dev.kikugie.stitcher.issue.check
-import dev.kikugie.stitcher.issue.checkNot
+import dev.kikugie.stitcher.issue.problem
+import dev.kikugie.stitcher.issue.report
+import dev.kikugie.stitcher.parse.layout.LayoutTokens
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.Lexer
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.TokenSource
 import org.antlr.v4.runtime.misc.Pair
-
-private val DUPLICATE_COMMENT_ENTRY: ProblemTemplate =
-    ProblemTemplate("Invalid comment opener; a closer must only follow openers", WARNING)
-private val UNMATCHED_COMMENT_EXIT: ProblemTemplate =
-    ProblemTemplate("Unmatched comment closer; closers outside a comment mode must be skipped", WARNING)
-private val UNRECOGNIZED_TYPE: ProblemTemplate =
-    ProblemTemplate("Unknown token type %s; emitted token types must be registered as openers or closers", WARNING)
 
 /**
  * Adapts the output of a user-defined comment [Lexer],
@@ -55,7 +47,7 @@ public class ScannerAdapter internal constructor(
     private val scanner: Lexer,
     private val openers: IntArray,
     private val closers: IntArray,
-    private val problems: ProblemCollector
+    private val sink: ProblemSink
 ) : TokenSource by scanner {
 
     /**
@@ -63,7 +55,7 @@ public class ScannerAdapter internal constructor(
      * a specific [Lexer], [openers][ScannerAdapter.openers] and [closers][ScannerAdapter.closers].
      */
     internal fun interface Factory {
-        fun create(input: CharStream, problems: ProblemCollector): ScannerAdapter
+        fun create(input: CharStream, sink: ProblemSink): ScannerAdapter
     }
 
     private data class Checkpoint(val cursor: Int, val line: Int, val offset: Int, val comment: Boolean)
@@ -109,9 +101,8 @@ public class ScannerAdapter internal constructor(
     }
 
     private fun handleCommentStart(token: Token): Boolean {
-        problems.checkNot(checkpoint.comment, { DUPLICATE_COMMENT_ENTRY.at(token) }) {
-            return false
-        }
+        if (checkpoint.comment) (sink.at(token) report problem { "Invalid comment opener; a closer must only follow openers" })
+            .also { return false }
         if (checkpoint.cursor < token.startIndex)
             push(LayoutTokens.CONTENT, token.startIndex)
         push(LayoutTokens.COMMENT_OPEN, token)
@@ -120,19 +111,17 @@ public class ScannerAdapter internal constructor(
     }
 
     private fun handleCommentEnd(token: Token): Boolean {
-        problems.check(checkpoint.comment, { UNMATCHED_COMMENT_EXIT.at(token) }) {
-            return false
-        }
+        if (!checkpoint.comment) (sink.at(token) report problem { "Unmatched comment closer; closers outside a comment mode must be skipped" })
+            .also { return false }
         push(LayoutTokens.COMMENT_BODY, token.startIndex)
         push(LayoutTokens.COMMENT_CLOSE, token)
         checkpoint = Checkpoint(token, false)
         return true
     }
 
-    private fun reportUnknown(token: Token): Boolean {
-        problems.report(UNRECOGNIZED_TYPE.at(token).format(scanner.vocabulary.getDisplayName(token.type)))
-        return false
-    }
+    private fun reportUnknown(token: Token): Boolean =
+        (sink.at(token) report problem { "Unknown token type %s; emitted token types must be registered as openers or closers" })
+            .let { false }
 
     private fun push(type: Int, endExclusive: Int): Unit =
         push(type, checkpoint.cursor, endExclusive)
