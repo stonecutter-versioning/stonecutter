@@ -5,35 +5,27 @@ import dev.kikugie.commons.takeAsOrNull
 import dev.kikugie.commons.then
 import dev.kikugie.stitcher.antlr.StitcherLexer
 import dev.kikugie.stitcher.antlr.StitcherParser
-import dev.kikugie.stitcher.parse.adapter.InlineCharStream
-import dev.kikugie.stitcher.parse.adapter.InlineTokenFactory
-import dev.kikugie.stitcher.parse.converter.DefinitionBuilder
 import dev.kikugie.stitcher.data.BlockToken
 import dev.kikugie.stitcher.data.DefinitionToken
 import dev.kikugie.stitcher.data.DefinitionType
+import dev.kikugie.stitcher.data.DefinitionType.*
 import dev.kikugie.stitcher.data.LeafToken
-import dev.kikugie.stitcher.issue.ProblemCollector
-import dev.kikugie.stitcher.issue.ProblemTemplate
-import dev.kikugie.stitcher.issue.checkNot
-import dev.kikugie.stitcher.util.LC
-import dev.kikugie.stitcher.util.checkNot
-import dev.kikugie.stitcher.util.skipLeadingSpaces
-import dev.kikugie.stitcher.util.skipWhile
-import dev.kikugie.stitcher.util.toLeaf
-import org.antlr.v4.runtime.CommonTokenStream
-import org.antlr.v4.runtime.IntStream
-import org.antlr.v4.runtime.ParserRuleContext
-import org.antlr.v4.runtime.Token
-import org.antlr.v4.runtime.TokenStream
+import dev.kikugie.stitcher.issue.ProblemSink
+import dev.kikugie.stitcher.issue.at
+import dev.kikugie.stitcher.issue.report
+import dev.kikugie.stitcher.parse.adapter.InlineCharStream
+import dev.kikugie.stitcher.parse.adapter.InlineTokenFactory
+import dev.kikugie.stitcher.parse.converter.DefinitionBuilder
+import dev.kikugie.stitcher.util.*
+import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.tree.TerminalNode
 
 private val SKIPPABLE_SPACES: CharArray = charArrayOf(' ', '\t', '\r', '\n')
-private val LOST_ROOT_CLOSER: ProblemTemplate = ProblemTemplate("Unexpected scope closer")
 
 private val ScopeBuilder.Code.isUnoccupied: Boolean
     get() = definition.type.isOpen && entries.isEmpty()
 
-internal class LayoutBuilder(val stream: TokenStream, val problems: ProblemCollector) {
+internal class LayoutBuilder(val stream: TokenStream, val sink: ProblemSink) {
     private var builder: ScopeBuilder = ScopeBuilder.Root()
     private val current: Token get() = stream.LT(1)
 
@@ -85,7 +77,7 @@ internal class LayoutBuilder(val stream: TokenStream, val problems: ProblemColle
     }
 
     private fun appendRootDefinition(marker: LeafToken, definition: DefinitionToken, range: IntRange) {
-        problems.checkNot(definition.type.isExtension, { LOST_ROOT_CLOSER.at(definition.closer!!.range.first) })
+        if (definition.type.isExtension) sink.report(at(definition, sink)) { "Unmatched scope closer" }
         val code = builder.code(marker, definition, range)
         if (!definition.type.isEmpty) builder = code
     }

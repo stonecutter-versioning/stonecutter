@@ -1,3 +1,5 @@
+@file:Suppress("UNCHECKED_CAST")
+
 package dev.kikugie.stitcher.parse.converter
 
 import dev.kikugie.semver.data.SemanticVersion
@@ -8,11 +10,16 @@ import dev.kikugie.semver.impl.VersionParsingException
 import dev.kikugie.stitcher.antlr.StitcherBaseVisitor
 import dev.kikugie.stitcher.antlr.StitcherParser
 import dev.kikugie.stitcher.data.PredicateToken
+import dev.kikugie.stitcher.issue.BailException
+import dev.kikugie.stitcher.issue.ProblemSink
+import dev.kikugie.stitcher.issue.at
+import dev.kikugie.stitcher.issue.bail
 import dev.kikugie.stitcher.util.range
+import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.util.concurrent.ConcurrentHashMap
 
-internal object PredicateBuilder : StitcherBaseVisitor<PredicateToken>() {
+internal class PredicateBuilder(val sink: ProblemSink) : StitcherBaseVisitor<PredicateToken>() {
     private val SEMVER_CACHE: MutableMap<String, SemanticVersion> = ConcurrentHashMap()
     private val STRVER_CACHE: MutableMap<String, StringVersion> = ConcurrentHashMap()
 
@@ -48,14 +55,15 @@ internal object PredicateBuilder : StitcherBaseVisitor<PredicateToken>() {
         else -> error("$this is empty")
     }
 
-    private fun <T : Version> cacheVersion(cache: MutableMap<String, T>, parser: Version.Operations, node: TerminalNode): T =
-        cache.computeIfAbsent(node.text) { parseVersion(parser, it, node.symbol.startIndex) }
+    private fun cacheVersion(cache: MutableMap<String, out Version>, parser: Version.Operations, node: TerminalNode): Version = try {
+        cache.computeIfAbsent(node.text) { parseVersion(parser, it, node.symbol) }
+    } catch (_: BailException) {
+        StringVersion("%PLACEHOLDER% (${node.text})")
+    }
 
-    @Suppress("UNCHECKED_CAST")
-    private fun <T : Version> parseVersion(parser: Version.Operations, input: String, offset: Int): T = parser.parse(input).getOrElse {
-        // TODO: replace with an error reporting system
-        it as VersionParsingException; throw VersionParsingException(it.message, it.position + offset).apply {
-            stackTrace = it.stackTrace
-        }
-    } as T
+    private fun <T> parseVersion(parser: Version.Operations, input: String, token: Token): T where T : Version = try {
+        parser.parse(input).getOrThrow() as T
+    } catch (e: VersionParsingException) {
+        sink.bail(at(token), e) { "Failed to parse version '$input'" }
+    }
 }
