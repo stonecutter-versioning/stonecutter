@@ -1,6 +1,5 @@
 package dev.kikugie.stitcher.parse.adapter
 
-import dev.kikugie.stitcher.data.StitcherToken
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.IntStream
 import org.antlr.v4.runtime.Token
@@ -18,7 +17,8 @@ import org.antlr.v4.runtime.misc.Interval
  */
 internal class InlineCharStream(val host: CharStream, val start: Int, val end: Int) : AutoCloseable, CharStream by host {
     constructor(host: Token) : this(host.inputStream, host.startIndex, host.stopIndex + 1)
-    constructor(host: StitcherToken) : this(host.source, host.range.first, host.range.last + 1)
+
+
     private val marker: Int = host.mark()
     private val index: Int = host.index()
 

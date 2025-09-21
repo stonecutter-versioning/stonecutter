@@ -8,7 +8,7 @@ import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.issue.problem
 import dev.kikugie.stitcher.issue.report
-import dev.kikugie.stitcher.parse.layout.LayoutTokens
+import dev.kikugie.stitcher.parse.builder.LayoutBuilder
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.Lexer
 import org.antlr.v4.runtime.Token
@@ -94,7 +94,7 @@ public class ScannerAdapter internal constructor(
     private fun handleEOF(token: Token): Boolean {
         if (checkpoint.comment) handleCommentEnd(token)
         else if (checkpoint.cursor < token.startIndex)
-            push(LayoutTokens.CONTENT, token.startIndex)
+            push(LayoutBuilder.CONTENT, token.startIndex)
         queue += token
         checkpoint = Checkpoint(-1, -1, -1, false)
         return true
@@ -104,8 +104,8 @@ public class ScannerAdapter internal constructor(
         if (checkpoint.comment) (sink.at(token) report problem { "Invalid comment opener; a closer must only follow openers" })
             .also { return false }
         if (checkpoint.cursor < token.startIndex)
-            push(LayoutTokens.CONTENT, token.startIndex)
-        push(LayoutTokens.COMMENT_OPEN, token)
+            push(LayoutBuilder.CONTENT, token.startIndex)
+        push(LayoutBuilder.COMMENT_OPEN, token)
         checkpoint = Checkpoint(token, true)
         return true
     }
@@ -113,8 +113,8 @@ public class ScannerAdapter internal constructor(
     private fun handleCommentEnd(token: Token): Boolean {
         if (!checkpoint.comment) (sink.at(token) report problem { "Unmatched comment closer; closers outside a comment mode must be skipped" })
             .also { return false }
-        push(LayoutTokens.COMMENT_BODY, token.startIndex)
-        push(LayoutTokens.COMMENT_CLOSE, token)
+        push(LayoutBuilder.COMMENT_BODY, token.startIndex)
+        push(LayoutBuilder.COMMENT_CLOSE, token)
         checkpoint = Checkpoint(token, false)
         return true
     }
