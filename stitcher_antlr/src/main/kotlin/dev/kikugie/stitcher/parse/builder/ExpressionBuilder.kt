@@ -1,47 +1,43 @@
-package dev.kikugie.stitcher.parse.converter
+package dev.kikugie.stitcher.parse.builder
 
 import dev.kikugie.stitcher.antlr.StitcherBaseVisitor
 import dev.kikugie.stitcher.antlr.StitcherParser
 import dev.kikugie.stitcher.data.ExpressionToken
-import dev.kikugie.stitcher.util.toLeaf
+import dev.kikugie.stitcher.issue.ProblemSink
+import dev.kikugie.stitcher.parse.adapter.AntlrTokenConverter
 
-internal object ExpressionBuilder : StitcherBaseVisitor<ExpressionToken>() {
+internal class ExpressionBuilder(sink: ProblemSink, val converter: AntlrTokenConverter) : StitcherBaseVisitor<ExpressionToken>() {
+    private val predicateBuilder: PredicateBuilder = PredicateBuilder(sink, converter)
+
     override fun visitConditionExpression(ctx: StitcherParser.ConditionExpressionContext): ExpressionToken {
         ctx.LEFT_BRACE()?.let {
-            val lb = it.toLeaf()
-            val rb = ctx.RIGHT_BRACE().toLeaf()
             val body = ctx.conditionExpression(0)
                 .accept(this)
-
-            return ExpressionToken.Group(lb, body, rb)
+            return ExpressionToken.Group(converter(it), body, converter(ctx.RIGHT_BRACE()))
         }
 
         ctx.OP_NOT()?.let {
-            val op = it.toLeaf()
             val body = ctx.conditionExpression(0)
                 .accept(this)
-
-            return ExpressionToken.Unary(op, body)
+            return ExpressionToken.Unary(converter(it), body)
         }
 
         (ctx.OP_AND() ?: ctx.OP_OR())?.let {
-            val op = it.toLeaf()
             val left = ctx.conditionExpression(0)
                 .accept(this)
             val right = ctx.conditionExpression(1)
                 .accept(this)
-
-            return ExpressionToken.Binary(left, op, right)
+            return ExpressionToken.Binary(left, converter(it), right)
         }
 
         return ctx.endpointExpression()?.accept(this)!!
     }
 
     override fun visitEndpointExpression(ctx: StitcherParser.EndpointExpressionContext): ExpressionToken {
-        val identifier = ctx.IDENTIFIER()?.toLeaf()
-        val operator = ctx.OP_ASSIGN()?.toLeaf()
+        val identifier = ctx.IDENTIFIER()?.let(converter::invoke)
+        val operator = ctx.OP_ASSIGN()?.let(converter::invoke)
         val predicates = ctx.versionPredicate()
-            .map { it.accept(PredicateBuilder) }
+            .map { it.accept(predicateBuilder) }
 
         return when {
             identifier != null && operator == null -> ExpressionToken.Constant(identifier)

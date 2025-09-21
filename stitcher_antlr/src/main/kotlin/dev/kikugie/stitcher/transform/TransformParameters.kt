@@ -1,11 +1,18 @@
 package dev.kikugie.stitcher.transform
 
 import dev.kikugie.semver.data.Version
+import dev.kikugie.stitcher.issue.ProblemSink
+import dev.kikugie.stitcher.parse.adapter.ScannerAdapter
 import dev.kikugie.stitcher.transform.strategy.CommentingStrategy
 import dev.kikugie.stitcher.transform.strategy.SwappingStrategy
 import dev.kikugie.stitcher.transform.strategy.UncommentingStrategy
+import org.antlr.v4.runtime.CharStream
 
 internal data class TransformParameters(
+    val input: CharStream,
+    val sink: ProblemSink,
+    val adapter: ScannerAdapter.Factory,
+
     val commenter: CommentingStrategy,
     val uncommenter: UncommentingStrategy,
     val replacer: SwappingStrategy,

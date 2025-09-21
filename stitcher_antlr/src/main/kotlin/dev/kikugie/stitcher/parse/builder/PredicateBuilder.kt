@@ -1,6 +1,6 @@
 @file:Suppress("UNCHECKED_CAST")
 
-package dev.kikugie.stitcher.parse.converter
+package dev.kikugie.stitcher.parse.builder
 
 import dev.kikugie.semver.data.SemanticVersion
 import dev.kikugie.semver.data.StringVersion
@@ -15,15 +15,12 @@ import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.issue.bail
 import dev.kikugie.stitcher.issue.problem
-import dev.kikugie.stitcher.util.range
+import dev.kikugie.stitcher.parse.adapter.AntlrTokenConverter
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.util.concurrent.ConcurrentHashMap
 
-internal class PredicateBuilder(val sink: ProblemSink) : StitcherBaseVisitor<PredicateToken>() {
-    private val SEMVER_CACHE: MutableMap<String, SemanticVersion> = ConcurrentHashMap()
-    private val STRVER_CACHE: MutableMap<String, StringVersion> = ConcurrentHashMap()
-
+internal class PredicateBuilder(val sink: ProblemSink, val converter: AntlrTokenConverter) : StitcherBaseVisitor<PredicateToken>() {
     override fun visitVersionPredicate(ctx: StitcherParser.VersionPredicateContext): PredicateToken =
         (ctx.semanticPredicate() ?: ctx.stringPredicate()).accept(this)
 
@@ -32,14 +29,14 @@ internal class PredicateBuilder(val sink: ProblemSink) : StitcherBaseVisitor<Pre
             ?: ctx.stringComparator().resolve()
         val node = ctx.LOOSE_VERSION()
         val version = cacheVersion(SEMVER_CACHE, SemanticVersion, node)
-        return PredicateToken(comparator, version, ctx.range, node.symbol.inputStream)
+        return PredicateToken(comparator, version, converter(ctx))
     }
 
     override fun visitStringPredicate(ctx: StitcherParser.StringPredicateContext): PredicateToken {
         val comparator = ctx.stringComparator().resolve()
         val node = ctx.IDENTIFIER()
         val version = cacheVersion(STRVER_CACHE, StringVersion, node)
-        return PredicateToken(comparator, version, ctx.range, node.symbol.inputStream)
+        return PredicateToken(comparator, version, converter(ctx))
     }
 
     private fun StitcherParser.SemanticComparatorContext.resolve(): VersionOperator? = when {
@@ -66,5 +63,10 @@ internal class PredicateBuilder(val sink: ProblemSink) : StitcherBaseVisitor<Pre
         parser.parse(input).getOrThrow() as T
     } catch (e: VersionParsingException) {
         sink.at(token) bail problem(e) { "Failed to parse version '$input'" }
+    }
+
+    companion object {
+        private val SEMVER_CACHE: MutableMap<String, SemanticVersion> = ConcurrentHashMap()
+        private val STRVER_CACHE: MutableMap<String, StringVersion> = ConcurrentHashMap()
     }
 }

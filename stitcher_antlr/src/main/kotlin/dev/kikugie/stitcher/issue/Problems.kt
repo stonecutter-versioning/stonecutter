@@ -3,8 +3,10 @@
 package dev.kikugie.stitcher.issue
 
 import dev.kikugie.stitcher.data.StitcherToken
+import dev.kikugie.stitcher.util.AntlrToken
 import org.antlr.v4.runtime.Token
 import java.nio.file.Path
+import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
 @DslMarker @Retention(SOURCE)
@@ -35,7 +37,7 @@ internal inline fun ProblemSink.at(line: Int, column: Int): ProblemLocation =
     ProblemLocation(line.toUInt(), column.toUInt(), this)
 
 @ProblemsDsl
-internal inline fun ProblemSink.at(token: Token): ProblemLocation =
+internal inline fun ProblemSink.at(token: AntlrToken): ProblemLocation =
     at(token.line, token.charPositionInLine)
 
 @ProblemsDsl
@@ -49,3 +51,13 @@ internal inline infix fun ProblemLocation.report(template: ProblemTemplate): Uni
 @ProblemsDsl
 internal inline infix fun ProblemLocation.bail(template: ProblemTemplate): Nothing =
     report(template).let { throw BailException() }
+
+@OptIn(ExperimentalContracts::class)
+@ProblemsDsl
+internal inline fun <T : Any> ProblemSink.verifyNotNull(value: T?, builder: ProblemSink.() -> Nothing): T {
+    contract {
+        returns() implies (value != null)
+        callsInPlace(builder, AT_MOST_ONCE)
+    }
+    return value ?: builder()
+}
