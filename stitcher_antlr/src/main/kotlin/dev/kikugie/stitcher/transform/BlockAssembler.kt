@@ -23,10 +23,8 @@ internal class BlockAssembler(private val builder: StringBuilder) : BlockToken.V
         for (it in it.scope) it.acceptThis()
     }
 
-    companion object : BlockToken.Visitor<String> {
-        override fun visitContent(it: BlockToken.Content): String = buildString { BlockAssembler(this) }
-        override fun visitComment(it: BlockToken.Comment): String = buildString { BlockAssembler(this) }
-        override fun visitCode(it: BlockToken.Code): String = buildString { BlockAssembler(this) }
-        override fun visitRoot(it: BlockToken.Root): String = buildString { BlockAssembler(this) }
+    companion object {
+        fun BlockToken.join(): String = buildString { accept(BlockAssembler(this)) }
+        fun BlockToken.join(builder: StringBuilder): Unit = accept(BlockAssembler(builder))
     }
 }
