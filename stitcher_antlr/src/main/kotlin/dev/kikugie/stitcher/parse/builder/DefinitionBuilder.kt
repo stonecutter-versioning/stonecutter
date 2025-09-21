@@ -5,10 +5,10 @@ import dev.kikugie.stitcher.antlr.StitcherParser
 import dev.kikugie.stitcher.data.LeafToken
 import dev.kikugie.stitcher.data.DefinitionToken
 import dev.kikugie.stitcher.issue.ProblemSink
-import dev.kikugie.stitcher.parse.adapter.AntlrTokenConverter
+import dev.kikugie.stitcher.parse.adapter.InlineTokenConverter
 import org.antlr.v4.runtime.tree.TerminalNode
 
-internal class DefinitionBuilder(sink: ProblemSink, val converter: AntlrTokenConverter) : StitcherBaseVisitor<DefinitionToken>() {
+internal class DefinitionBuilder(sink: ProblemSink, val converter: InlineTokenConverter) : StitcherBaseVisitor<DefinitionToken>() {
     private val expressionBuilder: ExpressionBuilder = ExpressionBuilder(sink, converter)
     override fun visitReplacement(ctx: StitcherParser.ReplacementContext): DefinitionToken =
         DefinitionToken.Replacement(converter(ctx.IDENTIFIER()))
@@ -19,12 +19,13 @@ internal class DefinitionBuilder(sink: ProblemSink, val converter: AntlrTokenCon
         }
 
         val arguments = ctx.swapArguments().mapToLeaves()
-        return DefinitionToken.Swap(converter(ctx.IDENTIFIER()), arguments, ctx.scopeOpener()?.let(converter::invoke))
+        val opener = ctx.scopeOpener()?.start?.let(converter::invoke)
+        return DefinitionToken.Swap(converter(ctx.IDENTIFIER()), arguments, opener)
     }
 
     override fun visitCondition(ctx: StitcherParser.ConditionContext): DefinitionToken {
         val closer = ctx.SCOPE_CLOSE()?.let(converter::invoke)
-        val opener = ctx.scopeOpener()?.let(converter::invoke)
+        val opener = ctx.scopeOpener()?.start?.let(converter::invoke)
         val sugar = listOfNotNull(ctx.SUGAR_IF(), ctx.SUGAR_ELIF(), ctx.SUGAR_ELSE())
             .map(converter::invoke)
         val expression = ctx.conditionExpression()

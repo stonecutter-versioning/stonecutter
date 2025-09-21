@@ -14,9 +14,9 @@ import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.issue.problem
 import dev.kikugie.stitcher.issue.report
-import dev.kikugie.stitcher.parse.adapter.AntlrTokenConverter
 import dev.kikugie.stitcher.parse.adapter.InlineCharStream
-import dev.kikugie.stitcher.parse.adapter.InlineTokenFactory
+import dev.kikugie.stitcher.parse.adapter.InlineTokenConverter
+import dev.kikugie.stitcher.parse.adapter.InlineTokenStream
 import dev.kikugie.stitcher.util.*
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.tree.TerminalNode
@@ -52,20 +52,20 @@ private fun InlineCharStream.consumeScope(type: DefinitionType): Boolean = when 
     }
 
     // Technically not needed - consumes the entire sequence
-    else -> seek(end) then false
+    else -> seek(end - 1) then false
 }
 
 private sealed interface ScopeBuilder {
     val parent: ScopeBuilder?
     val entries: List<ScopeBuilder>
 
-    fun build(converter: AntlrTokenConverter): BlockToken
+    fun build(converter: InlineTokenConverter): BlockToken
 
     class Root(
         override val entries: MutableList<ScopeBuilder> = mutableListOf()
     ) : ScopeBuilder {
         override val parent: ScopeBuilder? get() = null
-        override fun build(converter: AntlrTokenConverter): BlockToken.Root =
+        override fun build(converter: InlineTokenConverter): BlockToken.Root =
             BlockToken.Root(entries.map { it.build(converter) })
     }
 
@@ -76,25 +76,26 @@ private sealed interface ScopeBuilder {
         val definition: DefinitionToken,
         override val entries: MutableList<ScopeBuilder> = mutableListOf()
     ) : ScopeBuilder {
-        override fun build(converter: AntlrTokenConverter): BlockToken.Code =
+        override fun build(converter: InlineTokenConverter): BlockToken.Code =
             BlockToken.Code(host.build(converter), marker, definition, entries.map { it.build(converter) })
     }
 
     class Content(override val parent: ScopeBuilder, val tokens: MutableList<AntlrToken> = mutableListOf()) : ScopeBuilder {
         constructor(parent: ScopeBuilder, token: AntlrToken) : this (parent, mutableListOf(token))
         override val entries: List<ScopeBuilder> get() = emptyList()
-        override fun build(converter: AntlrTokenConverter): BlockToken.Content =
-            BlockToken.Content(converter(*tokens.toTypedArray()))
+        override fun build(converter: InlineTokenConverter): BlockToken.Content =
+            BlockToken.Content(converter(tokens))
     }
 
     class Comment(override val parent: ScopeBuilder, val opener: AntlrToken, val body: AntlrToken, val closer: AntlrToken) : ScopeBuilder {
         override val entries: List<ScopeBuilder> get() = emptyList()
-        override fun build(converter: AntlrTokenConverter): BlockToken.Comment =
+        override fun build(converter: InlineTokenConverter): BlockToken.Comment =
             BlockToken.Comment(converter(opener), converter(body), converter(closer))
     }
 }
 
-internal class LayoutBuilder private constructor(val stream: TokenStream, val sink: ProblemSink, val converter: AntlrTokenConverter) {
+internal class LayoutBuilder private constructor(val stream: TokenStream, val sink: ProblemSink, val converter: InlineTokenConverter) {
+    private val factory = CommonTokenFactory()
     private val visitor = DefinitionBuilder(sink, converter)
     private var builder: ScopeBuilder = ScopeBuilder.Root()
     private val current: AntlrToken get() = stream.LT(1)
@@ -133,12 +134,11 @@ internal class LayoutBuilder private constructor(val stream: TokenStream, val si
                 return@invoke builder.content(token)
 
             val unfinished = consumeScope(type)
-            val factory = InlineTokenFactory(token)
-            builder.content(factory.create(stream.tokenSource, CONTENT, start, host.index() - 1, 1, 0))
+            builder.content(factory.create(stream.tokenSource, CONTENT, start, host.index() - 1, 1, 0, host))
             builder = builder.parent!!
 
             // FIXME: Line and offset are not counted in InlineCharStream
-            if (unfinished) builder.content(factory.create(stream.tokenSource, CONTENT, host.index(), end - 1, 1, 0))
+            if (unfinished) builder.content(factory.create(stream.tokenSource, CONTENT, host.index(), end - 1, 1, 0, host))
         }
     }
 
@@ -184,10 +184,9 @@ internal class LayoutBuilder private constructor(val stream: TokenStream, val si
                 else -> return@invoke null
             }
 
-            val lexer = StitcherLexer(this).apply {
-                tokenFactory = InlineTokenFactory(body)
-            }
-            val parser = StitcherParser(CommonTokenStream(lexer))
+            val lexer = StitcherLexer(this)
+            val stream = InlineTokenStream(CommonTokenStream(lexer), factory, body.startIndex)
+            val parser = StitcherParser(stream)
             val context = parser.definition()
             constructCode(context)
         }
@@ -233,7 +232,7 @@ internal class LayoutBuilder private constructor(val stream: TokenStream, val si
             arrayOf("CONTENT", "COMMENT_OPEN", "COMMENT_BODY", "COMMENT_CLOSE")
         )
 
-        fun build(input: TokenStream, sink: ProblemSink, converter: AntlrTokenConverter): BlockToken.Root =
+        fun build(input: TokenStream, sink: ProblemSink, converter: InlineTokenConverter): BlockToken.Root =
             LayoutBuilder(input, sink, converter).collect()
     }
 }

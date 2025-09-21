@@ -4,9 +4,9 @@ import dev.kikugie.stitcher.antlr.StitcherBaseVisitor
 import dev.kikugie.stitcher.antlr.StitcherParser
 import dev.kikugie.stitcher.data.ExpressionToken
 import dev.kikugie.stitcher.issue.ProblemSink
-import dev.kikugie.stitcher.parse.adapter.AntlrTokenConverter
+import dev.kikugie.stitcher.parse.adapter.InlineTokenConverter
 
-internal class ExpressionBuilder(sink: ProblemSink, val converter: AntlrTokenConverter) : StitcherBaseVisitor<ExpressionToken>() {
+internal class ExpressionBuilder(sink: ProblemSink, val converter: InlineTokenConverter) : StitcherBaseVisitor<ExpressionToken>() {
     private val predicateBuilder: PredicateBuilder = PredicateBuilder(sink, converter)
 
     override fun visitConditionExpression(ctx: StitcherParser.ConditionExpressionContext): ExpressionToken {

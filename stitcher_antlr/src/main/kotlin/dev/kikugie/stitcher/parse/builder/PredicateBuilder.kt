@@ -15,12 +15,12 @@ import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.issue.bail
 import dev.kikugie.stitcher.issue.problem
-import dev.kikugie.stitcher.parse.adapter.AntlrTokenConverter
+import dev.kikugie.stitcher.parse.adapter.InlineTokenConverter
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.util.concurrent.ConcurrentHashMap
 
-internal class PredicateBuilder(val sink: ProblemSink, val converter: AntlrTokenConverter) : StitcherBaseVisitor<PredicateToken>() {
+internal class PredicateBuilder(val sink: ProblemSink, val converter: InlineTokenConverter) : StitcherBaseVisitor<PredicateToken>() {
     override fun visitVersionPredicate(ctx: StitcherParser.VersionPredicateContext): PredicateToken =
         (ctx.semanticPredicate() ?: ctx.stringPredicate()).accept(this)
 
@@ -29,14 +29,14 @@ internal class PredicateBuilder(val sink: ProblemSink, val converter: AntlrToken
             ?: ctx.stringComparator().resolve()
         val node = ctx.LOOSE_VERSION()
         val version = cacheVersion(SEMVER_CACHE, SemanticVersion, node)
-        return PredicateToken(comparator, version, converter(ctx))
+        return PredicateToken(comparator, version, converter(StitcherParser.LOOSE_VERSION, ctx))
     }
 
     override fun visitStringPredicate(ctx: StitcherParser.StringPredicateContext): PredicateToken {
         val comparator = ctx.stringComparator().resolve()
         val node = ctx.IDENTIFIER()
         val version = cacheVersion(STRVER_CACHE, StringVersion, node)
-        return PredicateToken(comparator, version, converter(ctx))
+        return PredicateToken(comparator, version, converter(StitcherParser.LOOSE_VERSION, ctx))
     }
 
     private fun StitcherParser.SemanticComparatorContext.resolve(): VersionOperator? = when {
@@ -53,20 +53,20 @@ internal class PredicateBuilder(val sink: ProblemSink, val converter: AntlrToken
         else -> error("$this is empty")
     }
 
-    private fun cacheVersion(cache: MutableMap<String, out Version>, parser: Version.Operations, node: TerminalNode): Version = try {
+    private fun cacheVersion(cache: MutableMap<String, Version>, parser: Version.Operations, node: TerminalNode): Version = try {
         cache.computeIfAbsent(node.text) { parseVersion(parser, it, node.symbol) }
     } catch (_: BailException) {
         StringVersion("%PLACEHOLDER% (${node.text})")
     }
 
-    private fun <T> parseVersion(parser: Version.Operations, input: String, token: Token): T where T : Version = try {
-        parser.parse(input).getOrThrow() as T
+    private fun parseVersion(parser: Version.Operations, input: String, token: Token): Version = try {
+        parser.parse(input).getOrThrow()
     } catch (e: VersionParsingException) {
         sink.at(token) bail problem(e) { "Failed to parse version '$input'" }
     }
 
     companion object {
-        private val SEMVER_CACHE: MutableMap<String, SemanticVersion> = ConcurrentHashMap()
-        private val STRVER_CACHE: MutableMap<String, StringVersion> = ConcurrentHashMap()
+        private val SEMVER_CACHE: MutableMap<String, Version> = ConcurrentHashMap()
+        private val STRVER_CACHE: MutableMap<String, Version> = ConcurrentHashMap()
     }
 }
