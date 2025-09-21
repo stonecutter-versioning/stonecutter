@@ -1,5 +1,6 @@
 package dev.kikugie.stitcher.transform
 
+import dev.kikugie.commons.takeAs
 import dev.kikugie.stitcher.antlr.StitcherParser
 import dev.kikugie.stitcher.antlr.SwapTemplate
 import dev.kikugie.stitcher.data.BlockToken
@@ -10,18 +11,29 @@ import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.issue.problem
 import dev.kikugie.stitcher.issue.report
 import dev.kikugie.stitcher.issue.verifyNotNull
-import dev.kikugie.stitcher.transform.impl.ExpressionEvaluator
+import dev.kikugie.stitcher.parse.adapter.InlineTokenConverter
+import dev.kikugie.stitcher.parse.builder.LayoutBuilder
+import dev.kikugie.stitcher.transform.BlockAssembler.Companion.join
+import dev.kikugie.stitcher.transform.RangeFinder.range
+import dev.kikugie.stitcher.transform.impl.UncommentingTokenSource
 import dev.kikugie.stitcher.util.isEOF
-import dev.kikugie.stitcher.util.merge
 import dev.kikugie.stitcher.util.range
 import dev.kikugie.stitcher.util.toStream
+import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.Token
 
-private fun List<BlockToken>.join(): String = joinToString(transform = BlockToken::text)
+private fun List<BlockToken>.join(): String = buildString {
+    for (it in this@join) it.join(this)
+}
 
-private fun List<BlockToken>.isCommented(): Boolean = all { it is BlockToken.Comment || (it is BlockToken.Content && it.leaf.text.isBlank()) }
+private fun List<BlockToken>.isCommented(): Boolean =
+    all { it is BlockToken.Comment || (it is BlockToken.Content && it.leaf.text.isBlank()) }
 
-internal class BlockTransformer(val parameters: TransformParameters) : BlockToken.Visitor<BlockToken> {
+internal data class BlockTransformer(
+    val runtime: RuntimeParameters,
+    val params: TransformParameters,
+    val converter: InlineTokenConverter
+) : BlockToken.Visitor<BlockToken> {
     private var visitedEnabledBlock: Boolean = false
 
     override fun visitRoot(it: BlockToken.Root) = it.copy(scope = it.scope.map { it.acceptThis() })
@@ -35,14 +47,14 @@ internal class BlockTransformer(val parameters: TransformParameters) : BlockToke
             if (it !is Swap.Opener) return emptyList()
 
             val identifier = it.identifier.text
-            val template = parameters.sink.verifyNotNull(parameters.swaps[identifier]?.processTemplate(it.arguments)) {
+            val template = runtime.sink.verifyNotNull(params.swaps[identifier]?.processTemplate(it.arguments)) {
                 at(it.identifier) report problem { "Unregistered swap identifier '${identifier}'" }
                 return host.scope
             }
 
-            val text = parameters.replacer.replace(host.scope.join(), template)
-            // FIXME: Handle injected tokens having different source and range
-            return listOf(BlockToken.Content(text.indices, text.toStream()))
+            val text = params.replacer.replace(host.scope.join(), template)
+            val token = converter(LayoutBuilder.CONTENT, host.scope.range(), text)
+            return listOf(BlockToken.Content(token))
         }
 
         override fun visitCondition(it: Condition): List<BlockToken> {
@@ -50,9 +62,23 @@ internal class BlockTransformer(val parameters: TransformParameters) : BlockToke
             if (it is Condition.Closer) return emptyList()
 
             // In an if-else chain makes the rest of the blocks disabled
-            val requestedState = it.expression!!.accept(ExpressionEvaluator(parameters))
+            val shouldEnable = it.expression?.accept(ExpressionEvaluator(runtime, params)) ?: true
                 && !visitedEnabledBlock
-            visitedEnabledBlock = requestedState || visitedEnabledBlock
+            visitedEnabledBlock = shouldEnable || visitedEnabledBlock
+            val isCommented = host.scope.isCommented()
+
+            return if (shouldEnable && isCommented) {
+                val source = UncommentingTokenSource(runtime, params, host.scope)
+                val scope = LayoutBuilder.build(CommonTokenStream(source), runtime.sink, InlineTokenConverter(host.host.closer.range.last + 1))
+                scope.accept(this@BlockTransformer.copy()).takeAs<BlockToken.Root>().scope
+            }
+            else if (!shouldEnable && !isCommented) {
+                val text = params.commenter.comment(host.scope.join())
+                val source = params.adapter.create(text.toStream(), runtime.sink)
+                val scope = LayoutBuilder.build(CommonTokenStream(source), runtime.sink, InlineTokenConverter(host.host.closer.range.last + 1))
+                scope.accept(this@BlockTransformer.copy()).takeAs<BlockToken.Root>().scope
+            }
+            else host.scope
         }
 
         private fun String.processTemplate(tokens: List<LeafToken>): String {
