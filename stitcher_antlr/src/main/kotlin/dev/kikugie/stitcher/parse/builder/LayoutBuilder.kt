@@ -36,8 +36,8 @@ private fun ScopeBuilder.comment(opener: AntlrToken, body: AntlrToken, closer: A
     entries as MutableList += ScopeBuilder.Comment(this, opener, body, closer)
 }
 
-private fun ScopeBuilder.code(opener: AntlrToken, marker: LeafToken, definition: DefinitionToken, closer: AntlrToken): ScopeBuilder.Code =
-    ScopeBuilder.Code(this, opener, marker, definition, closer).also { entries as MutableList += it }
+private fun ScopeBuilder.code(opener: AntlrToken, body: AntlrToken, closer: AntlrToken, marker: LeafToken, definition: DefinitionToken): ScopeBuilder.Code =
+    ScopeBuilder.Code(this, ScopeBuilder.Comment(this, opener, body, closer), marker, definition).also { entries as MutableList += it }
 
 /**Returns `true` if there are characters left.*/
 private fun InlineCharStream.consumeScope(type: DefinitionType): Boolean = when (type) {
@@ -71,14 +71,13 @@ private sealed interface ScopeBuilder {
 
     class Code(
         override val parent: ScopeBuilder,
-        val opener: AntlrToken,
+        val host: Comment,
         val marker: LeafToken,
         val definition: DefinitionToken,
-        val closer: AntlrToken,
         override val entries: MutableList<ScopeBuilder> = mutableListOf()
     ) : ScopeBuilder {
         override fun build(converter: AntlrTokenConverter): BlockToken.Code =
-            BlockToken.Code(converter(opener), marker, definition, converter(closer), entries.map { it.build(converter) })
+            BlockToken.Code(host.build(converter), marker, definition, entries.map { it.build(converter) })
     }
 
     class Content(override val parent: ScopeBuilder, val tokens: MutableList<AntlrToken> = mutableListOf()) : ScopeBuilder {
@@ -153,14 +152,14 @@ internal class LayoutBuilder private constructor(val stream: TokenStream, val si
 
         if (builder is ScopeBuilder.Root) {
             if (definition.closer != null) sink.at(definition.closer!!) report problem { "Unmatched scope closer" }
-            builder.code(opener, marker, definition, closer).also { if (!definition.type.isEmpty) builder = it }
+            builder.code(opener, body, closer, marker, definition).also { if (!definition.type.isEmpty) builder = it }
             return
         }
 
         if (builder is ScopeBuilder.Code) {
             val code = builder as ScopeBuilder.Code
             if (definition.type == INDEPENDENT) {
-                builder.code(opener, marker, definition, closer)
+                builder.code(opener, body, closer, marker, definition)
                 return
             }
 
@@ -172,7 +171,7 @@ internal class LayoutBuilder private constructor(val stream: TokenStream, val si
                 sink.at(marker) report problem { "Extension closes an open scope" }
 
             if (definition.type.isExtension) builder = builder.parent!!
-            builder.code(opener, marker, definition, closer).also { if (!definition.type.isEmpty) builder = it }
+            builder.code(opener, body, closer, marker, definition).also { if (!definition.type.isEmpty) builder = it }
         }
     }
     private fun parseComment(body: Token): Pair<LeafToken, DefinitionToken>? {

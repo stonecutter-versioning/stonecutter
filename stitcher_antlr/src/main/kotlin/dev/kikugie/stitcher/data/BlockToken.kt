@@ -19,10 +19,9 @@ internal sealed interface BlockToken {
     }
 
     data class Code(
-        val opener: LeafToken,
+        val host: Comment,
         val marker: LeafToken,
         val definition: DefinitionToken,
-        val closer: LeafToken,
         val scope: List<BlockToken> = emptyList()
     ) : BlockToken {
         override fun <T> accept(visitor: Visitor<T>): T = visitor.visitCode(this)

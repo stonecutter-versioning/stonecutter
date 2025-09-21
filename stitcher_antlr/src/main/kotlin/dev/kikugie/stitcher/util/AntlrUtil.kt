@@ -32,5 +32,5 @@ internal inline operator fun CharStream.get(start: Int, end: Int) =
 
 internal fun TokenSource.asSequence() = generateSequence { nextToken()?.takeIf { it.type != Token.EOF } }
 
-internal fun <T : AntlrToken> TokenFactory<T>.create(src: TokenSource, type: Int, start: Int, stop: Int, line: Int, offset: Int): T =
-    create(Pair(src, null), type, null, Token.DEFAULT_CHANNEL, start, stop, line, offset)
+internal fun <T : AntlrToken> TokenFactory<T>.create(src: TokenSource, type: Int, start: Int, stop: Int, line: Int, offset: Int, input: CharStream? = null): T =
+    create(Pair(src, input), type, null, Token.DEFAULT_CHANNEL, start, stop, line, offset)

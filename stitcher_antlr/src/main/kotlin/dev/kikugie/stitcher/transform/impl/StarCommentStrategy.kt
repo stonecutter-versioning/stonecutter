@@ -92,11 +92,10 @@ private fun StringBuilder.removeCommentDepth(from: Char, to: Char, surrounder: C
 internal object StarCommentStrategy : CommentingStrategy, UncommentingStrategy {
     override fun comment(scope: String): String = buildString(scope) {
         applyCommentDepth(from = '*', to = '^', surrounder = '/')
-        insert(0, "/*").append(" */")
+        insert(0, "/*").append("*/")
     }
 
     override fun uncomment(scope: String): String = buildString(scope) {
-        removePrefix("/*").removeSuffix("*/").removeSuffix(" ")
         removeCommentDepth(from = '^', to = '*', surrounder = '/')
     }
 }
