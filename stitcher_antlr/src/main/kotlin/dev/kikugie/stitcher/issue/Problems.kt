@@ -13,7 +13,7 @@ import kotlin.contracts.contract
 internal annotation class ProblemsDsl
 
 @ProblemsDsl
-internal class BailException : Throwable()
+internal class BailException : RuntimeException()
 
 @ProblemsDsl
 internal data class ProblemTemplate(val message: String, val cause: Throwable?)
@@ -24,7 +24,7 @@ internal data class ProblemLocation(val line: UInt, val column: UInt, val sink: 
 @ProblemsDsl
 internal class ProblemSink(val file: Path) {
     fun report(location: ProblemLocation, template: ProblemTemplate) {
-        TODO()
+        System.err.println("At $location: $template")
     }
 }
 
@@ -41,8 +41,8 @@ internal inline fun ProblemSink.at(token: AntlrToken): ProblemLocation =
     at(token.line, token.charPositionInLine)
 
 @ProblemsDsl
-internal inline fun ProblemSink.at(stitcherToken: StitcherToken): ProblemLocation =
-    TODO()
+internal inline fun ProblemSink.at(token: StitcherToken): ProblemLocation =
+    ProblemLocation(1u, 0u, this)
 
 @ProblemsDsl
 internal inline infix fun ProblemLocation.report(template: ProblemTemplate): Unit =
