@@ -1,8 +1,11 @@
 package dev.kikugie.stitcher.transform.impl
 
+import dev.kikugie.commons.text.countMatching
+import dev.kikugie.commons.text.countWhile
 import dev.kikugie.commons.text.getOrDefault
 import dev.kikugie.stitcher.transform.strategy.CommentingStrategy
 import dev.kikugie.stitcher.transform.strategy.UncommentingStrategy
+import dev.kikugie.stitcher.util.WORD_BREAKS
 import dev.kikugie.stitcher.util.buildString
 
 private val SUPERSCRIPT_NUMBERS: CharArray = charArrayOf('⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹')
@@ -92,7 +95,7 @@ private fun StringBuilder.removeCommentDepth(from: Char, to: Char, surrounder: C
 internal object StarCommentStrategy : CommentingStrategy, UncommentingStrategy {
     override fun comment(scope: String): String = buildString(scope) {
         applyCommentDepth(from = '*', to = '^', surrounder = '/')
-        insert(0, "/*").append("*/")
+        insert(countMatching(*WORD_BREAKS), "/*").append("*/")
     }
 
     override fun uncomment(scope: String): String = buildString(scope) {

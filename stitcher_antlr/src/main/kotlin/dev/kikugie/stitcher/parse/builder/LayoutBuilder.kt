@@ -21,8 +21,6 @@ import dev.kikugie.stitcher.util.*
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.tree.TerminalNode
 
-private val SKIPPABLE_SPACES: CharArray = charArrayOf(' ', '\t', '\r', '\n')
-
 private fun ScopeBuilder.isPopulated(): Boolean = entries.isNotEmpty() && !entries.first().let { builder ->
     builder is ScopeBuilder.Content && builder.tokens.all { it.text.isBlank() }
 }
@@ -42,14 +40,10 @@ private fun ScopeBuilder.code(opener: AntlrToken, body: AntlrToken, closer: Antl
 /**Returns `true` if there are characters left.*/
 private fun InlineCharStream.consumeScope(type: DefinitionType): Boolean = when (type) {
     // The first line without the line break
-    LINE_OPENER, LINE_EXTENSION -> skipWhile {
-        it != '\n' && it != '\r'
-    }
+    LINE_OPENER, LINE_EXTENSION -> skipNotMatching(*LINE_BREAKS)
 
     // The first "word" until a whitespace or a line break
-    WORD_OPENER, WORD_EXTENSION -> skipWhile {
-        it !in SKIPPABLE_SPACES
-    }
+    WORD_OPENER, WORD_EXTENSION -> skipNotMatching(*WHITESPACES)
 
     // Technically not needed - consumes the entire sequence
     else -> seek(end - 1) then false
@@ -130,7 +124,7 @@ internal class LayoutBuilder private constructor(val stream: TokenStream, val si
 
         InlineCharStream(token).invoke {
             // The entire block is whitespace - append and wait for the next
-            if (!skipLeadingSpaces(*SKIPPABLE_SPACES))
+            if (!skipMatching(*WHITESPACES))
                 return@invoke builder.content(token)
 
             val unfinished = consumeScope(type)

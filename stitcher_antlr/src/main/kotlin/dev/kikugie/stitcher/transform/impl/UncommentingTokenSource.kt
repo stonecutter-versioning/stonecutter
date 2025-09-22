@@ -1,8 +1,8 @@
 package dev.kikugie.stitcher.transform.impl
 
 import dev.kikugie.stitcher.data.BlockToken
-import dev.kikugie.stitcher.parse.adapter.InlineTokenStream
 import dev.kikugie.stitcher.parse.builder.LayoutBuilder
+import dev.kikugie.stitcher.parse.inline.InlineTokenStream
 import dev.kikugie.stitcher.transform.RuntimeParameters
 import dev.kikugie.stitcher.transform.TransformParameters
 import dev.kikugie.stitcher.util.asSequence
@@ -48,7 +48,7 @@ internal class UncommentingTokenSource(
         is BlockToken.Comment -> {
             val content = params.uncommenter.uncomment(block.body.text)
             val lexer = params.adapter.create(content.toStream(), runtime.sink)
-            val stream = InlineTokenStream(CommonTokenStream(lexer), CommonTokenFactory(), block.body.range.first)
+            val stream = InlineTokenStream(lexer, block.body.range.first)
             yieldAll(stream.asSequence())
         }
         else -> error("Unexpected block type: ${block::class.simpleName}")
