@@ -15,7 +15,7 @@ import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.issue.bail
 import dev.kikugie.stitcher.issue.problem
-import dev.kikugie.stitcher.parse.adapter.InlineTokenConverter
+import dev.kikugie.stitcher.parse.inline.InlineTokenConverter
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.util.concurrent.ConcurrentHashMap

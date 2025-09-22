@@ -14,9 +14,9 @@ import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.issue.problem
 import dev.kikugie.stitcher.issue.report
-import dev.kikugie.stitcher.parse.adapter.InlineCharStream
-import dev.kikugie.stitcher.parse.adapter.InlineTokenConverter
-import dev.kikugie.stitcher.parse.adapter.InlineTokenStream
+import dev.kikugie.stitcher.parse.inline.InlineCharStream
+import dev.kikugie.stitcher.parse.inline.InlineTokenConverter
+import dev.kikugie.stitcher.parse.inline.InlineTokenStream
 import dev.kikugie.stitcher.util.*
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.tree.TerminalNode
@@ -185,8 +185,7 @@ internal class LayoutBuilder private constructor(val stream: TokenStream, val si
             }
 
             val lexer = StitcherLexer(this)
-            val stream = InlineTokenStream(CommonTokenStream(lexer), factory, body.startIndex)
-            val parser = StitcherParser(stream)
+            val parser = StitcherParser(InlineTokenStream(lexer, body.startIndex))
             val context = parser.definition()
             constructCode(context)
         }

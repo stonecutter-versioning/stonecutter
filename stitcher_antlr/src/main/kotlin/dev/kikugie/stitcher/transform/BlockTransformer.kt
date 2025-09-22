@@ -11,7 +11,7 @@ import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.issue.problem
 import dev.kikugie.stitcher.issue.report
 import dev.kikugie.stitcher.issue.verifyNotNull
-import dev.kikugie.stitcher.parse.adapter.InlineTokenConverter
+import dev.kikugie.stitcher.parse.inline.InlineTokenConverter
 import dev.kikugie.stitcher.parse.builder.LayoutBuilder
 import dev.kikugie.stitcher.transform.BlockAssembler.Companion.join
 import dev.kikugie.stitcher.transform.RangeFinder.range

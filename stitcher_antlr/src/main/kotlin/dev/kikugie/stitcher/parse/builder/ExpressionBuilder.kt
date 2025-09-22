@@ -4,7 +4,7 @@ import dev.kikugie.stitcher.antlr.StitcherBaseVisitor
 import dev.kikugie.stitcher.antlr.StitcherParser
 import dev.kikugie.stitcher.data.ExpressionToken
 import dev.kikugie.stitcher.issue.ProblemSink
-import dev.kikugie.stitcher.parse.adapter.InlineTokenConverter
+import dev.kikugie.stitcher.parse.inline.InlineTokenConverter
 
 internal class ExpressionBuilder(sink: ProblemSink, val converter: InlineTokenConverter) : StitcherBaseVisitor<ExpressionToken>() {
     private val predicateBuilder: PredicateBuilder = PredicateBuilder(sink, converter)

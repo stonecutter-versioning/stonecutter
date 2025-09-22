@@ -1,4 +1,4 @@
-package dev.kikugie.stitcher.parse.adapter
+package dev.kikugie.stitcher.parse.inline
 
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.IntStream
@@ -6,7 +6,7 @@ import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.misc.Interval
 
 /**
- * A [CharStream] implementation that represents a substream of a larger [CharStream][host].
+ * A [org.antlr.v4.runtime.CharStream] implementation that represents a substream of a larger [CharStream][host].
  *
  * Delegates most functionality directly to the [host], while restricting access to the indices
  * between [start] and [end].

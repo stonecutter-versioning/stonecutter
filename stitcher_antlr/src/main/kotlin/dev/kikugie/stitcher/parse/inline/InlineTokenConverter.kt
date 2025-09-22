@@ -1,4 +1,4 @@
-package dev.kikugie.stitcher.parse.adapter
+package dev.kikugie.stitcher.parse.inline
 
 import dev.kikugie.commons.ranges.shr
 import dev.kikugie.stitcher.data.LeafToken
