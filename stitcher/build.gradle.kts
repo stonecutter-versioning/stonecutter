@@ -1,15 +1,13 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    java
+    antlr
     alias(common.plugins.kotlin.jvm)
     alias(common.plugins.kotlin.dokka)
-    alias(common.plugins.kotlin.serialization)
 }
 
-version = "SNAPSHOT"
+group = "dev.kikugie"
+version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -18,13 +16,13 @@ repositories {
 }
 
 dependencies {
-    api("dev.kikugie:semver:2.0.0")
-    api("dev.kikugie:commons:0.3.1")
-    implementation(common.kotlin.reflect)
-    implementation(common.kotlin.serialization)
-
-    testImplementation(kotlin("test"))
-    testImplementation(common.kotlin.serialization.yaml)
+    antlr("org.antlr:antlr4:4.13.2")
+    api(common.misc.semver)
+    api(common.misc.commons)
+    implementation(libs.misc.ahocorasic)
+    implementation(common.misc.mordant)
+    testImplementation(common.kotest.runner)
+    testImplementation(common.kotest.assertions)
 }
 
 dokka {
@@ -42,11 +40,16 @@ dokka {
     dokkaSourceSets.named("main") {
         reportUndocumented = false
         skipEmptyPackages = true
+//        documentedVisibilities = setOf(VisibilityModifier.Public, VisibilityModifier.Internal)
 
         sourceLink {
             localDirectory = file("src/main/kotlin")
             remoteLineSuffix = "#L"
-            remoteUrl("https://codeberg.org/stonecutter/stonecutter/src/branch/0.7/stitcher/")
+            remoteUrl("https://codeberg.org/stonecutter/stonecutter/src/branch/0.8/stitcher_antlr/")
+        }
+
+        externalDocumentationLinks.register("antlr") {
+            url("https://javadoc.io/doc/org.antlr/antlr4-runtime/latest/index.html")
         }
 
         externalDocumentationLinks.register("kotlin-stdlib") {
@@ -64,19 +67,30 @@ tasks {
         useJUnitPlatform()
     }
 
-    withType<KotlinCompile> {
-        compilerOptions {
-            languageVersion = KotlinVersion.KOTLIN_2_0
-            apiVersion = KotlinVersion.KOTLIN_2_0
-            jvmTarget = JvmTarget.JVM_17
-        }
+    generateGrammarSource {
+        arguments = arguments + listOf("-visitor", "-no-listener", "-long-messages", "-lib", "$projectDir/src/main/antlr/dev/kikugie/stitcher/antlr", "-lib", "$projectDir/src/main/antlr/dev/kikugie/stitcher/antlr/scanner")
+    }
+
+    compileKotlin {
+        dependsOn(generateGrammarSource)
+    }
+
+    compileTestKotlin {
+        dependsOn(generateTestGrammarSource)
     }
 }
 
-java {
-    withSourcesJar()
-    withJavadocJar()
+tasks.test {
+    useJUnitPlatform()
+}
+kotlin {
+    jvmToolchain(21)
+    explicitApiWarning()
 
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    compilerOptions {
+        languageVersion = KotlinVersion.KOTLIN_2_2
+        apiVersion = KotlinVersion.KOTLIN_2_2
+
+        freeCompilerArgs.addAll("-Xcontext-parameters", "-Xnested-type-aliases", "-Xcontext-sensitive-resolution", "-Xwhen-guards")
+    }
 }
