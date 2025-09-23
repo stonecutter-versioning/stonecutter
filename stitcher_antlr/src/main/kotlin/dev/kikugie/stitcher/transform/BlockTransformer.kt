@@ -13,10 +13,10 @@ import dev.kikugie.stitcher.issue.report
 import dev.kikugie.stitcher.issue.verifyNotNull
 import dev.kikugie.stitcher.parse.inline.InlineTokenConverter
 import dev.kikugie.stitcher.parse.builder.LayoutBuilder
-import dev.kikugie.stitcher.transform.BlockAssembler.Companion.join
-import dev.kikugie.stitcher.transform.RangeFinder.range
+import dev.kikugie.stitcher.transform.visitor.BlockAssembler.Companion.join
+import dev.kikugie.stitcher.transform.visitor.RangeFinder.range
 import dev.kikugie.stitcher.transform.impl.UncommentingTokenSource
-import dev.kikugie.stitcher.transform.replacement.ReplacementExecutor
+import dev.kikugie.stitcher.transform.visitor.ExpressionEvaluator
 import dev.kikugie.stitcher.util.buildString
 import dev.kikugie.stitcher.util.isEOF
 import dev.kikugie.stitcher.util.range

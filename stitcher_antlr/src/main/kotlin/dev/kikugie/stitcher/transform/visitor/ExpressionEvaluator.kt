@@ -1,4 +1,4 @@
-package dev.kikugie.stitcher.transform
+package dev.kikugie.stitcher.transform.visitor
 
 import dev.kikugie.stitcher.antlr.StitcherParser
 import dev.kikugie.stitcher.data.ExpressionToken
@@ -6,6 +6,8 @@ import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.issue.bail
 import dev.kikugie.stitcher.issue.problem
 import dev.kikugie.stitcher.issue.verifyNotNull
+import dev.kikugie.stitcher.transform.RuntimeState
+import dev.kikugie.stitcher.transform.TransformParameters
 
 internal class ExpressionEvaluator(val runtime: RuntimeState, val parameters: TransformParameters) : ExpressionToken.Visitor<Boolean> {
     override fun visitGroup(it: ExpressionToken.Group): Boolean = it.body.accept(this)

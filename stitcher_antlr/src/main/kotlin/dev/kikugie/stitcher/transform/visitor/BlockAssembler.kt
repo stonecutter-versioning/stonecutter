@@ -1,4 +1,4 @@
-package dev.kikugie.stitcher.transform
+package dev.kikugie.stitcher.transform.visitor
 
 import dev.kikugie.stitcher.data.BlockToken
 import dev.kikugie.stitcher.data.acceptThis
