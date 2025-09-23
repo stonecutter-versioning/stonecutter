@@ -1,15 +1,7 @@
 package dev.kikugie.stonecutter.process
 
-import dev.kikugie.stitcher.data.replacement.ReplacementExecutor.Companion.replaceWithScannedTokens
-import dev.kikugie.stitcher.data.replacement.ReplacementPhase
-import dev.kikugie.stitcher.eval.join
-import dev.kikugie.stitcher.exception.ErrorHandler
-import dev.kikugie.stitcher.exception.StoringErrorHandler
-import dev.kikugie.stitcher.exception.join
-import dev.kikugie.stitcher.parser.FileParser
-import dev.kikugie.stitcher.transformer.TransformParameters
-import dev.kikugie.stitcher.transformer.Transformer
-import dev.kikugie.stonecutter.build.param.StonecutterBuildData
+import dev.kikugie.stonecutter.StonecutterInternalAPI
+import dev.kikugie.stonecutter.build.param.StonecutterBuildParameters
 import dev.kikugie.stonecutter.util.clearIfNotIncremental
 import dev.kikugie.stonecutter.util.execute
 import dev.kikugie.stonecutter.util.invoke
@@ -19,11 +11,8 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileType
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
-import org.gradle.api.provider.ListProperty
-import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
-import org.gradle.kotlin.dsl.mapProperty
 import org.gradle.kotlin.dsl.submit
 import org.gradle.work.FileChange
 import org.gradle.work.Incremental
@@ -34,13 +23,14 @@ import org.gradle.workers.WorkQueue
 import org.gradle.workers.WorkerExecutor
 import java.io.File
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
 import javax.inject.Inject
-import kotlin.io.path.*
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.exists
 
+@OptIn(StonecutterInternalAPI::class)
 public abstract class SCPrepareTask : DefaultTask() {
     @get:Nested
-    public abstract val params: Property<StonecutterBuildData>
+    public abstract val params: Property<StonecutterBuildParameters>
 
     @get:Input
     public abstract val root: Property<File>
@@ -66,32 +56,19 @@ public abstract class SCPrepareTask : DefaultTask() {
         }
     }
 
-    private fun WorkQueue.processFile(change: FileChange) = submit(SCPrepareAction::class) {
-        constants.set(params().constantsProperty)
-        swaps.set(params().swapsProperty)
-        dependencies.set(params().dependenciesProperty.configureImplicitVersion())
-        replacements.set(params().replacementsProperty)
+    private fun WorkQueue.processFile(change: FileChange): Unit = submit(SCPrepareAction::class) {
+        params.set(this@SCPrepareTask.params)
         source.set(change.file)
         output.set(change.file.cacheFile())
-    }
-
-    private fun MapProperty<String, String>.configureImplicitVersion(): MapProperty<String, String> = objects.mapProperty<String, String>().apply {
-        putAll(this@configureImplicitVersion())
-        val receiver = params().implicitReceiver()
-        val default = getting(receiver).getOrElse(getting("").get())
-        put(receiver, default)
-        put(receiver, default)
     }
 
     private fun File.cacheFile(): File = destination.asFile().resolve(relativeTo(root()))
 }
 
+@OptIn(StonecutterInternalAPI::class)
 private interface SCPrepareAction : WorkAction<SCPrepareAction.Parameters> {
     interface Parameters : WorkParameters {
-        val constants: MapProperty<String, Boolean>
-        val swaps: MapProperty<String, String>
-        val dependencies: MapProperty<String, String>
-        val replacements: ListProperty<StonecutterBuildData.ReplacementStub>
+        val params: Property<StonecutterBuildParameters>
         val source: RegularFileProperty
         val output: RegularFileProperty
     }
@@ -101,40 +78,7 @@ private interface SCPrepareAction : WorkAction<SCPrepareAction.Parameters> {
         val output: Path = parameters.output.asFile().toPath()
 
         if (!source.exists()) { output.deleteIfExists(); return }
-        val transforms = StonecutterBuildData.Serializer.convert(
-            parameters.constants, parameters.swaps, parameters.dependencies, parameters.replacements
-        )
 
-        val original: CharSequence = source.readText(Charsets.UTF_8)
-        val modified: CharSequence = original
-            .applyReplacements(transforms, ReplacementPhase.FIRST)
-            .applyTransformation(transforms)
-            .applyReplacements(transforms, ReplacementPhase.LAST)
-        if (original == modified) output.deleteIfExists()
-        else with(output) {
-            parent.createDirectories()
-            writeText(modified, Charsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
-        }
     }
 
-    private fun CharSequence.applyReplacements(transforms: TransformParameters, phase: ReplacementPhase): CharSequence =
-        replaceWithScannedTokens(transforms.replacements, phase)
-
-    private fun CharSequence.applyTransformation(transforms: TransformParameters): CharSequence {
-        val handler: ErrorHandler = StoringErrorHandler()
-        val parser: FileParser = FileParser.create(this, handler, transforms)
-        val ast = parser.parse()
-        handler.throwIfHasErrors()
-        Transformer(ast, transforms, handler).process()
-        handler.throwIfHasErrors()
-        return ast.join()
-    }
-
-    private fun ErrorHandler.throwIfHasErrors(): Nothing? {
-        if (errors.isEmpty()) return null
-        for (err in errors)
-            System.err.println(err.join())
-        val file = parameters.source().asFile.absolutePath
-        throw RuntimeException("Failed to parse $file")
-    }
 }

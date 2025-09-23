@@ -40,7 +40,7 @@ internal class StonecutterBuildTasksImpl(private val ext: StonecutterBuildImpl) 
         output.set(ext.project.layout.buildDirectory.file("stonecutter-cache/node.json"))
         json.set(ext.project.provider {
             val branch = ext.branch.let { BranchInfo(it.id, it.location) }
-            NodeModel(ext.current, branch, ext.tree.location, ext.properties.data).let(encoder::encodeToString)
+            NodeModel(ext.current, branch, ext.tree.location, ext.properties.params).let(encoder::encodeToString)
         })
     }.also { ext.tree.project.tasks.named("stonecutterSaveModels") { dependsOn(it) } }
 
