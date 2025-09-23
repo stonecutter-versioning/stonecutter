@@ -1,31 +1,33 @@
 package dev.kikugie.stonecutter.build.param
 
-import dev.kikugie.stitcher.data.replacement.Replacement
-import dev.kikugie.stonecutter.data.dsl.*
-import dev.kikugie.stonecutter.data.dsl.impl.*
+import dev.kikugie.stonecutter.StonecutterInternalAPI
+import dev.kikugie.stonecutter.build.ext.ConstantContainer.Companion.constantContainer
+import dev.kikugie.stonecutter.build.ext.DependencyContainer.Companion.dependencyContainer
+import dev.kikugie.stonecutter.build.ext.ReplacementContainer.Companion.replacementContainer
+import dev.kikugie.stonecutter.build.ext.SwapContainer.Companion.swapContainer
+import dev.kikugie.stonecutter.data.dsl.VersionOperations
+import dev.kikugie.stonecutter.data.dsl.impl.LenientOperations
 import dev.kikugie.stonecutter.data.tree.struct.ProjectNode
 import org.gradle.api.Named
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ProviderFactory
-import org.gradle.api.tasks.util.PatternFilterable
-import org.gradle.api.tasks.util.PatternSet
 import org.gradle.kotlin.dsl.newInstance
 import javax.inject.Inject
 import dev.kikugie.semver.data.Version as ParsedVersion
 
-public abstract class StonecutterBuildProperties @Inject constructor(
-    override val node: ProjectNode,
-    objects: ObjectFactory,
-    factory: ProviderFactory
-) : DeprecatedBuildConfig, Named, VersionOperations<ParsedVersion> by LenientOperations {
-    private val list: MutableList<Replacement> = mutableListOf()
-    internal val data: StonecutterBuildData = objects.newInstance(factory, list)
+@OptIn(StonecutterInternalAPI::class)
+public abstract class StonecutterBuildProperties @Inject constructor(override val node: ProjectNode, objects: ObjectFactory, factory: ProviderFactory)
+    : StonecutterBuildConfig, Named, VersionOperations<ParsedVersion> by LenientOperations {
+        private val params = objects.newInstance<StonecutterBuildParameters>()
 
-    override val constants: ConstantContainer = ConstantContainerImpl(factory, data.constantsProperty)
-    override val dependencies: DependencyContainer = DependencyContainerImpl(factory, data.dependenciesProperty)
-    override val swaps: SwapContainer = SwapContainerImpl(factory, data.swapsProperty)
-    override val replacements: ReplacementContainer = ReplacementContainerImpl(objects, list)
-    override val filters: PatternFilterable = PatternSet()
+    init {
+        with(extensions) {
+            constantContainer("constants", params.constants)
+            swapContainer("swaps", params.swaps)
+            dependencyContainer("dependencies", params.dependencies)
+            replacementContainer("replacements", params::addString, params::addRegex)
+        }
+    }
 
     override fun getName(): String = "StonecutterBuild@${node.hierarchy}"
 }

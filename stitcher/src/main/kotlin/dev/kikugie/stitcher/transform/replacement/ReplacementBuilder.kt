@@ -8,6 +8,12 @@ public interface ReplacementBuilder<T : Replacement> {
 
     public companion object {
         public operator fun invoke(): ReplacementBuilder<Replacement> = CompositeReplacementBuilder()
+        public fun string(identifiers: MutableSet<String>) : ReplacementBuilder<StringReplacement> =
+            StringReplacementBuilder(identifiers)
+
+        public fun regex(identifiers: MutableSet<String>) : ReplacementBuilder<RegexReplacement> =
+            RegexReplacementBuilder(identifiers)
+
         internal fun string(repl: List<StringReplacement>): ReplacementBuilder<StringReplacement> =
             StringReplacementBuilder(repl)
     }

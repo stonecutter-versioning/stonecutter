@@ -1,8 +1,6 @@
-package dev.kikugie.stonecutter.data.dsl.impl
+package dev.kikugie.stonecutter.build.util
 
 import dev.kikugie.commons.then
-import dev.kikugie.stonecutter.data.dsl.DynamicMap
-import dev.kikugie.stonecutter.data.dsl.EagerOperation
 import dev.kikugie.stonecutter.util.get
 import dev.kikugie.stonecutter.util.orEmpty
 import org.gradle.api.provider.MapProperty
@@ -11,22 +9,21 @@ import org.gradle.api.provider.ProviderFactory
 import org.jetbrains.annotations.Contract
 
 @Suppress("UNCHECKED_CAST")
-internal open class PropertyBackedMap<K : Any, V : Any>(private val factory: ProviderFactory, internal val property: MapProperty<K, V>) : DynamicMap<K, V> {
+internal open class PropertyBackedMap<K : Any, V : Any>(
+    private val factory: ProviderFactory,
+    internal val property: MapProperty<K, V>
+) : DynamicMap<K, V> {
     override val entries: MutableSet<MutableMap.MutableEntry<K, V>>
-        @EagerOperation get() = property.orEmpty().entries as MutableSet<MutableMap.MutableEntry<K, V>>
+        get() = property.orEmpty().entries as MutableSet<MutableMap.MutableEntry<K, V>>
     override val keys: MutableSet<K>
-        @EagerOperation get() = property.orEmpty().values as MutableSet<K>
+        get() = property.orEmpty().values as MutableSet<K>
     override val values: MutableCollection<V>
-        @EagerOperation get() = property.orEmpty().values as MutableCollection<V>
+        get() = property.orEmpty().values as MutableCollection<V>
     override val size: Int
-        @EagerOperation get() = property.orEmpty().size
+        get() = property.orEmpty().size
 
     override fun clear(): Unit = property.set(mutableMapOf())
-
-    @EagerOperation
     override fun isEmpty(): Boolean = property.orEmpty().isEmpty()
-
-    @EagerOperation
     override fun get(key: K): V? = property[key].orNull
 
     override fun set(key: K, value: V) = checkBoth(key, value) then property.put(key, value)
@@ -39,16 +36,13 @@ internal open class PropertyBackedMap<K : Any, V : Any>(private val factory: Pro
 
     override fun putAll(from: Map<out K, V>): Unit = from.forEach { (k, v) -> checkBoth(k, v) } then property.putAll(from)
 
+    override fun containsKey(key: K): Boolean = key in property.orEmpty()
+    override fun containsValue(value: V): Boolean = property.orEmpty().containsValue(value)
+
     @Throws(UnsupportedOperationException::class) @Contract("_ -> fail")
     override fun remove(key: K): V? = throw UnsupportedOperationException(
         "Removal of arbitrary elements is not supported for Gradle MapProperty"
     )
-
-    @EagerOperation
-    override fun containsKey(key: K): Boolean = key in property.orEmpty()
-
-    @EagerOperation
-    override fun containsValue(value: V): Boolean = property.orEmpty().containsValue(value)
 
     protected open fun checkKey(key: K) {}
     protected open fun checkValue(value: V) {}
