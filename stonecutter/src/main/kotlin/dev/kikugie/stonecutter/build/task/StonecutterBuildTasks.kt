@@ -2,11 +2,15 @@ package dev.kikugie.stonecutter.build.task
 
 import dev.kikugie.stonecutter.Identifier
 import dev.kikugie.stonecutter.StonecutterAPI
+import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.process.SCPrepareTask
 import dev.kikugie.stonecutter.TaskProviderMap
+import dev.kikugie.stonecutter.build.StonecutterBuildImpl
+import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.Sync
+import org.gradle.kotlin.dsl.create
 import java.io.File
 
 /**
@@ -47,4 +51,10 @@ public interface StonecutterBuildTasks {
         if (SourceSet.isMain(src)) "" else src.name.replaceFirstChar(Char::uppercase)
 
     public fun configureSource(src: SourceSet)
+
+    @StonecutterInternalAPI
+    public companion object {
+        internal fun ExtensionContainer.tasksContainer(name: String, ext: StonecutterBuildImpl): StonecutterBuildTasks =
+            create(StonecutterBuildTasks::class, name, StonecutterBuildTasksImpl::class, ext)
+    }
 }

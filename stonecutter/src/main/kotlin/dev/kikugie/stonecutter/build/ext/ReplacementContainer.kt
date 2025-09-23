@@ -4,7 +4,6 @@ import dev.kikugie.stitcher.transform.replacement.RegexReplacement
 import dev.kikugie.stitcher.transform.replacement.StringReplacement
 import dev.kikugie.stonecutter.Identifier
 import dev.kikugie.stonecutter.StonecutterInternalAPI
-import dev.kikugie.stonecutter.Version
 import dev.kikugie.stonecutter.util.invoke
 import dev.kikugie.stonecutter.util.isIdentifier
 import dev.kikugie.stonecutter.util.newInstance

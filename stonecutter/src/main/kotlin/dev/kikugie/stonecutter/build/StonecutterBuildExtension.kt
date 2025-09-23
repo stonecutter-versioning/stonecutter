@@ -2,9 +2,6 @@ package dev.kikugie.stonecutter.build
 
 import dev.kikugie.semver.data.SemanticVersion
 import dev.kikugie.stonecutter.StonecutterAPI
-import dev.kikugie.stonecutter.build.param.StonecutterBuildConfig
-import dev.kikugie.stonecutter.build.task.StonecutterBuildTasks
-import dev.kikugie.stonecutter.controller.flag.FlagContainer
 import dev.kikugie.stonecutter.data.StonecutterProject
 import dev.kikugie.stonecutter.data.dsl.VersionOperations
 import dev.kikugie.stonecutter.data.dsl.impl.SemanticOperations
@@ -52,25 +49,4 @@ public interface StonecutterBuildExtension : ExtensionAware {
     // TODO: Convert to extension
     public val semantics: VersionOperations<SemanticVersion>
         get() = SemanticOperations
-
-    /**
-     * Read-only configuration flags container passed from `stonecutter.gradle[.kts]`.
-     * Can be used to retrieve default and custom configuration values.
-     */
-    // TODO: Convert to extension
-    public val flags: FlagContainer
-
-    /**
-     * Structured task container for each stage of file processing.
-     * This can be used to programmatically configure task dependencies
-     * when the automatic method doesn't work correctly.
-     */
-    // TODO: Convert to extension
-    public val tasks: StonecutterBuildTasks
-
-    public infix fun flags(action: FlagContainer.() -> Unit): Unit = flags.action()
-    public fun flags(action: Closure<*>): Unit = flags(action::call)
-
-    public infix fun tasks(action: StonecutterBuildTasks.() -> Unit): Unit = tasks.action()
-    public fun tasks(action: Closure<*>): Unit = tasks(action::call)
 }

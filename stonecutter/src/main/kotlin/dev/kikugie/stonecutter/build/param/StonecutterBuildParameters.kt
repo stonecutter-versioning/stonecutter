@@ -6,8 +6,8 @@ import dev.kikugie.stitcher.transform.replacement.StringReplacement
 import dev.kikugie.stonecutter.Identifier
 import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.Version
-import dev.kikugie.stonecutter.controller.flag.FlagContainer
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlag
+import dev.kikugie.stonecutter.controller.flag.StonecutterFlags
 import dev.kikugie.stonecutter.util.newInstance
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
@@ -43,7 +43,12 @@ private fun patchImplicitDependency(prop: MapProperty<Identifier, Version>, key:
  * However, the properties should not be modified directly, as it is likely to cause errors at task runtime.
  */
 @StonecutterInternalAPI
-public abstract class StonecutterBuildParameters @Inject constructor(flags: FlagContainer, current: Version, objects: ObjectFactory, factory: ProviderFactory) {
+public abstract class StonecutterBuildParameters @Inject internal constructor(
+    flags: StonecutterFlags,
+    current: Version,
+    objects: ObjectFactory,
+    factory: ProviderFactory
+) {
     @get:Input public abstract val constants: MapProperty<Identifier, Boolean>
     @get:Input public abstract val swaps: MapProperty<Identifier, String>
     @get:Input public abstract val dependencies: MapProperty<Identifier, Version>

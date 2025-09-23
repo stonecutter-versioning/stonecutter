@@ -2,6 +2,7 @@ package dev.kikugie.stonecutter.build.task
 
 import dev.kikugie.stonecutter.Identifier
 import dev.kikugie.stonecutter.MutableTaskProviderMap
+import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.build.StonecutterBuildImpl
 import dev.kikugie.stonecutter.data.tree.model.BranchInfo
 import dev.kikugie.stonecutter.data.tree.model.NodeModel
@@ -18,7 +19,8 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.register
 import java.io.File
 
-internal class StonecutterBuildTasksImpl(private val ext: StonecutterBuildImpl) : StonecutterBuildTasks {
+@OptIn(StonecutterInternalAPI::class)
+internal open class StonecutterBuildTasksImpl(private val ext: StonecutterBuildImpl) : StonecutterBuildTasks {
     override val prepare: MutableTaskProviderMap<Identifier, SCPrepareTask> = mutableMapOf()
     override val generate: MutableTaskProviderMap<Identifier, Sync> = mutableMapOf()
     override val merge: MutableTaskProviderMap<Identifier, Copy> = mutableMapOf()
@@ -52,7 +54,7 @@ internal class StonecutterBuildTasksImpl(private val ext: StonecutterBuildImpl) 
         }
 
     override fun configureSource(src: SourceSet) {
-        val branchSrc: File = ext.parent.projectDirectory.resolve("src")
+        val branchSrc: File = ext.project.parent!!.projectDirectory.resolve("src")
         val versionSrc: File = ext.project.projectDirectory.resolve("src")
         for (set in src.allSources()) {
             val matchingDirs = set.sourceDirectories
