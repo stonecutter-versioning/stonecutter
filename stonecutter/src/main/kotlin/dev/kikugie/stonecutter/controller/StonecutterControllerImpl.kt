@@ -4,10 +4,10 @@ import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.StonecutterPlugin
 import dev.kikugie.stonecutter.build.param.StonecutterBuildProperties
 import dev.kikugie.stonecutter.controller.StonecutterControllerManager.Companion.getController
-import dev.kikugie.stonecutter.controller.flag.FlagContainerImpl
-import dev.kikugie.stonecutter.controller.flag.MutableFlagContainer
+import dev.kikugie.stonecutter.controller.ext.mutableFlagContainer
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlag
-import dev.kikugie.stonecutter.controller.tasks.StonecutterControllerTasksImpl
+import dev.kikugie.stonecutter.controller.flag.StonecutterFlags
+import dev.kikugie.stonecutter.controller.tasks.StonecutterControllerTasks.Companion.tasksContainer
 import dev.kikugie.stonecutter.data.ProjectHierarchy
 import dev.kikugie.stonecutter.data.ProjectHierarchy.Companion.hierarchy
 import dev.kikugie.stonecutter.data.StonecutterProject
@@ -25,36 +25,40 @@ import dev.kikugie.stonecutter.data.tree.struct.ProjectNodeImpl
 import dev.kikugie.stonecutter.data.tree.struct.ProjectTreeImpl
 import dev.kikugie.stonecutter.process.SCIdeaConfigTask
 import dev.kikugie.stonecutter.util.ActiveProvider
+import dev.kikugie.stonecutter.util.flags
 import dev.kikugie.stonecutter.util.isIdeaSync
 import dev.kikugie.stonecutter.util.requestTasks
 import dev.kikugie.stonecutter.util.set
+import dev.kikugie.stonecutter.util.tasks
+import org.gradle.api.Action
 import org.gradle.api.Project
-import org.gradle.api.file.RegularFile
-import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.provider.Provider
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.named
-import java.io.File
 import dev.kikugie.semver.data.Version as ParsedVersion
 
 @OptIn(StonecutterInternalAPI::class)
-internal open class StonecutterControllerImpl(val root: Project) :
+internal abstract class StonecutterControllerImpl(val root: Project) :
     StonecutterControllerExtension, VersionOperations<ParsedVersion> by LenientOperations {
-    private val nodes get() = root.gradle.getContainer<ProjectNodeContainer>()
-    private val properties get() = root.gradle.getContainer<BuildPropertiesContainer>()
+    private val nodes by lazy { root.gradle.getContainer<ProjectNodeContainer>() }
+    private val properties by lazy { root.gradle.getContainer<BuildPropertiesContainer>() }
     private var hasInitialized: Boolean = false
 
-    override val tree: ProjectTreeImpl = constructTree()
-    override val flags: MutableFlagContainer = FlagContainerImpl().apply {
-        lookup = { root.findProperty("dev.kikugie.stonecutter.${it.key}")?.toString() }
-    }
-    override val tasks: StonecutterControllerTasksImpl = StonecutterControllerTasksImpl(this)
     internal var activeInfo: ActiveInfo = ActiveInfo.empty()
         private set
 
-    init {
-        nodes += tree
+    override val tree: ProjectTreeImpl = constructTree()
+//    override val flags: MutableFlagContainer = FlagContainerImpl().apply {
+//        lookup = { root.findProperty("dev.kikugie.stonecutter.${it.key}")?.toString() }
+//    }
+//    override val tasks: StonecutterControllerTasksImpl = StonecutterControllerTasksImpl(this)
 
+    init {
+        with(extensions) {
+            mutableFlagContainer("flags", StonecutterFlags { root.findProperty("dev.kikugie.stonecutter.${it.key}")?.toString() })
+            tasksContainer("tasks", this@StonecutterControllerImpl)
+        }
+
+        nodes += tree
         configureProject()
         configureSyncTask()
         configureModelTasks()
@@ -62,7 +66,7 @@ internal open class StonecutterControllerImpl(val root: Project) :
 
     override fun active(provider: Any?) = initializePluginConfiguration(provider)
 
-    override fun parameters(config: StonecutterBuildProperties.() -> Unit) {
+    override fun parameters(config: Action<StonecutterBuildProperties>) {
         properties[tree] = config
     }
 

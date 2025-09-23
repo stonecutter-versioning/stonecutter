@@ -4,11 +4,14 @@ import dev.kikugie.stonecutter.Identifier
 import dev.kikugie.stonecutter.StonecutterAPI
 import dev.kikugie.stonecutter.TaskProviderMap
 import dev.kikugie.stonecutter.TaskProviderMapProperty
+import dev.kikugie.stonecutter.controller.StonecutterControllerImpl
 import dev.kikugie.stonecutter.data.dsl.impl.LenientOperations
 import dev.kikugie.stonecutter.data.tree.struct.ProjectNode
 import dev.kikugie.stonecutter.process.SCSwitchTask
 import org.gradle.api.Task
+import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.api.tasks.TaskProvider
+import org.gradle.kotlin.dsl.create
 import kotlin.reflect.KClass
 
 /**
@@ -16,15 +19,6 @@ import kotlin.reflect.KClass
  */
 @StonecutterAPI
 public interface StonecutterControllerTasks {
-    public companion object {
-        /**
-         * Compares nodes by evaluating the [ProjectNode.metadata.version][dev.kikugie.stonecutter.data.StonecutterProject.version]
-         * with [StonecutterControllerExtension.parse][dev.kikugie.stonecutter.controller.StonecutterControllerExtension.parse].
-         */
-        @JvmField public val VERSION_COMPARATOR: Comparator<ProjectNode> =
-            Comparator.comparing { LenientOperations.parse(it.metadata.version) }
-    }
-
     /**
      * Compares nodes by evaluating the [ProjectNode.metadata.version][dev.kikugie.stonecutter.data.StonecutterProject.version]
      * with [StonecutterControllerExtension.parse][dev.kikugie.stonecutter.controller.StonecutterControllerExtension.parse].
@@ -82,4 +76,16 @@ public interface StonecutterControllerTasks {
      *   the final execution order may be different from expected.
      */
     public fun order(name: String, ordering: Comparator<ProjectNode>? = null, filter: (ProjectNode.() -> Boolean)? = null)
+
+    public companion object {
+        /**
+         * Compares nodes by evaluating the [ProjectNode.metadata.version][dev.kikugie.stonecutter.data.StonecutterProject.version]
+         * with [StonecutterControllerExtension.parse][dev.kikugie.stonecutter.controller.StonecutterControllerExtension.parse].
+         */
+        @JvmField public val VERSION_COMPARATOR: Comparator<ProjectNode> =
+            Comparator.comparing { LenientOperations.parse(it.metadata.version) }
+
+        internal fun ExtensionContainer.tasksContainer(name: String, ext: StonecutterControllerImpl): StonecutterControllerTasks =
+            create(StonecutterControllerTasks::class, name, StonecutterControllerTasksImpl::class, ext)
+    }
 }

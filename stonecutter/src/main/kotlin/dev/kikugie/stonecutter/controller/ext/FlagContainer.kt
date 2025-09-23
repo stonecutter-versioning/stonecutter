@@ -10,10 +10,7 @@ import kotlin.annotation.AnnotationRetention.BINARY
 @DslMarker @Retention(BINARY)
 private annotation class FlagDsl
 
-internal fun ExtensionContainer.flagContainer(name: String, flags: StonecutterFlags): FlagContainer =
-    create(FlagContainer::class, name, Impl::class, flags)
-
-internal fun ExtensionContainer.mutableFlagContainer(name: String, flags: StonecutterFlags): MutableFlagContainer =
+internal fun ExtensionContainer.flagContainer(name: String, flags: StonecutterFlags): MutableFlagContainer =
     create(MutableFlagContainer::class, name, Impl::class, flags)
 
 @FlagDsl @ApiStatus.NonExtendable

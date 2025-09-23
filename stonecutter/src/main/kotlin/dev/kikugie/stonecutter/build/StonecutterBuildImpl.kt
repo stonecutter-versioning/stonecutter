@@ -3,8 +3,8 @@ package dev.kikugie.stonecutter.build
 import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.build.param.StonecutterBuildProperties
 import dev.kikugie.stonecutter.build.task.StonecutterBuildTasks.Companion.tasksContainer
-import dev.kikugie.stonecutter.build.util.flags
-import dev.kikugie.stonecutter.build.util.tasks
+import dev.kikugie.stonecutter.util.flags
+import dev.kikugie.stonecutter.util.tasks
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlag
 import dev.kikugie.stonecutter.data.ProjectHierarchy.Companion.hierarchy
 import dev.kikugie.stonecutter.data.container.BuildPropertiesContainer
@@ -33,7 +33,7 @@ internal abstract class StonecutterBuildImpl(val project: Project)
         project.gradle.getContainer<BuildPropertiesContainer>()[node]
 
     init {
-        for (schema in properties.extensions.extensionsSchema)
+        for (schema in properties.extensions.extensionsSchema) if (schema.name != "ext")
             extensions.add(schema.name, properties.extensions.getByName(schema.name))
         extensions.tasksContainer("tasks", this)
         configureProject()
@@ -57,6 +57,7 @@ internal abstract class StonecutterBuildImpl(val project: Project)
     }
 
     private fun createProcessingTasks(src: SourceSet) {
+        // TODO: Use input-output dependencies instead
         val overrides = project.projectDirectory.resolve("src/${src.name}")
         val prepareTask = tasks.registerPrepareTask(src) {
             params.set(properties.params)

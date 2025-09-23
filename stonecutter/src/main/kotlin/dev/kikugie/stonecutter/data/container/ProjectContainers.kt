@@ -6,6 +6,7 @@ import dev.kikugie.stonecutter.data.ProjectHierarchy.Companion.hierarchy
 import dev.kikugie.stonecutter.data.tree.builder.TreeBuilder
 import dev.kikugie.stonecutter.data.tree.struct.ProjectNode
 import dev.kikugie.stonecutter.data.tree.struct.ProjectTree
+import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.kotlin.dsl.create
 import org.gradle.api.Project
@@ -42,7 +43,7 @@ internal open class BuildPropertiesContainer(val objects: ObjectFactory, val fac
     operator fun get(node: ProjectNode): StonecutterBuildProperties = properties.findByName("StonecutterBuild@${node.hierarchy}")
         ?: objects.newInstance<StonecutterBuildProperties>(node, objects, factory).also(properties::add)
 
-    operator fun set(tree: ProjectTree, action: StonecutterBuildProperties.() -> Unit) {
+    operator fun set(tree: ProjectTree, action: Action<StonecutterBuildProperties>) {
         val nodes = tree.nodes.map { "StonecutterBuild@${it.hierarchy}" }.toSet()
         properties.named { it in nodes }.all(action)
     }

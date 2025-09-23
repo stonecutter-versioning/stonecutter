@@ -1,7 +1,10 @@
 package dev.kikugie.stonecutter.controller.tasks
 
+import dev.kikugie.commons.takeAs
 import dev.kikugie.stonecutter.*
 import dev.kikugie.stonecutter.build.StonecutterBuildExtension
+import dev.kikugie.stonecutter.build.StonecutterBuildImpl
+import dev.kikugie.stonecutter.util.tasks
 import dev.kikugie.stonecutter.controller.StonecutterControllerImpl
 import dev.kikugie.stonecutter.controller.StonecutterControllerManager
 import dev.kikugie.stonecutter.data.tree.model.BranchInfo
@@ -111,7 +114,7 @@ internal class StonecutterControllerTasksImpl(val ext: StonecutterControllerImpl
         .filter { it.metadata.project == project }
         .map {
             ext.root.provider {
-                it.project.the<StonecutterBuildExtension>().tasks.merge.values
+                it.project.the<StonecutterBuildExtension>().takeAs<StonecutterBuildImpl>().tasks.merge.values
             }
         }
 }
