@@ -1,3 +1,4 @@
+import org.gradle.kotlin.dsl.antlr
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
@@ -6,7 +7,6 @@ plugins {
     alias(common.plugins.kotlin.dokka)
 }
 
-group = "dev.kikugie"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -16,10 +16,10 @@ repositories {
 }
 
 dependencies {
-    antlr("org.antlr:antlr4:4.13.2")
+    antlr(libs.antlr)
     api(common.misc.semver)
     api(common.misc.commons)
-    implementation(libs.misc.ahocorasic)
+    implementation(libs.ahocorasick)
     implementation(common.misc.mordant)
     testImplementation(common.kotest.runner)
     testImplementation(common.kotest.assertions)
@@ -83,8 +83,9 @@ tasks {
 tasks.test {
     useJUnitPlatform()
 }
+
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(17)
     explicitApiWarning()
 
     compilerOptions {

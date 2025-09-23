@@ -21,4 +21,4 @@ plugins {
 }
 
 rootProject.name = "Stonecutter"
-include("stonecutter", "stitcher")
+include("stitcher", "stonecutter")

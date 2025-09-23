@@ -3,13 +3,10 @@
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import kotlin.io.path.ExperimentalPathApi
 
 plugins {
-    idea
     java
     signing
     `kotlin-dsl`
@@ -21,13 +18,6 @@ plugins {
     alias(common.plugins.kotlin.dokka.javadoc)
     alias(common.plugins.kotlin.serialization)
     alias(common.plugins.kotlin.validator)
-}
-
-idea {
-    module {
-        isDownloadJavadoc = true
-        isDownloadSources = true
-    }
 }
 
 repositories {
@@ -44,9 +34,9 @@ sourceSets {
 }
 
 dependencies {
-    api(project(path = ":stitcher"))
-    api("dev.kikugie:semver:2.0.0")
-    api("dev.kikugie:commons:0.3.1")
+    api(project(":stitcher"))
+    api(common.misc.semver)
+    api(common.misc.commons)
     implementation(common.kotlin.serialization)
     implementation(common.kotlin.serialization.json)
 
@@ -58,7 +48,6 @@ dependencies {
 
 apiValidation {
     ignoredPackages += "stonecutter_samples"
-    nonPublicMarkers += "dev.kikugie.stonecutter.StonecutterInternalAPI"
 }
 
 dokka {
@@ -110,7 +99,8 @@ kotlin {
     compilerOptions {
         languageVersion = KotlinVersion.KOTLIN_2_2
         apiVersion = KotlinVersion.KOTLIN_2_2
-//        freeCompilerArgs.addAll("-Xnested-type-aliases", "-Xcontext-sensitive-resolution", "-Xwhen-guards")
+
+        freeCompilerArgs.addAll("-Xcontext-parameters", "-Xnested-type-aliases", "-Xcontext-sensitive-resolution", "-Xwhen-guards")
     }
 }
 
@@ -123,7 +113,6 @@ tasks {
         compilerOptions {
             languageVersion = KotlinVersion.KOTLIN_2_2
             apiVersion = KotlinVersion.KOTLIN_2_2
-//            freeCompilerArgs.addAll("-Xnested-type-aliases", "-Xcontext-sensitive-resolution", "-Xwhen-guards")
         }
     }
 

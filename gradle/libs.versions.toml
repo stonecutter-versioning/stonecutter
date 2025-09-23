@@ -1,5 +1,7 @@
 [versions]
+antlr = "4.13.2"
 aho-corasick = "0.6.3"
 
 [libraries]
-misc-ahocorasic = { group = "org.ahocorasick", name = "ahocorasick", version.ref = "aho-corasick" }
+antlr = { group = "org.antlr", name="antlr4", version.ref = "antlr" }
+ahocorasick = { group = "org.ahocorasick", name = "ahocorasick", version.ref = "aho-corasick" }
