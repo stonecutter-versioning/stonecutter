@@ -2,6 +2,7 @@
 
 package dev.kikugie.stonecutter.util
 
+import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.invocation.Gradle
@@ -24,19 +25,19 @@ import java.io.File
 internal val Project.sourceSets: SourceSetContainer
     get() = project.the<SourceSetContainer>()
 
-internal inline operator fun <T> Provider<T>.invoke(): T = get()
-internal inline operator fun <T> ListProperty<T>.invoke(): List<T> = get()
-internal inline operator fun <K : Any, V> MapProperty<K, V>.invoke(): Map<K, V> = get()
-internal inline operator fun <K : Any, V> MapProperty<K, V>.get(key: K): Provider<V> = getting(key)
+internal inline operator fun <T: Any> Provider<T>.invoke(): T = get()
+internal inline operator fun <T: Any> ListProperty<T>.invoke(): List<T> = get()
+internal inline operator fun <K : Any, V: Any> MapProperty<K, V>.invoke(): Map<K, V> = get()
+internal inline operator fun <K : Any, V: Any> MapProperty<K, V>.get(key: K): Provider<V> = getting(key)
 
-internal inline operator fun <T> Property<T>.invoke(value: T?) = set(value)
-internal inline operator fun <T> ListProperty<T>.invoke(elements: Iterable<T>?) = set(elements)
-internal inline operator fun <T> ListProperty<T>.invoke(vararg elements: T) = set(elements.asIterable())
-internal inline operator fun <K : Any, V> MapProperty<K, V>.invoke(map: Map<K, V>?) = set(map)
-internal inline operator fun <K : Any, V> MapProperty<K, V>.invoke(pairs: Iterable<Pair<K, V>>) = set(pairs.toMap())
-internal inline operator fun <K : Any, V> MapProperty<K, V>.invoke(vararg pairs: Pair<K, V>) = set(mapOf(*pairs))
-internal inline operator fun <K : Any, V : Any> MapProperty<K, V>.set(key: K, value: V) = put(key, value)
-internal inline operator fun <K : Any, V : Any> MapProperty<K, V>.set(key: K, value: Provider<V>) = put(key, value)
+internal inline operator fun <T: Any> Property<T>.invoke(value: T?): Unit = set(value)
+internal inline operator fun <T: Any> ListProperty<T>.invoke(elements: Iterable<T>?): Unit = set(elements)
+internal inline operator fun <T: Any> ListProperty<T>.invoke(vararg elements: T): Unit = set(elements.asIterable())
+internal inline operator fun <K : Any, V: Any> MapProperty<K, V>.invoke(map: Map<K, V>?): Unit = set(map)
+internal inline operator fun <K : Any, V: Any> MapProperty<K, V>.invoke(pairs: Iterable<Pair<K, V>>): Unit = set(pairs.toMap())
+internal inline operator fun <K : Any, V: Any> MapProperty<K, V>.invoke(vararg pairs: Pair<K, V>): Unit = set(mapOf(*pairs))
+internal inline operator fun <K : Any, V : Any> MapProperty<K, V>.set(key: K, value: V): Unit = put(key, value)
+internal inline operator fun <K : Any, V : Any> MapProperty<K, V>.set(key: K, value: Provider<V>): Unit = put(key, value)
 
 
 internal fun <E> Provider<Set<E>>.orEmpty(): Set<E> = orNull ?: emptySet()
@@ -45,6 +46,9 @@ internal fun <K, V> Provider<Map<K, V>>.orEmpty(): Map<K, V> = orNull ?: emptyMa
 
 internal inline fun <reified T : Any> ObjectFactory.newInstance(vararg parameters: Any, build: T.() -> Unit)
     = newInstance<T>(*parameters).apply(build)
+
+internal inline fun <reified T : Any> ObjectFactory.newInstance(build: Action<T>, vararg parameters: Any)
+    = newInstance<T>(*parameters).apply(build::execute)
 
 internal fun SourceSet.allSources() = sequence {
     yield(java)
