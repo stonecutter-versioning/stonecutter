@@ -58,7 +58,7 @@ private class StringReplacementExecutor(replacements: List<Replacement>, identif
 
     private class ReplacementAction(val value: String) {
         fun replace(builder: StringBuilder, emit: Interval) {
-            builder.replace(emit.start, emit.end, value)
+            builder.replace(emit.start, emit.end + 1, value)
         }
     }
 }

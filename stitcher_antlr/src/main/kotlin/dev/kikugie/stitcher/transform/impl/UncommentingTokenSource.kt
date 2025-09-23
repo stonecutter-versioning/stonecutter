@@ -3,20 +3,19 @@ package dev.kikugie.stitcher.transform.impl
 import dev.kikugie.stitcher.data.BlockToken
 import dev.kikugie.stitcher.parse.builder.LayoutBuilder
 import dev.kikugie.stitcher.parse.inline.InlineTokenStream
-import dev.kikugie.stitcher.transform.RuntimeParameters
+import dev.kikugie.stitcher.transform.RuntimeState
 import dev.kikugie.stitcher.transform.TransformParameters
 import dev.kikugie.stitcher.util.asSequence
 import dev.kikugie.stitcher.util.toStream
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CommonTokenFactory
-import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.TokenFactory
 import org.antlr.v4.runtime.TokenSource
 import org.antlr.v4.runtime.misc.Pair
 
 internal class UncommentingTokenSource(
-    val runtime: RuntimeParameters,
+    val runtime: RuntimeState,
     val params: TransformParameters,
     val blocks: List<BlockToken>
 ) : TokenSource {

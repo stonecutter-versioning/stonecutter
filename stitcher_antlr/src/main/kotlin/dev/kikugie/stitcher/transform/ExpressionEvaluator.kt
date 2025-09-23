@@ -7,7 +7,7 @@ import dev.kikugie.stitcher.issue.bail
 import dev.kikugie.stitcher.issue.problem
 import dev.kikugie.stitcher.issue.verifyNotNull
 
-internal class ExpressionEvaluator(val runtime: RuntimeParameters, val parameters: TransformParameters) : ExpressionToken.Visitor<Boolean> {
+internal class ExpressionEvaluator(val runtime: RuntimeState, val parameters: TransformParameters) : ExpressionToken.Visitor<Boolean> {
     override fun visitGroup(it: ExpressionToken.Group): Boolean = it.body.accept(this)
 
     override fun visitUnary(it: ExpressionToken.Unary): Boolean = when (it.operator.type) {

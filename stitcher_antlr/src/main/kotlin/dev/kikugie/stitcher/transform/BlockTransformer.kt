@@ -16,6 +16,8 @@ import dev.kikugie.stitcher.parse.builder.LayoutBuilder
 import dev.kikugie.stitcher.transform.BlockAssembler.Companion.join
 import dev.kikugie.stitcher.transform.RangeFinder.range
 import dev.kikugie.stitcher.transform.impl.UncommentingTokenSource
+import dev.kikugie.stitcher.transform.replacement.ReplacementExecutor
+import dev.kikugie.stitcher.util.buildString
 import dev.kikugie.stitcher.util.isEOF
 import dev.kikugie.stitcher.util.range
 import dev.kikugie.stitcher.util.toStream
@@ -30,7 +32,7 @@ private fun List<BlockToken>.isCommented(): Boolean =
     all { it is BlockToken.Comment || (it is BlockToken.Content && it.leaf.text.isBlank()) }
 
 internal data class BlockTransformer(
-    val runtime: RuntimeParameters,
+    val runtime: RuntimeState,
     val params: TransformParameters,
     val converter: InlineTokenConverter
 ) : BlockToken.Visitor<BlockToken> {
@@ -38,12 +40,28 @@ internal data class BlockTransformer(
 
     override fun visitRoot(it: BlockToken.Root) = it.copy(scope = it.scope.map { it.acceptThis() })
     override fun visitCode(it: BlockToken.Code) = it.copy(scope = it.definition.accept(ScopeTransformer(it)))
-    override fun visitContent(it: BlockToken.Content) = it
     override fun visitComment(it: BlockToken.Comment) = it
+    override fun visitContent(it: BlockToken.Content): BlockToken = with(it.leaf) {
+        if (text.isNotBlank())
+            runtime.initializeReplacements(params.replacements)
+
+        if (runtime.replacer == null || params.replacements.isEmpty())
+            return it
+
+        val transformed = buildString(text) { runtime.replacer!!.replace(this) }
+        BlockToken.Content(copy(text = transformed))
+    }
 
     private inner class ScopeTransformer(val host: BlockToken.Code) : Visitor<List<BlockToken>> {
-        override fun visitReplacement(it: Replacement): List<BlockToken> = emptyList()
+        override fun visitReplacement(it: Replacement): List<BlockToken> {
+            if (runtime.replacer != null) runtime.sink.at(host.marker) report problem { "Late replacement token" }
+            else runtime.includeReplacement(it.identifier.text)
+
+            return emptyList()
+        }
+
         override fun visitSwap(it: Swap): List<BlockToken> {
+            runtime.initializeReplacements(params.replacements)
             if (it !is Swap.Opener) return emptyList()
 
             val identifier = it.identifier.text
@@ -58,6 +76,7 @@ internal data class BlockTransformer(
         }
 
         override fun visitCondition(it: Condition): List<BlockToken> {
+            runtime.initializeReplacements(params.replacements)
             if (it !is Condition.Extension) visitedEnabledBlock = false
             if (it is Condition.Closer) return emptyList()
 
