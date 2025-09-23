@@ -19,6 +19,7 @@ dependencies {
     antlr("org.antlr:antlr4:4.13.2")
     api(common.misc.semver)
     api(common.misc.commons)
+    implementation(libs.misc.ahocorasic)
     implementation(common.misc.mordant)
     testImplementation(common.kotest.runner)
     testImplementation(common.kotest.assertions)

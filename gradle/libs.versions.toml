@@ -1,0 +1,5 @@
+[versions]
+aho-corasick = "0.6.3"
+
+[libraries]
+misc-ahocorasic = { group = "org.ahocorasick", name = "ahocorasick", version.ref = "aho-corasick" }
