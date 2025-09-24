@@ -1,5 +1,12 @@
+@file:OptIn(StonecutterInternalAPI::class)
+
 package dev.kikugie.stonecutter.build.param
 
+import dev.kikugie.stitcher.antlr.scanner.SlashStyleScanner
+import dev.kikugie.stitcher.parse.adapter.ScannerAdapter
+import dev.kikugie.stitcher.transform.TransformParameters
+import dev.kikugie.stitcher.transform.impl.StandardSwapStrategy
+import dev.kikugie.stitcher.transform.impl.StarCommentStrategy
 import dev.kikugie.stitcher.transform.replacement.RegexReplacement
 import dev.kikugie.stitcher.transform.replacement.ReplacementBuilder
 import dev.kikugie.stitcher.transform.replacement.StringReplacement
@@ -8,6 +15,8 @@ import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.Version
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlag
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlags
+import dev.kikugie.stonecutter.data.dsl.impl.LenientOperations
+import dev.kikugie.stonecutter.util.get
 import dev.kikugie.stonecutter.util.newInstance
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
@@ -21,13 +30,36 @@ import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.Optional
 import javax.inject.Inject
 
-@OptIn(StonecutterInternalAPI::class)
 private fun ObjectFactory.stringSpec(repl: StringReplacement): StonecutterBuildParameters.StringReplacementSpec =
     newInstance { target.set(repl.target); sources.set(repl.sources); identifier.set(repl.identifier) }
 
-@OptIn(StonecutterInternalAPI::class)
 private fun ObjectFactory.regexSpec(repl: RegexReplacement): StonecutterBuildParameters.RegexReplacementSpec =
     newInstance { target.set(repl.target); pattern.set(repl.pattern.pattern); flags.set(repl.pattern.options); identifier.set(repl.identifier) }
+
+private fun StonecutterBuildParameters.RegexReplacementSpec.build(): RegexReplacement =
+    RegexReplacement(target.get(), Regex(pattern.get()), identifier.orNull)
+
+private fun StonecutterBuildParameters.StringReplacementSpec.build(): StringReplacement =
+    StringReplacement(target.get(), sources.get(), identifier.orNull)
+
+// TODO: API for new functionality
+private fun StonecutterBuildParameters.toTransformParameters(): TransformParameters {
+    val constants = constants.get()
+    val swaps = swaps.get()
+    val dependencies = dependencies.get().mapValues { (_, it) -> LenientOperations.parse(it) }
+    val replacements = stringReplacements.get().map { it.build() } + regexReplacements.get().map { it.build() }
+
+    val adapter = ScannerAdapter.Factory { input, sink ->
+        ScannerAdapter(
+            SlashStyleScanner(input),
+            intArrayOf(SlashStyleScanner.SLASH_COMMENT_START, SlashStyleScanner.STAR_COMMENT_START),
+            intArrayOf(SlashStyleScanner.SLASH_COMMENT_END, SlashStyleScanner.STAR_COMMENT_END),
+            sink
+        )
+    }
+
+    return TransformParameters(adapter, StarCommentStrategy, StarCommentStrategy, StandardSwapStrategy, swaps, constants, dependencies, replacements)
+}
 
 private fun patchImplicitDependency(prop: MapProperty<Identifier, Version>, key: Identifier, version: Version): Map<Identifier, Version> = buildMap {
     putAll(prop.get())
@@ -75,6 +107,7 @@ public abstract class StonecutterBuildParameters @Inject internal constructor(fl
 
     internal fun addString(repl: StringReplacement): Unit = stringReplacementBuilder.add(repl).getOrThrow()
     internal fun addRegex(repl: RegexReplacement): Unit = regexReplacementBuilder.add(repl).getOrThrow()
+    internal fun build(): TransformParameters = toTransformParameters()
 
     public interface StringReplacementSpec {
         @get:Input public val target: Property<String>

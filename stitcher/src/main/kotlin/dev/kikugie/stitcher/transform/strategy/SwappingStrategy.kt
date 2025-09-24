@@ -1,6 +1,9 @@
 package dev.kikugie.stitcher.transform.strategy
 
-internal fun interface SwappingStrategy {
+/**
+ * Represents a strategy for replacing a specific scope of text with a new value.
+ */
+public fun interface SwappingStrategy {
     /**
      * Replaces provided [scope] with the new [value].
      *
@@ -11,5 +14,5 @@ internal fun interface SwappingStrategy {
      * - Preserve the first and the last blank line in a code block.
      * - Maintain the indentation of the existing value.
      */
-    fun replace(scope: String, value: String): String
+    public fun replace(scope: String, value: String): String
 }

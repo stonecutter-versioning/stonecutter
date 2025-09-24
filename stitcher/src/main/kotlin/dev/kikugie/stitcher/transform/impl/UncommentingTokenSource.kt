@@ -45,7 +45,7 @@ internal class UncommentingTokenSource(
             yield(token)
         }
         is BlockToken.Comment -> {
-            val content = params.uncommenter.uncomment(block.body.text)
+            val content = params.uncommenter.uncomment(block.body.text, block.opener.text, block.closer.text)
             val lexer = params.adapter.create(content.toStream(), runtime.sink)
             val stream = InlineTokenStream(lexer, block.body.range.first)
             yieldAll(stream.asSequence())

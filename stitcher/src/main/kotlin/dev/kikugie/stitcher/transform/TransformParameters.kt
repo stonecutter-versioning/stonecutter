@@ -7,7 +7,7 @@ import dev.kikugie.stitcher.transform.strategy.CommentingStrategy
 import dev.kikugie.stitcher.transform.strategy.SwappingStrategy
 import dev.kikugie.stitcher.transform.strategy.UncommentingStrategy
 
-internal data class TransformParameters(
+public data class TransformParameters(
     val adapter: ScannerAdapter.Factory,
 
     val commenter: CommentingStrategy,

@@ -92,13 +92,13 @@ private fun StringBuilder.removeCommentDepth(from: Char, to: Char, surrounder: C
     }
 }
 
-internal object StarCommentStrategy : CommentingStrategy, UncommentingStrategy {
+public object StarCommentStrategy : CommentingStrategy, UncommentingStrategy {
     override fun comment(scope: String): String = buildString(scope) {
         applyCommentDepth(from = '*', to = '^', surrounder = '/')
         insert(countMatching(*WORD_BREAKS), "/*").append("*/")
     }
 
-    override fun uncomment(scope: String): String = buildString(scope) {
+    override fun uncomment(scope: String, opener: String, closer: String): String = buildString(scope) {
         removeCommentDepth(from = '^', to = '*', surrounder = '/')
     }
 }
