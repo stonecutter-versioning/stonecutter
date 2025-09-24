@@ -58,6 +58,7 @@ public abstract class SCPrepareTask : DefaultTask() {
     }
 
     private fun WorkQueue.processFile(change: FileChange): Unit = submit(SCPrepareAction::class) {
+        params.set(this@SCPrepareTask.params)
         source.set(change.file)
         output.set(change.file.cacheFile())
     }
@@ -68,8 +69,9 @@ public abstract class SCPrepareTask : DefaultTask() {
 @OptIn(StonecutterInternalAPI::class)
 private interface SCPrepareAction : WorkAction<SCPrepareAction.Parameters> {
     interface Parameters : WorkParameters {
-        val source: RegularFileProperty
-        val output: RegularFileProperty
+        @get:Nested val params: Property<StonecutterBuildParameters>
+        @get:Input val source: RegularFileProperty
+        @get:Input val output: RegularFileProperty
     }
 
     override fun execute() {
