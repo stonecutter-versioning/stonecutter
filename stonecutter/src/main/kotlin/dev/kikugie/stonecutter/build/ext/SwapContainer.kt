@@ -1,6 +1,7 @@
 package dev.kikugie.stonecutter.build.ext
 
 import dev.kikugie.stonecutter.Identifier
+import dev.kikugie.stonecutter.StonecutterAPI
 import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.build.util.DynamicMap
 import dev.kikugie.stonecutter.build.util.PropertyBackedMap
@@ -12,7 +13,7 @@ import kotlin.annotation.AnnotationRetention.BINARY
 @DslMarker @Retention(BINARY)
 private annotation class SwapDsl
 
-@SwapDsl
+@StonecutterAPI @SwapDsl
 public sealed interface SwapContainer : DynamicMap<Identifier, String> {
     private class Impl(factory: ProviderFactory, property: MapProperty<Identifier, String>) :
         PropertyBackedMap<Identifier, String>(factory, property), SwapContainer {

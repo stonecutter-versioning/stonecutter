@@ -1,6 +1,7 @@
 package dev.kikugie.stonecutter.data.tree.struct
 
 import dev.kikugie.stonecutter.Identifier
+import dev.kikugie.stonecutter.StonecutterAPI
 import dev.kikugie.stonecutter.data.ProjectHierarchy
 import dev.kikugie.stonecutter.data.StonecutterProject
 import org.gradle.api.Project
@@ -10,6 +11,7 @@ import java.nio.file.Path
  * Represents a member entity within a Gradle-based structure that provides access to its [hierarchy],
  * the [location] it resides in, and the associated Gradle [project].
  */
+@StonecutterAPI
 public interface GradleMember {
     /**
      * The [directory][Path] where the associated member resides within the Gradle project structure.
@@ -33,6 +35,7 @@ public interface GradleMember {
  * Represents a node in a project structure associated with a [StonecutterProject] and a [branch].
  * Provides methods to navigate between related nodes within the structure.
  */
+@StonecutterAPI
 public interface ProjectNode : GradleMember {
     /**
      * Contains the project name, assigned version, and the active status, represented by a [StonecutterProject].
@@ -70,6 +73,7 @@ public interface ProjectNode : GradleMember {
  * Represents a branch in the [ProjectTree].
  * Implements [GradleMember] and maps [ProjectNode.metadata.project][StonecutterProject.project] keys to [ProjectNode] values.
  */
+@StonecutterAPI
 public interface ProjectBranch : GradleMember, Map<Identifier, ProjectNode> {
     /**
      * The name of this branch.
@@ -102,6 +106,7 @@ public interface ProjectBranch : GradleMember, Map<Identifier, ProjectNode> {
  * Represents a hierarchical structure of projects, offering access to branches, nodes, and version control information.
  * Implements [GradleMember] and maps [ProjectBranch.id] keys to [ProjectBranch] values.
  */
+@StonecutterAPI
 public interface ProjectTree : GradleMember, Map<Identifier, ProjectBranch> {
     /**
      * The version control reset point for this tree.

@@ -1,6 +1,7 @@
 package dev.kikugie.stonecutter.build.ext
 
 import dev.kikugie.stonecutter.Identifier
+import dev.kikugie.stonecutter.StonecutterAPI
 import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.build.util.DynamicMap
 import dev.kikugie.stonecutter.build.util.PropertyBackedMap
@@ -11,7 +12,7 @@ import org.gradle.api.provider.ProviderFactory
 @DslMarker @Retention(AnnotationRetention.BINARY)
 private annotation class ConstantDsl
 
-@ConstantDsl
+@StonecutterAPI @ConstantDsl
 public sealed interface ConstantContainer : DynamicMap<Identifier, Boolean> {
     /**Puts all [choices] into the constant map, with their values set to `true` if they equal [sample].*/
     public fun match(sample: Identifier, vararg choices: Identifier): Unit = choices.forEach { put(it, it == sample) }

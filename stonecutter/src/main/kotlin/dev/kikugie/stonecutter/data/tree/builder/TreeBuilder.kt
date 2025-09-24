@@ -1,6 +1,7 @@
 package dev.kikugie.stonecutter.data.tree.builder
 
 import dev.kikugie.stonecutter.Identifier
+import dev.kikugie.stonecutter.StonecutterAPI
 import dev.kikugie.stonecutter.Version
 import dev.kikugie.stonecutter.data.StonecutterProject
 import groovy.lang.Closure
@@ -12,6 +13,7 @@ import org.gradle.api.provider.Property
  *
  * @see <a href="https://stonecutter.kikugie.dev/wiki/config/branches">Wiki</a>
  */
+@StonecutterAPI
 public abstract class TreeBuilder : BranchBuilder() {
     /**
      * Represents a reset point to maintain code consistency on commits.
@@ -84,6 +86,7 @@ public abstract class TreeBuilder : BranchBuilder() {
  *
  * @see <a href="https://stonecutter.kikugie.dev/wiki/config/branches">Wiki</a>
  */
+@StonecutterAPI
 public abstract class BranchBuilder {
     /**
      * Configures the build script name for this branch.

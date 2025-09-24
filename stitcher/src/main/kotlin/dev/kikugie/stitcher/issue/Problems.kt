@@ -23,8 +23,8 @@ internal data class ProblemTemplate(val message: String, val cause: Throwable?)
 internal data class ProblemLocation(val line: UInt, val column: UInt, val sink: ProblemSink)
 
 @ProblemsDsl
-internal class ProblemSink(val file: Path) {
-    fun report(location: ProblemLocation, template: ProblemTemplate) {
+public class ProblemSink(private val file: Path) {
+    internal fun report(location: ProblemLocation, template: ProblemTemplate) {
         System.err.println("At $location: $template")
     }
 }

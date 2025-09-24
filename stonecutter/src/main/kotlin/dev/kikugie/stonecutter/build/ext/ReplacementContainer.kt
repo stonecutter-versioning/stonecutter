@@ -3,6 +3,7 @@ package dev.kikugie.stonecutter.build.ext
 import dev.kikugie.stitcher.transform.replacement.RegexReplacement
 import dev.kikugie.stitcher.transform.replacement.StringReplacement
 import dev.kikugie.stonecutter.Identifier
+import dev.kikugie.stonecutter.StonecutterAPI
 import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.util.invoke
 import dev.kikugie.stonecutter.util.isIdentifier
@@ -29,7 +30,7 @@ private fun ReplacementContainer.RegexReplacementSpec.build(): RegexReplacement 
     else RegexReplacement(reverseValue(), reversePattern(), identifier = id.orNull)
 }
 
-@ReplacementDsl
+@StonecutterAPI @ReplacementDsl
 public sealed interface ReplacementContainer {
     public fun string(action: Action<StringReplacementSpec>)
 
@@ -47,7 +48,7 @@ public sealed interface ReplacementContainer {
     public fun regex(id: Identifier, direction: Boolean? = null, action: Action<RegexReplacementSpec>): Unit =
         regex { this.id.set(id); this.direction.set(direction); action.execute(this) }
 
-    @ReplacementSpecDsl
+    @StonecutterAPI @ReplacementSpecDsl
     public interface StringReplacementSpec {
         public val direction: Property<Boolean>
         public val id: Property<Identifier>
@@ -60,7 +61,7 @@ public sealed interface ReplacementContainer {
         }
     }
 
-    @ReplacementSpecDsl
+    @StonecutterAPI @ReplacementSpecDsl
     public interface RegexReplacementSpec {
         public val direction: Property<Boolean>
         public val id: Property<Identifier>

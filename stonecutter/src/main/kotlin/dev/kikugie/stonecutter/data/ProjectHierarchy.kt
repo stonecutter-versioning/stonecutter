@@ -1,6 +1,7 @@
 package dev.kikugie.stonecutter.data
 
 import dev.kikugie.commons.then
+import dev.kikugie.stonecutter.StonecutterAPI
 import kotlinx.serialization.Serializable
 import org.gradle.api.Project
 import org.gradle.api.UnknownProjectException
@@ -11,7 +12,7 @@ import org.gradle.api.initialization.ProjectDescriptor
  * Provided path must be absolute, starting with `:`.
  * @property path String representation of the path
  */
-@JvmInline @Serializable
+@StonecutterAPI @JvmInline @Serializable
 public value class ProjectHierarchy(private val path: String) : List<String> {
     init {
         require(path.isNotBlank()) { "Path cannot be blank" }

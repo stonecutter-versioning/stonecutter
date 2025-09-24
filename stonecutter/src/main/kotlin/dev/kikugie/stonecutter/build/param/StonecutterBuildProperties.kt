@@ -24,7 +24,7 @@ import javax.inject.Inject
 import dev.kikugie.semver.data.Version as ParsedVersion
 
 @OptIn(StonecutterInternalAPI::class)
-public abstract class StonecutterBuildProperties @Inject internal constructor(override val node: ProjectNode, factory: ProviderFactory, objects: ObjectFactory)
+internal abstract class StonecutterBuildProperties @Inject internal constructor(override val node: ProjectNode, factory: ProviderFactory, objects: ObjectFactory)
     : Named, StonecutterBuildExtension, VersionOperations<ParsedVersion> by LenientOperations {
     override val flags: FlagContainer = node.tree.project.the<StonecutterControllerExtension>().flags
     internal val params: StonecutterBuildParameters = objects.newInstance<StonecutterBuildParameters>(flags.container, current.version, factory)

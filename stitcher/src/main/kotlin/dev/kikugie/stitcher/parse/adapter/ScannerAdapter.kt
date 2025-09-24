@@ -54,8 +54,8 @@ public class ScannerAdapter internal constructor(
      * Encapsulates the creation of a [ScannerAdapter] configured with
      * a specific [Lexer], [openers][ScannerAdapter.openers] and [closers][ScannerAdapter.closers].
      */
-    internal fun interface Factory {
-        fun create(input: CharStream, sink: ProblemSink): ScannerAdapter
+    public fun interface Factory {
+        public fun create(input: CharStream, sink: ProblemSink): ScannerAdapter
     }
 
     private data class Checkpoint(val cursor: Int, val line: Int, val offset: Int, val comment: Boolean)

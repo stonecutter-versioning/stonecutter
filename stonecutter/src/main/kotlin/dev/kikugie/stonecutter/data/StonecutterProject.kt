@@ -1,12 +1,13 @@
 package dev.kikugie.stonecutter.data
 
 import dev.kikugie.stonecutter.Identifier
+import dev.kikugie.stonecutter.StonecutterAPI
 import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.Version
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-@Serializable
+@StonecutterAPI @Serializable
 public data class StonecutterProject(
     /**The name of this project's directory, as in `versions/${project}`.*/
     public val project: Identifier,

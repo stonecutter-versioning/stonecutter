@@ -1,6 +1,7 @@
 package dev.kikugie.stonecutter.controller.ext
 
 import dev.kikugie.commons.takeAs
+import dev.kikugie.stonecutter.StonecutterAPI
 import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlag
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlags
@@ -9,14 +10,14 @@ import kotlin.annotation.AnnotationRetention.BINARY
 @DslMarker @Retention(BINARY)
 private annotation class FlagDsl
 
-@FlagDsl
+@StonecutterAPI @FlagDsl
 public sealed interface FlagContainer {
     public operator fun get(key: String): Any = get(StonecutterFlag.named(key))
     public operator fun <T : Any> get(key: StonecutterFlag<T>): T
     public operator fun <T : Any> StonecutterFlag<T>.invoke(): T = get(this)
 }
 
-@FlagDsl
+@StonecutterAPI @FlagDsl
 public sealed interface MutableFlagContainer : FlagContainer {
     public operator fun set(key: String, value: Any): Unit = StonecutterFlag.named(key).let {
         require(value::class == it.default::class) { "Value must be ${it.default::class.simpleName} for flag '$key'" }

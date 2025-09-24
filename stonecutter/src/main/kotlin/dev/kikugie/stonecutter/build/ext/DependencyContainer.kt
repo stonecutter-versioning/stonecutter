@@ -1,6 +1,7 @@
 package dev.kikugie.stonecutter.build.ext
 
 import dev.kikugie.stonecutter.Identifier
+import dev.kikugie.stonecutter.StonecutterAPI
 import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.Version
 import dev.kikugie.stonecutter.build.util.DynamicMap
@@ -12,7 +13,7 @@ import org.gradle.api.provider.ProviderFactory
 @DslMarker @Retention(AnnotationRetention.BINARY)
 private annotation class DependencyDsl
 
-@DependencyDsl
+@StonecutterAPI @DependencyDsl
 public sealed interface DependencyContainer : DynamicMap<Identifier, Version> {
     private open class Impl(factory: ProviderFactory, property: MapProperty<Identifier, Version>) :
         PropertyBackedMap<Identifier, Version>(factory, property), DependencyContainer {
