@@ -11,6 +11,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.initialization.Settings
 import org.gradle.api.plugins.ExtensionAware
+import org.gradle.kotlin.dsl.add
 import org.gradle.kotlin.dsl.create
 
 public open class StonecutterPlugin : Plugin<ExtensionAware> {
@@ -37,6 +38,8 @@ public open class StonecutterPlugin : Plugin<ExtensionAware> {
     }
 
     private inline fun <reified P : Any, reified R : P> ExtensionAware.stonecutter() {
-        extensions.create(P::class, "stonecutter", R::class, this)
+        val it = extensions.create(P::class, "stonecutter", R::class, this)
+        if (!extensions.extraProperties.has("dev.kikugie.stonecutter.no_short_extension"))
+            extensions.add(P::class, "sc", it)
     }
 }
