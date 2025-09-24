@@ -48,6 +48,7 @@ dependencies {
 
 apiValidation {
     ignoredPackages += "stonecutter_samples"
+    nonPublicMarkers += "dev.kikugie.stonecutter.StonecutterInternalAPI"
 }
 
 dokka {
@@ -99,8 +100,6 @@ kotlin {
     compilerOptions {
         languageVersion = KotlinVersion.KOTLIN_2_2
         apiVersion = KotlinVersion.KOTLIN_2_2
-
-        freeCompilerArgs.addAll("-Xcontext-parameters", "-Xnested-type-aliases", "-Xcontext-sensitive-resolution", "-Xwhen-guards")
     }
 }
 
