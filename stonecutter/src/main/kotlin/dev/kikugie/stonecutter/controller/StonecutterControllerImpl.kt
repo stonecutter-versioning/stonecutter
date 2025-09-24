@@ -3,7 +3,6 @@ package dev.kikugie.stonecutter.controller
 import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.StonecutterPlugin
 import dev.kikugie.stonecutter.build.StonecutterBuildExtension
-import dev.kikugie.stonecutter.build.param.StonecutterBuildProperties
 import dev.kikugie.stonecutter.controller.StonecutterControllerManager.Companion.getController
 import dev.kikugie.stonecutter.controller.ext.MutableFlagContainer
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlag
@@ -29,7 +28,6 @@ import dev.kikugie.stonecutter.util.ActiveProvider
 import dev.kikugie.stonecutter.util.isIdeaSync
 import dev.kikugie.stonecutter.util.requestTasks
 import dev.kikugie.stonecutter.util.set
-import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.named
@@ -58,8 +56,8 @@ internal abstract class StonecutterControllerImpl(val root: Project) :
 
     override fun active(provider: Any?) = initializePluginConfiguration(provider)
 
-    override fun parameters(config: Action<StonecutterBuildExtension>) {
-        properties[tree] = config
+    override fun parameters(action: StonecutterBuildExtension.() -> Unit) {
+        properties[tree] = action
     }
 
     private fun configureProject() = root.afterEvaluate {

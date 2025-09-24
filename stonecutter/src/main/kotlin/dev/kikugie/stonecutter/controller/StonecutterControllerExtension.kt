@@ -10,7 +10,8 @@ import dev.kikugie.stonecutter.data.StonecutterProject
 import dev.kikugie.stonecutter.data.dsl.VersionOperations
 import dev.kikugie.stonecutter.data.dsl.impl.SemanticOperations
 import dev.kikugie.stonecutter.data.tree.struct.ProjectTree
-import org.gradle.api.Action
+import dev.kikugie.stonecutter.util.configure
+import groovy.lang.Closure
 import org.gradle.api.plugins.ExtensionAware
 import dev.kikugie.semver.data.Version as ParsedVersion
 
@@ -59,5 +60,12 @@ public interface StonecutterControllerExtension : ExtensionAware, VersionOperati
      * as it's lazily evaluated when the build plugin is applied to the subproject,
      * instead of resolving it immediately.
      */
-    public infix fun parameters(config: Action<StonecutterBuildExtension>)
+    public infix fun parameters(action: StonecutterBuildExtension.() -> Unit)
+    public fun parameters(action: Closure<*>): Unit = parameters { action.configure(this) }
+
+    public infix fun flags(action: MutableFlagContainer.() -> Unit): Unit = flags.action()
+    public fun flags(action: Closure<*>): Unit = action.configure(flags)
+
+    public infix fun tasks(action: StonecutterControllerTasks.() -> Unit): Unit = tasks.action()
+    public fun tasks(action: Closure<*>): Unit = action.configure(tasks)
 }

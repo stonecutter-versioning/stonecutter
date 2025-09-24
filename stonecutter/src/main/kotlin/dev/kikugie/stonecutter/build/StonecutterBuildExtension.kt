@@ -15,7 +15,10 @@ import dev.kikugie.stonecutter.data.dsl.impl.SemanticOperations
 import dev.kikugie.stonecutter.data.tree.struct.ProjectBranch
 import dev.kikugie.stonecutter.data.tree.struct.ProjectNode
 import dev.kikugie.stonecutter.data.tree.struct.ProjectTree
+import dev.kikugie.stonecutter.util.configure
+import groovy.lang.Closure
 import org.gradle.api.tasks.util.PatternFilterable
+import org.gradle.util.internal.ConfigureUtil
 
 @DslMarker @Retention(AnnotationRetention.BINARY)
 private annotation class BuildDsl
@@ -61,4 +64,22 @@ public interface StonecutterBuildExtension : VersionOperations<Version> {
     public val filters: PatternFilterable
     public val flags: FlagContainer
     public val tasks: StonecutterBuildTasks
+
+    public infix fun constants(action: ConstantContainer.() -> Unit): Unit = constants.action()
+    public fun constants(action: Closure<*>): Unit = action.configure(constants)
+
+    public infix fun swaps(action: SwapContainer.() -> Unit): Unit = swaps.action()
+    public fun swaps(action: Closure<*>): Unit = action.configure(swaps)
+
+    public infix fun dependencies(action: DependencyContainer.() -> Unit): Unit = dependencies.action()
+    public fun dependencies(action: Closure<*>): Unit = action.configure(dependencies)
+
+    public infix fun replacements(action: ReplacementContainer.() -> Unit): Unit = replacements.action()
+    public fun replacements(action: Closure<*>): Unit = action.configure(replacements)
+
+    public infix fun flags(action: FlagContainer.() -> Unit): Unit = flags.action()
+    public fun flags(action: Closure<*>): Unit = action.configure(flags)
+
+    public infix fun tasks(action: StonecutterBuildTasks.() -> Unit): Unit = tasks.action()
+    public fun tasks(action: Closure<*>): Unit = action.configure(tasks)
 }

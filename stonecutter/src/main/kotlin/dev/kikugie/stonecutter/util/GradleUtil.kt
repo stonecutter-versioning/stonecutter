@@ -2,6 +2,7 @@
 
 package dev.kikugie.stonecutter.util
 
+import groovy.lang.Closure
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.file.SourceDirectorySet
@@ -17,6 +18,7 @@ import org.gradle.internal.DefaultTaskExecutionRequest
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.newInstance
 import org.gradle.kotlin.dsl.the
+import org.gradle.util.internal.ConfigureUtil
 import org.gradle.work.InputChanges
 import org.gradle.workers.WorkQueue
 import org.gradle.workers.WorkerExecutor
@@ -77,3 +79,7 @@ internal val Project.buildDirectory get() = layout.buildDirectory.asFile()
 
 internal inline fun WorkerExecutor.execute(action: (queue: WorkQueue) -> Unit) =
     noIsolation().apply(action).await()
+
+internal fun Closure<*>.configure(any: Any) {
+    ConfigureUtil.configure(this, any)
+}

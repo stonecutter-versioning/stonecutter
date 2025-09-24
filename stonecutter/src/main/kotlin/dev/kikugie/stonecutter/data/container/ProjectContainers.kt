@@ -44,7 +44,7 @@ internal open class BuildPropertiesContainer(val objects: ObjectFactory, val fac
     operator fun get(node: ProjectNode): StonecutterBuildProperties = properties.findByName("StonecutterBuild@${node.hierarchy}")
         ?: objects.newInstance<StonecutterBuildProperties>(node, factory).also(properties::add)
 
-    operator fun set(tree: ProjectTree, action: Action<StonecutterBuildExtension>) {
+    operator fun set(tree: ProjectTree, action: (StonecutterBuildExtension) -> Unit) {
         val nodes = tree.nodes.map { "StonecutterBuild@${it.hierarchy}" }.toSet()
         properties.named { it in nodes }.all(action)
     }
