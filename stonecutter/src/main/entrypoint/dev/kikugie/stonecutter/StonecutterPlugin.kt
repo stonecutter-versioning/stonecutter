@@ -11,11 +11,12 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.initialization.Settings
 import org.gradle.api.plugins.ExtensionAware
+import org.gradle.kotlin.dsl.create
 
 public open class StonecutterPlugin : Plugin<ExtensionAware> {
     public companion object {
         /**Current Stonecutter version.*/ // Updated by ':updateVersion' task during build
-        public const val VERSION: String = "0.7.9-beta.1"
+        public const val VERSION: String = "0.8-dev.1"
     }
 
     /**
@@ -35,7 +36,7 @@ public open class StonecutterPlugin : Plugin<ExtensionAware> {
             error("The plugin may only be applied to settings and projects")
     }
 
-    private inline fun <reified P, reified R : P> ExtensionAware.stonecutter() {
-        extensions.create(P::class.java, "stonecutter", R::class.java, this)
+    private inline fun <reified P : Any, reified R : P> ExtensionAware.stonecutter() {
+        extensions.create(P::class, "stonecutter", R::class, this)
     }
 }

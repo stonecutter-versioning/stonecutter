@@ -45,6 +45,12 @@ public interface ProjectNode : GradleMember {
     public val branch: ProjectBranch
 
     /**
+     * The [ProjectTree] this node belongs to.
+     */
+    public val tree: ProjectTree
+        get() = branch.tree
+
+    /**
      * Retrieves a related project node within the same [branch] based on the specified [node] identifier.
      */
     public fun peer(node: Identifier): ProjectNode? = find(branch.id, node)

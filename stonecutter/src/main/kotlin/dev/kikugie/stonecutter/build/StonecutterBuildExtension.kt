@@ -1,20 +1,28 @@
 package dev.kikugie.stonecutter.build
 
 import dev.kikugie.semver.data.SemanticVersion
+import dev.kikugie.semver.data.Version
 import dev.kikugie.stonecutter.StonecutterAPI
+import dev.kikugie.stonecutter.build.ext.ConstantContainer
+import dev.kikugie.stonecutter.build.ext.DependencyContainer
+import dev.kikugie.stonecutter.build.ext.ReplacementContainer
+import dev.kikugie.stonecutter.build.ext.SwapContainer
+import dev.kikugie.stonecutter.build.task.StonecutterBuildTasks
+import dev.kikugie.stonecutter.controller.ext.FlagContainer
 import dev.kikugie.stonecutter.data.StonecutterProject
 import dev.kikugie.stonecutter.data.dsl.VersionOperations
 import dev.kikugie.stonecutter.data.dsl.impl.SemanticOperations
 import dev.kikugie.stonecutter.data.tree.struct.ProjectBranch
 import dev.kikugie.stonecutter.data.tree.struct.ProjectNode
 import dev.kikugie.stonecutter.data.tree.struct.ProjectTree
-import groovy.lang.Closure
-import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.tasks.util.PatternFilterable
 
+@DslMarker @Retention(AnnotationRetention.BINARY)
+private annotation class BuildDsl
+
 /**Stonecutter plugin available in `build.gradle[.kts]`.*/
-@StonecutterAPI
-public interface StonecutterBuildExtension : ExtensionAware {
+@StonecutterAPI @BuildDsl
+public interface StonecutterBuildExtension : VersionOperations<Version> {
     public val node: ProjectNode
     public val branch: ProjectBranch get() = node.branch
     public val tree: ProjectTree get() = branch.tree
@@ -43,10 +51,14 @@ public interface StonecutterBuildExtension : ExtensionAware {
     public val versions: Collection<StonecutterProject>
         get() = branch.versions
 
-    public val filters: PatternFilterable
-
-    /**Provides [VersionOperations], which work strictly with [SemanticVersion]s.*/
-    // TODO: Convert to extension
     public val semantics: VersionOperations<SemanticVersion>
         get() = SemanticOperations
+
+    public val constants: ConstantContainer
+    public val swaps: SwapContainer
+    public val dependencies: DependencyContainer
+    public val replacements: ReplacementContainer
+    public val filters: PatternFilterable
+    public val flags: FlagContainer
+    public val tasks: StonecutterBuildTasks
 }

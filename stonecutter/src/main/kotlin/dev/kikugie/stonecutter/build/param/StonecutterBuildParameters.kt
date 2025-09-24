@@ -43,12 +43,7 @@ private fun patchImplicitDependency(prop: MapProperty<Identifier, Version>, key:
  * However, the properties should not be modified directly, as it is likely to cause errors at task runtime.
  */
 @StonecutterInternalAPI
-public abstract class StonecutterBuildParameters @Inject internal constructor(
-    flags: StonecutterFlags,
-    current: Version,
-    objects: ObjectFactory,
-    factory: ProviderFactory
-) {
+public abstract class StonecutterBuildParameters @Inject internal constructor(flags: StonecutterFlags, current: Version, factory: ProviderFactory) {
     @get:Input public abstract val constants: MapProperty<Identifier, Boolean>
     @get:Input public abstract val swaps: MapProperty<Identifier, String>
     @get:Input public abstract val dependencies: MapProperty<Identifier, Version>
@@ -58,8 +53,10 @@ public abstract class StonecutterBuildParameters @Inject internal constructor(
 
     @get:Internal internal abstract val dummyDependencies: MapProperty<Identifier, Version>
 
-    private val stringReplacementBuilder: ReplacementBuilder<StringReplacement>
-    private val regexReplacementBuilder: ReplacementBuilder<RegexReplacement>
+    @get:Inject protected abstract val objects: ObjectFactory
+
+    @get:Internal private val stringReplacementBuilder: ReplacementBuilder<StringReplacement>
+    @get:Internal private val regexReplacementBuilder: ReplacementBuilder<RegexReplacement>
 
     init {
         val replacementIdentifierPool = mutableSetOf<Identifier>()

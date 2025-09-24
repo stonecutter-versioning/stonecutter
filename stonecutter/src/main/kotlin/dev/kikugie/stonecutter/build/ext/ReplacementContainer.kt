@@ -9,17 +9,12 @@ import dev.kikugie.stonecutter.util.isIdentifier
 import dev.kikugie.stonecutter.util.newInstance
 import org.gradle.api.Action
 import org.gradle.api.model.ObjectFactory
-import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.api.provider.Property
-import org.gradle.kotlin.dsl.create
-import org.jetbrains.annotations.ApiStatus
-import javax.inject.Inject
-import kotlin.annotation.AnnotationRetention.BINARY
 
-@DslMarker @Retention(BINARY)
+@DslMarker @Retention(AnnotationRetention.BINARY)
 private annotation class ReplacementDsl
 
-@DslMarker @Retention(BINARY)
+@DslMarker @Retention(AnnotationRetention.BINARY)
 private annotation class ReplacementSpecDsl
 
 private fun ReplacementContainer.StringReplacementSpec.build(): StringReplacement {
@@ -34,8 +29,8 @@ private fun ReplacementContainer.RegexReplacementSpec.build(): RegexReplacement 
     else RegexReplacement(reverseValue(), reversePattern(), identifier = id.orNull)
 }
 
-@ReplacementDsl @ApiStatus.NonExtendable
-public interface ReplacementContainer {
+@ReplacementDsl
+public sealed interface ReplacementContainer {
     public fun string(action: Action<StringReplacementSpec>)
 
     public fun string(direction: Boolean, action: Action<StringReplacementSpec>): Unit =
@@ -52,7 +47,7 @@ public interface ReplacementContainer {
     public fun regex(id: Identifier, direction: Boolean? = null, action: Action<RegexReplacementSpec>): Unit =
         regex { this.id.set(id); this.direction.set(direction); action.execute(this) }
 
-    @ReplacementSpecDsl @ApiStatus.NonExtendable
+    @ReplacementSpecDsl
     public interface StringReplacementSpec {
         public val direction: Property<Boolean>
         public val id: Property<Identifier>
@@ -65,7 +60,7 @@ public interface ReplacementContainer {
         }
     }
 
-    @ReplacementSpecDsl @ApiStatus.NonExtendable
+    @ReplacementSpecDsl
     public interface RegexReplacementSpec {
         public val direction: Property<Boolean>
         public val id: Property<Identifier>
@@ -85,10 +80,10 @@ public interface ReplacementContainer {
         }
     }
 
-    private class Impl @Inject constructor(
+    private open class Impl(
+        val objects: ObjectFactory,
         val string: (StringReplacement) -> Unit,
         val regex: (RegexReplacement) -> Unit,
-        val objects: ObjectFactory
     ) : ReplacementContainer {
         override fun string(action: Action<StringReplacementSpec>): Unit =
             objects.newInstance<StringReplacementSpec>(action).build().let(string)
@@ -99,11 +94,7 @@ public interface ReplacementContainer {
 
     @StonecutterInternalAPI
     public companion object {
-        internal fun ExtensionContainer.replacementContainer(
-            name: Identifier,
-            string: (StringReplacement) -> Unit,
-            regex: (RegexReplacement) -> Unit
-        ): ReplacementContainer =
-            create(ReplacementContainer::class, name, Impl::class, string, regex)
+        internal operator fun invoke(objects: ObjectFactory, string: (StringReplacement) -> Unit, regex: (RegexReplacement) -> Unit): ReplacementContainer =
+            Impl(objects, string, regex)
     }
 }

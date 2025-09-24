@@ -40,16 +40,16 @@ internal class PredicateBuilder(val sink: ProblemSink, val converter: InlineToke
     }
 
     private fun StitcherParser.SemanticComparatorContext.resolve(): VersionOperator? = when {
-        COMP_MAJOR() != null -> SAME_MAJOR
-        REPL_MARK() != null -> SAME_MINOR
+        COMP_MAJOR() != null -> VersionOperator.SAME_MAJOR
+        REPL_MARK() != null -> VersionOperator.SAME_MINOR
         else -> null
     }
 
     private fun StitcherParser.StringComparatorContext.resolve(): VersionOperator = when {
-        OP_NOT() != null -> NOT_EQUAL
-        COMP_MORE() != null -> if (COMP_EQUAL() != null) GREATER_EQUAL else GREATER
-        COMP_LESS() != null -> if (COMP_EQUAL() != null) LESS_EQUAL else LESS
-        COMP_EQUAL() != null -> EQUAL
+        OP_NOT() != null -> VersionOperator.NOT_EQUAL
+        COMP_MORE() != null -> if (COMP_EQUAL() != null) VersionOperator.GREATER_EQUAL else VersionOperator.GREATER
+        COMP_LESS() != null -> if (COMP_EQUAL() != null) VersionOperator.LESS_EQUAL else VersionOperator.LESS
+        COMP_EQUAL() != null -> VersionOperator.EQUAL
         else -> error("$this is empty")
     }
 

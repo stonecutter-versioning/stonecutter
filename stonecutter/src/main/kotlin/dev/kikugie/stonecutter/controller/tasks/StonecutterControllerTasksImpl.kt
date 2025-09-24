@@ -1,21 +1,17 @@
 package dev.kikugie.stonecutter.controller.tasks
 
 import dev.kikugie.commons.takeAs
-import dev.kikugie.stonecutter.*
+import dev.kikugie.stonecutter.Identifier
+import dev.kikugie.stonecutter.MutableTaskProviderMap
+import dev.kikugie.stonecutter.StonecutterInternalAPI
+import dev.kikugie.stonecutter.TaskProviderMapProperty
 import dev.kikugie.stonecutter.build.StonecutterBuildExtension
 import dev.kikugie.stonecutter.build.StonecutterBuildImpl
-import dev.kikugie.stonecutter.util.tasks
 import dev.kikugie.stonecutter.controller.StonecutterControllerImpl
 import dev.kikugie.stonecutter.controller.StonecutterControllerManager
-import dev.kikugie.stonecutter.data.tree.model.BranchInfo
-import dev.kikugie.stonecutter.data.tree.model.BranchModel
-import dev.kikugie.stonecutter.data.tree.model.NodeInfo
-import dev.kikugie.stonecutter.data.tree.model.TreeModel
-import dev.kikugie.stonecutter.data.tree.struct.ProjectBranch
 import dev.kikugie.stonecutter.data.tree.struct.ProjectNode
 import dev.kikugie.stonecutter.process.SCExternalSwitchTask
 import dev.kikugie.stonecutter.process.SCScriptSwitchTask
-import dev.kikugie.stonecutter.process.SCModelTask
 import dev.kikugie.stonecutter.process.SCSwitchTask
 import dev.kikugie.stonecutter.util.buildDirectory
 import dev.kikugie.stonecutter.util.invoke
@@ -32,7 +28,7 @@ import java.io.File
 private val TRUE: (Any) -> Boolean = { true }
 
 @OptIn(StonecutterInternalAPI::class)
-internal class StonecutterControllerTasksImpl(val ext: StonecutterControllerImpl) : StonecutterControllerTasks {
+internal open class StonecutterControllerTasksImpl(val ext: StonecutterControllerImpl) : StonecutterControllerTasks {
     override val switch: MutableTaskProviderMap<Identifier, out SCSwitchTask> = mutableMapOf()
     private val encoder = Json { prettyPrint = true }
     override fun named(name: String, filter: (ProjectNode.() -> Boolean)?): TaskProviderMapProperty<ProjectNode, *> =
@@ -81,27 +77,27 @@ internal class StonecutterControllerTasksImpl(val ext: StonecutterControllerImpl
 
     fun registerModelGroupingTask() = ext.root.registerDefaultTask<DefaultTask>("stonecutterSaveModels")
 
-    fun registerTreeModelTask() = ext.root.registerDefaultTask<SCModelTask>("stonecutterSaveTreeModel") {
-        output.set(ext.root.layout.buildDirectory.file("stonecutter-cache/tree.json"))
-        json.set(ext.root.provider {
-            val branches = ext.tree.branches.map { BranchInfo(it.id, it.location) }
-            val nodes = ext.tree.nodes.map { NodeInfo(it.metadata, it.location) }
-            TreeModel(StonecutterPlugin.VERSION, ext.tree.vcs.project, ext.tree.current?.project, branches, nodes, ext.flags, ext.activeInfo)
-                .let(encoder::encodeToString)
-        })
-    }.also {
-        ext.root.tasks.named("stonecutterSaveModels") { dependsOn(it) }
-    }
-
-    fun registerBranchModelTask(branch: ProjectBranch) = branch.project.registerDefaultTask<SCModelTask>("stonecutterSaveBranchModel") {
-        output.set(branch.project.layout.buildDirectory.file("stonecutter-cache/branch.json"))
-        json.set(ext.root.provider {
-            val nodes = branch.nodes.map { NodeInfo(it.metadata, it.location) }
-            BranchModel(branch.id, ext.tree.location, nodes).let(encoder::encodeToString)
-        })
-    }.also {
-        ext.root.tasks.named("stonecutterSaveModels") { dependsOn(it) }
-    }
+//    fun registerTreeModelTask() = ext.root.registerDefaultTask<SCModelTask>("stonecutterSaveTreeModel") {
+//        output.set(ext.root.layout.buildDirectory.file("stonecutter-cache/tree.json"))
+//        json.set(ext.root.provider {
+//            val branches = ext.tree.branches.map { BranchInfo(it.id, it.location) }
+//            val nodes = ext.tree.nodes.map { NodeInfo(it.metadata, it.location) }
+//            TreeModel(StonecutterPlugin.VERSION, ext.tree.vcs.project, ext.tree.current?.project, branches, nodes, ext.flags, ext.activeInfo)
+//                .let(encoder::encodeToString)
+//        })
+//    }.also {
+//        ext.root.tasks.named("stonecutterSaveModels") { dependsOn(it) }
+//    }
+//
+//    fun registerBranchModelTask(branch: ProjectBranch) = branch.project.registerDefaultTask<SCModelTask>("stonecutterSaveBranchModel") {
+//        output.set(branch.project.layout.buildDirectory.file("stonecutter-cache/branch.json"))
+//        json.set(ext.root.provider {
+//            val nodes = branch.nodes.map { NodeInfo(it.metadata, it.location) }
+//            BranchModel(branch.id, ext.tree.location, nodes).let(encoder::encodeToString)
+//        })
+//    }.also {
+//        ext.root.tasks.named("stonecutterSaveModels") { dependsOn(it) }
+//    }
 
     private inline fun <reified T : Task> Project.registerDefaultTask(name: String, crossinline config: T.() -> Unit = {}): TaskProvider<T> =
         tasks.register<T>(name) {

@@ -38,13 +38,14 @@ internal open class StonecutterBuildTasksImpl(private val ext: StonecutterBuildI
     internal inline fun registerMergeTask(src: SourceSet, crossinline config: Copy.() -> Unit): TaskProvider<Copy> =
         registerDefaultTask(mergeTaskName(src), config).apply { merge[name] = this }
 
-    internal fun registerNodeModelTask(): TaskProvider<SCModelTask> = registerDefaultTask<SCModelTask>("stonecutterSaveNodeModel") {
-        output.set(ext.project.layout.buildDirectory.file("stonecutter-cache/node.json"))
-        json.set(ext.project.provider {
-            val branch = ext.branch.let { BranchInfo(it.id, it.location) }
-            NodeModel(ext.current, branch, ext.tree.location, ext.properties.params).let(encoder::encodeToString)
-        })
-    }.also { ext.tree.project.tasks.named("stonecutterSaveModels") { dependsOn(it) } }
+    internal fun registerNodeModelTask(): TaskProvider<SCModelTask> = TODO()
+//        registerDefaultTask<SCModelTask>("stonecutterSaveNodeModel") {
+//        output.set(ext.project.layout.buildDirectory.file("stonecutter-cache/node.json"))
+//        json.set(ext.project.provider {
+//            val branch = ext.branch.let { BranchInfo(it.id, it.location) }
+//            NodeModel(ext.current, branch, ext.tree.location, ext.params).let(encoder::encodeToString)
+//        })
+//    }.also { ext.tree.project.tasks.named("stonecutterSaveModels") { dependsOn(it) } }
 
     private inline fun <reified T : Task> registerDefaultTask(name: String, crossinline config: T.() -> Unit): TaskProvider<T> =
         ext.project.tasks.register<T>(name) {

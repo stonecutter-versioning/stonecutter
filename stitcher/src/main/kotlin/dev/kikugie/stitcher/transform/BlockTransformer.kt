@@ -6,7 +6,6 @@ import dev.kikugie.stitcher.antlr.SwapTemplate
 import dev.kikugie.stitcher.data.BlockToken
 import dev.kikugie.stitcher.data.DefinitionToken.*
 import dev.kikugie.stitcher.data.LeafToken
-import dev.kikugie.stitcher.data.acceptThis
 import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.issue.problem
 import dev.kikugie.stitcher.issue.report
@@ -38,7 +37,7 @@ internal data class BlockTransformer(
 ) : BlockToken.Visitor<BlockToken> {
     private var visitedEnabledBlock: Boolean = false
 
-    override fun visitRoot(it: BlockToken.Root) = it.copy(scope = it.scope.map { it.acceptThis() })
+    override fun visitRoot(it: BlockToken.Root) = it.copy(scope = it.scope.map { it.accept(this) })
     override fun visitCode(it: BlockToken.Code) = it.copy(scope = it.definition.accept(ScopeTransformer(it)))
     override fun visitComment(it: BlockToken.Comment) = it
     override fun visitContent(it: BlockToken.Content): BlockToken = with(it.leaf) {

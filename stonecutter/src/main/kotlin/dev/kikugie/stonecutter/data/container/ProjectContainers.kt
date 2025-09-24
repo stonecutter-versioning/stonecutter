@@ -1,5 +1,6 @@
 package dev.kikugie.stonecutter.data.container
 
+import dev.kikugie.stonecutter.build.StonecutterBuildExtension
 import dev.kikugie.stonecutter.build.param.StonecutterBuildProperties
 import dev.kikugie.stonecutter.data.ProjectHierarchy
 import dev.kikugie.stonecutter.data.ProjectHierarchy.Companion.hierarchy
@@ -41,9 +42,9 @@ internal open class BuildPropertiesContainer(val objects: ObjectFactory, val fac
         objects.domainObjectContainer(StonecutterBuildProperties::class)
 
     operator fun get(node: ProjectNode): StonecutterBuildProperties = properties.findByName("StonecutterBuild@${node.hierarchy}")
-        ?: objects.newInstance<StonecutterBuildProperties>(node, objects, factory).also(properties::add)
+        ?: objects.newInstance<StonecutterBuildProperties>(node, factory).also(properties::add)
 
-    operator fun set(tree: ProjectTree, action: Action<StonecutterBuildProperties>) {
+    operator fun set(tree: ProjectTree, action: Action<StonecutterBuildExtension>) {
         val nodes = tree.nodes.map { "StonecutterBuild@${it.hierarchy}" }.toSet()
         properties.named { it in nodes }.all(action)
     }

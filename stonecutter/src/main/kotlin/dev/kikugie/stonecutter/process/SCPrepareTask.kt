@@ -23,6 +23,7 @@ import org.gradle.workers.WorkQueue
 import org.gradle.workers.WorkerExecutor
 import java.io.File
 import java.nio.file.Path
+import java.util.UUID
 import javax.inject.Inject
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
@@ -57,7 +58,6 @@ public abstract class SCPrepareTask : DefaultTask() {
     }
 
     private fun WorkQueue.processFile(change: FileChange): Unit = submit(SCPrepareAction::class) {
-        params.set(this@SCPrepareTask.params)
         source.set(change.file)
         output.set(change.file.cacheFile())
     }
@@ -68,7 +68,6 @@ public abstract class SCPrepareTask : DefaultTask() {
 @OptIn(StonecutterInternalAPI::class)
 private interface SCPrepareAction : WorkAction<SCPrepareAction.Parameters> {
     interface Parameters : WorkParameters {
-        val params: Property<StonecutterBuildParameters>
         val source: RegularFileProperty
         val output: RegularFileProperty
     }
@@ -78,7 +77,6 @@ private interface SCPrepareAction : WorkAction<SCPrepareAction.Parameters> {
         val output: Path = parameters.output.asFile().toPath()
 
         if (!source.exists()) { output.deleteIfExists(); return }
-
+        // FIXME: This does nothing so far
     }
-
 }

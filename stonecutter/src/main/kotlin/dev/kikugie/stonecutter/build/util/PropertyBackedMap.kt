@@ -9,10 +9,8 @@ import org.gradle.api.provider.ProviderFactory
 import org.jetbrains.annotations.Contract
 
 @Suppress("UNCHECKED_CAST")
-internal open class PropertyBackedMap<K : Any, V : Any>(
-    private val factory: ProviderFactory,
-    internal val property: MapProperty<K, V>
-) : DynamicMap<K, V> {
+internal open class PropertyBackedMap<K : Any, V : Any>(private val factory: ProviderFactory, internal val property: MapProperty<K, V>)
+    : DynamicMap<K, V> {
     override val entries: MutableSet<MutableMap.MutableEntry<K, V>>
         get() = property.orEmpty().entries as MutableSet<MutableMap.MutableEntry<K, V>>
     override val keys: MutableSet<K>
@@ -26,9 +24,9 @@ internal open class PropertyBackedMap<K : Any, V : Any>(
     override fun isEmpty(): Boolean = property.orEmpty().isEmpty()
     override fun get(key: K): V? = property[key].orNull
 
-    override fun set(key: K, value: V) = checkBoth(key, value) then property.put(key, value)
-    override fun set(key: K, supplier: () -> V) = checkKey(key) then set(key, factory.provider(supplier))
-    override fun set(key: K, provider: Provider<V>) = checkKey(key) then property.put(key, provider.asChecked())
+    override fun set(key: K, value: V): Unit = checkBoth(key, value) then property.put(key, value)
+    override fun set(key: K, supplier: () -> V): Unit = checkKey(key) then set(key, factory.provider(supplier))
+    override fun set(key: K, provider: Provider<V>): Unit = checkKey(key) then property.put(key, provider.asChecked())
 
     override fun put(key: K, value: V): V? = withPreviousValue(key) { set(key, value) }
     override fun put(key: K, supplier: () -> V): V? = withPreviousValue(key) { set(key, supplier) }

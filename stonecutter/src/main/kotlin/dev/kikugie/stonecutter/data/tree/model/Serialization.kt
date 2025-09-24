@@ -1,7 +1,6 @@
 package dev.kikugie.stonecutter.data.tree.model
 
-import dev.kikugie.stonecutter.controller.flag.FlagContainer
-import dev.kikugie.stonecutter.controller.flag.FlagContainerImpl
+import dev.kikugie.stonecutter.controller.ext.FlagContainer
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlag
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
@@ -28,9 +27,11 @@ public object FlagContainerJsonSerializer : KSerializer<FlagContainer> {
     private val delegate = MapSerializer(String.serializer(), String.serializer())
 
     override fun serialize(encoder: Encoder, value: FlagContainer): Unit =
-        delegate.serialize(encoder, (value as FlagContainerImpl).flags.mapValues { (_, value) -> value.toString() })
+        TODO()
+//        delegate.serialize(encoder, (value).ma.mapValues { (_, value) -> value.toString() })
 
     override fun deserialize(decoder: Decoder): FlagContainer =
-        delegate.deserialize(decoder).mapValues { (key, value) -> StonecutterFlag.named(key).fromString(value) }
-            .let(::FlagContainerImpl)
+        TODO()
+//        delegate.deserialize(decoder).mapValues { (key, value) -> StonecutterFlag.named(key).fromString(value) }
+//            .let(::FlagContainerImpl)
 }

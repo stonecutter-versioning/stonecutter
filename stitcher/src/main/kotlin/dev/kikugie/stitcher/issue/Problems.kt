@@ -7,9 +7,10 @@ import dev.kikugie.stitcher.util.AntlrToken
 import org.antlr.v4.runtime.Token
 import java.nio.file.Path
 import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
-@DslMarker @Retention(SOURCE)
+@DslMarker @Retention(AnnotationRetention.BINARY)
 internal annotation class ProblemsDsl
 
 @ProblemsDsl
@@ -57,7 +58,7 @@ internal inline infix fun ProblemLocation.bail(template: ProblemTemplate): Nothi
 internal inline fun <T : Any> ProblemSink.verifyNotNull(value: T?, builder: ProblemSink.() -> Nothing): T {
     contract {
         returns() implies (value != null)
-        callsInPlace(builder, AT_MOST_ONCE)
+        callsInPlace(builder, InvocationKind.AT_MOST_ONCE)
     }
     return value ?: builder()
 }

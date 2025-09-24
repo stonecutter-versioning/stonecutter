@@ -1,7 +1,6 @@
 package dev.kikugie.stitcher.transform.visitor
 
 import dev.kikugie.stitcher.data.BlockToken
-import dev.kikugie.stitcher.data.acceptThis
 
 internal class BlockAssembler(private val builder: StringBuilder) : BlockToken.Visitor<Unit> {
     override fun visitContent(it: BlockToken.Content) {
@@ -15,12 +14,12 @@ internal class BlockAssembler(private val builder: StringBuilder) : BlockToken.V
     }
 
     override fun visitCode(it: BlockToken.Code) {
-        it.host.acceptThis()
-        for (it in it.scope) it.acceptThis()
+        it.host.accept(this)
+        for (it in it.scope) it.accept(this)
     }
 
     override fun visitRoot(it: BlockToken.Root) {
-        for (it in it.scope) it.acceptThis()
+        for (it in it.scope) it.accept(this)
     }
 
     companion object {

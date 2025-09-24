@@ -5,26 +5,23 @@ import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.build.util.DynamicMap
 import dev.kikugie.stonecutter.build.util.PropertyBackedMap
 import dev.kikugie.stonecutter.util.isIdentifier
-import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.ProviderFactory
-import org.gradle.kotlin.dsl.create
-import org.jetbrains.annotations.ApiStatus
-import javax.inject.Inject
+import kotlin.annotation.AnnotationRetention.BINARY
 
 @DslMarker @Retention(BINARY)
 private annotation class SwapDsl
 
-@SwapDsl @ApiStatus.NonExtendable
-public interface SwapContainer : DynamicMap<Identifier, String> {
-    private open class Impl @Inject constructor(property: MapProperty<Identifier, String>, factory: ProviderFactory) :
+@SwapDsl
+public sealed interface SwapContainer : DynamicMap<Identifier, String> {
+    private class Impl(factory: ProviderFactory, property: MapProperty<Identifier, String>) :
         PropertyBackedMap<Identifier, String>(factory, property), SwapContainer {
-        override fun checkKey(key: Identifier) = require(key.isNotBlank() && isIdentifier(key)) { "Invalid Swap key '$key'" }
+        override fun checkKey(key: Identifier): Unit = require(key.isNotBlank() && isIdentifier(key)) { "Invalid Swap key '$key'" }
     }
 
     @StonecutterInternalAPI
     public companion object {
-        internal fun ExtensionContainer.swapContainer(name: String, property: MapProperty<Identifier, String>): SwapContainer =
-            create(SwapContainer::class, name, Impl::class, property)
+        internal operator fun invoke(factory: ProviderFactory, property: MapProperty<Identifier, String>): SwapContainer =
+            Impl(factory, property)
     }
 }
