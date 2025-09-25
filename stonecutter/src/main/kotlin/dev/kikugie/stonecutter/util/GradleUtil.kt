@@ -12,6 +12,7 @@ import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
+import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.internal.DefaultTaskExecutionRequest
@@ -82,4 +83,8 @@ internal inline fun WorkerExecutor.execute(action: (queue: WorkQueue) -> Unit) =
 
 internal fun Closure<*>.configure(any: Any) {
     ConfigureUtil.configure(this, any)
+}
+
+internal fun <T : Any> Property<T>.set(factory: ProviderFactory, provider: () -> T) {
+    set(factory.provider(provider))
 }

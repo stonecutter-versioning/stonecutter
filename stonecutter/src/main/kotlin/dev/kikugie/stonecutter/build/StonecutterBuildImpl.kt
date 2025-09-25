@@ -44,7 +44,7 @@ internal abstract class StonecutterBuildImpl(val project: Project, private val p
             tasks.configureSource(this)
         }
         filters.include("**/*.java", "**/*.kt", "**/*.kts", "**/*.groovy", "**/*.gradle", "**/*.scala", "**/*.sc", "**/*.json5", "**/*.hjson")
-//        tasks.registerNodeModelTask()
+        tasks.registerNodeModelTask()
         configureTaskDependencies()
     }
 

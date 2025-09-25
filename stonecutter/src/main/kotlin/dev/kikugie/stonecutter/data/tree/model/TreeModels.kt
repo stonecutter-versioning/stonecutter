@@ -1,8 +1,9 @@
-@file:UseSerializers(PathSerializer::class, FlagContainerJsonSerializer::class)
+@file:UseSerializers(PathSerializer::class)
 package dev.kikugie.stonecutter.data.tree.model
 
 import dev.kikugie.stonecutter.Identifier
 import dev.kikugie.stonecutter.Version
+import dev.kikugie.stonecutter.build.param.StonecutterBuildData
 import dev.kikugie.stonecutter.data.StonecutterProject
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -60,10 +61,10 @@ public data class NodeModel(
     val active: Boolean = false,
     val branch: BranchInfo,
     val root: Path,
-//    val parameters: StonecutterBuildData,
+    val parameters: StonecutterBuildData,
 ) {
-//    public constructor(metadata: StonecutterProject, branch: BranchInfo, root: Path, parameters: StonecutterBuildData)
-//        : this(metadata.project, metadata.version, metadata.isActive, branch, root, parameters)
+    public constructor(metadata: StonecutterProject, branch: BranchInfo, root: Path, parameters: StonecutterBuildData)
+        : this(metadata.project, metadata.version, metadata.isActive, branch, root, parameters)
 }
 
 @Serializable
@@ -91,7 +92,7 @@ public data class TreeModel(
     val current: Identifier? = null,
     val branches: List<BranchInfo>,
     val nodes: List<NodeInfo>,
-//    val flags: FlagContainer,
+    val flags: Map<String, String>,
     @SerialName("current_provider")
     val currentProvider: ActiveInfo,
 )

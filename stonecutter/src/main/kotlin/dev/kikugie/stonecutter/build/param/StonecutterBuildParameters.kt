@@ -43,25 +43,6 @@ private fun StonecutterBuildParameters.RegexReplacementSpec.build(): RegexReplac
 private fun StonecutterBuildParameters.StringReplacementSpec.build(): StringReplacement =
     StringReplacement(target.get(), sources.get(), identifier.orNull)
 
-// TODO: API for new functionality
-private fun StonecutterBuildParameters.toTransformParameters(): TransformParameters {
-    val constants = constants.get()
-    val swaps = swaps.get()
-    val dependencies = dependencies.get().mapValues { (_, it) -> LenientOperations.parse(it) }
-    val replacements = stringReplacements.get().map { it.build() } + regexReplacements.get().map { it.build() }
-
-    val adapter = ScannerAdapter.Factory { input, sink ->
-        ScannerAdapter(
-            SlashStyleScanner(input),
-            intArrayOf(SlashStyleScanner.SLASH_COMMENT_START, SlashStyleScanner.STAR_COMMENT_START),
-            intArrayOf(SlashStyleScanner.SLASH_COMMENT_END, SlashStyleScanner.STAR_COMMENT_END),
-            sink
-        )
-    }
-
-    return TransformParameters(adapter, StarCommentStrategy, StarCommentStrategy, StandardSwapStrategy, swaps, constants, dependencies, replacements)
-}
-
 private fun patchImplicitDependency(prop: MapProperty<Identifier, Version>, key: Identifier, version: Version): Map<Identifier, Version> = buildMap {
     putAll(prop.get())
     val implicit = getOrDefault(key, version)
@@ -108,7 +89,37 @@ public abstract class StonecutterBuildParameters @Inject internal constructor(fl
 
     internal fun addString(repl: StringReplacement): Unit = stringReplacementBuilder.add(repl).getOrThrow()
     internal fun addRegex(repl: RegexReplacement): Unit = regexReplacementBuilder.add(repl).getOrThrow()
-    internal fun build(): TransformParameters = toTransformParameters()
+
+    // TODO: API for new functionality
+    internal fun toTransformParameters(): TransformParameters {
+        val adapter = ScannerAdapter.Factory { input, sink ->
+            ScannerAdapter(
+                SlashStyleScanner(input),
+                intArrayOf(SlashStyleScanner.SLASH_COMMENT_START, SlashStyleScanner.STAR_COMMENT_START),
+                intArrayOf(SlashStyleScanner.SLASH_COMMENT_END, SlashStyleScanner.STAR_COMMENT_END),
+                sink
+            )
+        }
+        val data = toBuildData()
+        return TransformParameters(
+            adapter,
+            StarCommentStrategy,
+            StarCommentStrategy,
+            StandardSwapStrategy,
+            data.swaps,
+            data.constants,
+            data.dependencies,
+            data.replacements
+        )
+    }
+
+    internal fun toBuildData(): StonecutterBuildData {
+        val constants = constants.get()
+        val swaps = swaps.get()
+        val dependencies = dependencies.get().mapValues { (_, it) -> LenientOperations.parse(it) }
+        val replacements = stringReplacements.get().map { it.build() } + regexReplacements.get().map { it.build() }
+        return StonecutterBuildData(constants, swaps, dependencies, replacements)
+    }
 
     public interface StringReplacementSpec {
         @get:Input public val target: Property<String>

@@ -52,7 +52,7 @@ public abstract class SCPrepareTask : DefaultTask() {
     @TaskAction
     public fun run(inputs: InputChanges) {
         inputs.clearIfNotIncremental(destination.asFile())
-        val data = params.get().build()
+        val data = params().toTransformParameters()
 
         executor.execute {
             for (change in inputs.getFileChanges(source))
@@ -83,7 +83,7 @@ private interface SCPrepareAction : WorkAction<SCPrepareAction.Parameters> {
 
         if (!source.exists()) { output.deleteIfExists(); return }
         val contents = source.readText()
-        val modified = process(source, contents, parameters.params.get())
+        val modified = process(source, contents, parameters.params())
         if (contents == modified) output.deleteIfExists() else with(output) {
             parent.createDirectories()
             writeText(modified, Charsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
