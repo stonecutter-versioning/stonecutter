@@ -1,5 +1,6 @@
 package dev.kikugie.stonecutter.process
 
+import dev.kikugie.commons.collections.present
 import dev.kikugie.stitcher.transform.TransformParameters
 import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.build.param.StonecutterBuildParameters
