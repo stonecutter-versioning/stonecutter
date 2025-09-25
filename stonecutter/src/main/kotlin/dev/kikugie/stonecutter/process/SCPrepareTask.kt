@@ -1,6 +1,6 @@
 package dev.kikugie.stonecutter.process
 
-import dev.kikugie.commons.collections.present
+import dev.kikugie.stitcher.process
 import dev.kikugie.stitcher.transform.TransformParameters
 import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.build.param.StonecutterBuildParameters
@@ -25,9 +25,9 @@ import org.gradle.workers.WorkQueue
 import org.gradle.workers.WorkerExecutor
 import java.io.File
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import javax.inject.Inject
-import kotlin.io.path.deleteIfExists
-import kotlin.io.path.exists
+import kotlin.io.path.*
 
 @OptIn(StonecutterInternalAPI::class)
 public abstract class SCPrepareTask : DefaultTask() {
@@ -82,6 +82,11 @@ private interface SCPrepareAction : WorkAction<SCPrepareAction.Parameters> {
         val output: Path = parameters.output.asFile().toPath()
 
         if (!source.exists()) { output.deleteIfExists(); return }
-        // FIXME: This does nothing so far
+        val contents = source.readText()
+        val modified = process(source, contents, parameters.params.get())
+        if (contents == modified) output.deleteIfExists() else with(output) {
+            parent.createDirectories()
+            writeText(modified, Charsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
+        }
     }
 }

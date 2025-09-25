@@ -24,7 +24,11 @@ internal data class ProblemLocation(val line: UInt, val column: UInt, val sink: 
 
 @ProblemsDsl
 public class ProblemSink(private val file: Path) {
+    public var isSuccess: Boolean = true
+        private set
+
     internal fun report(location: ProblemLocation, template: ProblemTemplate) {
+        isSuccess = false
         System.err.println("At $location: $template")
     }
 }
