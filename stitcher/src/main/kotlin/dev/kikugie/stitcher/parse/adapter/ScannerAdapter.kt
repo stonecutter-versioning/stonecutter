@@ -44,7 +44,8 @@ import org.antlr.v4.runtime.misc.Pair
  * Registered scanners should provide the respective adapter with a [Factory] implementation.
  */
 public class ScannerAdapter(
-    private val scanner: Lexer,
+    // TODO: Return to private when the API is done
+    internal val scanner: Lexer,
     private val openers: IntArray,
     private val closers: IntArray,
     private val sink: ProblemSink

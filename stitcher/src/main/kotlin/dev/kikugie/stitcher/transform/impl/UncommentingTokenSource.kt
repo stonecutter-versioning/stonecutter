@@ -2,10 +2,12 @@ package dev.kikugie.stitcher.transform.impl
 
 import dev.kikugie.stitcher.data.BlockToken
 import dev.kikugie.stitcher.parse.builder.LayoutBuilder
+import dev.kikugie.stitcher.parse.inline.InlineErrorListener
 import dev.kikugie.stitcher.parse.inline.InlineTokenStream
 import dev.kikugie.stitcher.transform.RuntimeState
 import dev.kikugie.stitcher.transform.TransformParameters
 import dev.kikugie.stitcher.util.asSequence
+import dev.kikugie.stitcher.util.errorListener
 import dev.kikugie.stitcher.util.toStream
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CommonTokenFactory
@@ -46,7 +48,9 @@ internal class UncommentingTokenSource(
         }
         is BlockToken.Comment -> {
             val content = params.uncommenter.uncomment(block.body.text, block.opener.text, block.closer.text)
-            val lexer = params.adapter.create(content.toStream(), runtime.sink)
+            val lexer = params.adapter.create(content.toStream(), runtime.sink).apply {
+                scanner.errorListener(InlineErrorListener(runtime.sink, block.body.range.first))
+            }
             val stream = InlineTokenStream(lexer, block.body.range.first)
             yieldAll(stream.asSequence())
         }

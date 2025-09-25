@@ -15,6 +15,7 @@ import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.issue.problem
 import dev.kikugie.stitcher.issue.report
 import dev.kikugie.stitcher.parse.inline.InlineCharStream
+import dev.kikugie.stitcher.parse.inline.InlineErrorListener
 import dev.kikugie.stitcher.parse.inline.InlineTokenConverter
 import dev.kikugie.stitcher.parse.inline.InlineTokenStream
 import dev.kikugie.stitcher.util.*
@@ -178,8 +179,9 @@ internal class LayoutBuilder private constructor(val stream: TokenStream, val si
                 else -> return@invoke null
             }
 
-            val lexer = StitcherLexer(this)
-            val parser = StitcherParser(InlineTokenStream(lexer, body.startIndex))
+            val listener = InlineErrorListener(sink, body.startIndex)
+            val lexer = StitcherLexer(this).errorListener(listener)
+            val parser = StitcherParser(InlineTokenStream(lexer, body.startIndex)).errorListener(listener)
             val context = parser.definition()
             constructCode(context)
         }

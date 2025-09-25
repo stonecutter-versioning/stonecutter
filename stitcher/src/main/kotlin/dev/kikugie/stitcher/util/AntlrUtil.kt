@@ -2,6 +2,7 @@
 
 package dev.kikugie.stitcher.util
 
+import dev.kikugie.commons.takeAs
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Interval
 import org.antlr.v4.runtime.misc.Pair
@@ -40,3 +41,8 @@ internal fun TokenStream.asSequence() = generateSequence { LT(1).takeIf { it.typ
 
 internal fun <T : AntlrToken> TokenFactory<T>.create(src: TokenSource, type: Int, start: Int, stop: Int, line: Int, offset: Int, input: CharStream? = null): T =
     create(Pair(src, input), type, null, Token.DEFAULT_CHANNEL, start, stop, line, offset)
+
+internal fun <T : Recognizer<*, *>> T.errorListener(listener: ANTLRErrorListener) = apply {
+    errorListeners.clear()
+    (errorListeners as MutableList<ANTLRErrorListener>) += listener
+}
