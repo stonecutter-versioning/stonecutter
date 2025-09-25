@@ -111,6 +111,7 @@ internal data class BlockTransformer(
                 generateSequence { nextToken().takeUnless(Token::isEOF) }.map(Token::range).toList()
             }
 
+            // FIXME: Not specifying arguments leaves the string the same instead of erroring
             val builder = StringBuilder(this)
             for (range in places.asReversed()) {
                 // FIXME: Use checked conversion and list getter
