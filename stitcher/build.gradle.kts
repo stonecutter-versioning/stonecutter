@@ -20,7 +20,7 @@ dependencies {
     api(common.misc.semver)
     api(common.misc.commons)
     implementation(libs.ahocorasick)
-    implementation(common.misc.mordant)
+    compileOnly(common.misc.mordant)
     testImplementation(common.kotest.runner)
     testImplementation(common.kotest.assertions)
 }

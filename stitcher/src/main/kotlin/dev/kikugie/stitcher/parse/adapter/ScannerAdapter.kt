@@ -54,7 +54,7 @@ public class ScannerAdapter(
      * Encapsulates the creation of a [ScannerAdapter] configured with
      * a specific [Lexer], [openers][ScannerAdapter.openers] and [closers][ScannerAdapter.closers].
      */
-    public fun interface Factory {
+    public fun interface Factory : java.io.Serializable {
         public fun create(input: CharStream, sink: ProblemSink): ScannerAdapter
     }
 

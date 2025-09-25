@@ -19,4 +19,8 @@ public data class TransformParameters(
     val dependencies: Map<String, Version> = emptyMap(),
 
     val replacements: List<Replacement> = emptyList()
-)
+) : java.io.Serializable {
+    private companion object {
+        @java.io.Serial private val serialVersionUID: Long = 0x50E9D2D2FBE78A2B
+    }
+}

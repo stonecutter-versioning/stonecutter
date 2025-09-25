@@ -123,6 +123,8 @@ tasks {
 
     shadowJar {
         archiveClassifier = ""
+
+        exclude("com/ibm/**")
     }
 
     named<Jar>("javadocJar") {
