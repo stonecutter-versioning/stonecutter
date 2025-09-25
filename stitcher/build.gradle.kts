@@ -17,10 +17,12 @@ repositories {
 
 dependencies {
     antlr(libs.antlr)
-    api(common.misc.semver)
-    api(common.misc.commons)
-    implementation(libs.ahocorasick)
     compileOnly(common.misc.mordant)
+    implementation(libs.ahocorasick)
+    implementation(common.misc.semver)
+    implementation(common.misc.commons)
+    implementation(common.kotlin.stdlib)
+    implementation(common.kotlin.reflect)
     testImplementation(common.kotest.runner)
     testImplementation(common.kotest.assertions)
 }

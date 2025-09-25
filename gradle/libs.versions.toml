@@ -4,4 +4,5 @@ aho-corasick = "0.6.3"
 
 [libraries]
 antlr = { group = "org.antlr", name="antlr4", version.ref = "antlr" }
+antlr-runtime = { group = "org.antlr", name="antlr4-runtime", version.ref = "antlr" }
 ahocorasick = { group = "org.ahocorasick", name = "ahocorasick", version.ref = "aho-corasick" }

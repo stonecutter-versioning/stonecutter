@@ -37,6 +37,8 @@ dependencies {
     api(project(":stitcher"))
     api(common.misc.semver)
     api(common.misc.commons)
+    implementation(common.kotlin.stdlib)
+    implementation(common.kotlin.reflect)
     implementation(common.kotlin.serialization)
     implementation(common.kotlin.serialization.json)
 
@@ -123,8 +125,8 @@ tasks {
 
     shadowJar {
         archiveClassifier = ""
-
-        exclude("com/ibm/**")
+        minimize()
+        exclude("com/ibm/**", "kotlin/**", "org/jetbrains/**")
     }
 
     named<Jar>("javadocJar") {
