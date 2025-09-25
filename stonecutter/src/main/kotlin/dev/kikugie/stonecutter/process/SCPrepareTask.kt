@@ -1,5 +1,6 @@
 package dev.kikugie.stonecutter.process
 
+import dev.kikugie.stitcher.transform.TransformParameters
 import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.build.param.StonecutterBuildParameters
 import dev.kikugie.stonecutter.util.clearIfNotIncremental
@@ -23,7 +24,6 @@ import org.gradle.workers.WorkQueue
 import org.gradle.workers.WorkerExecutor
 import java.io.File
 import java.nio.file.Path
-import java.util.UUID
 import javax.inject.Inject
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
@@ -51,14 +51,16 @@ public abstract class SCPrepareTask : DefaultTask() {
     @TaskAction
     public fun run(inputs: InputChanges) {
         inputs.clearIfNotIncremental(destination.asFile())
+        val data = params.get().build()
+
         executor.execute {
             for (change in inputs.getFileChanges(source))
-                if (change.fileType != FileType.DIRECTORY) it.processFile(change)
+                if (change.fileType != FileType.DIRECTORY) it.processFile(change, data)
         }
     }
 
-    private fun WorkQueue.processFile(change: FileChange): Unit = submit(SCPrepareAction::class) {
-        params.set(this@SCPrepareTask.params)
+    private fun WorkQueue.processFile(change: FileChange, data: TransformParameters): Unit = submit(SCPrepareAction::class) {
+        params.set(data)
         source.set(change.file)
         output.set(change.file.cacheFile())
     }
@@ -69,9 +71,9 @@ public abstract class SCPrepareTask : DefaultTask() {
 @OptIn(StonecutterInternalAPI::class)
 private interface SCPrepareAction : WorkAction<SCPrepareAction.Parameters> {
     interface Parameters : WorkParameters {
-        @get:Nested val params: Property<StonecutterBuildParameters>
-        @get:Input val source: RegularFileProperty
-        @get:Input val output: RegularFileProperty
+        val params: Property<TransformParameters>
+        val source: RegularFileProperty
+        val output: RegularFileProperty
     }
 
     override fun execute() {

@@ -28,6 +28,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.Optional
+import java.io.Serializable
 import javax.inject.Inject
 
 private fun ObjectFactory.stringSpec(repl: StringReplacement): StonecutterBuildParameters.StringReplacementSpec =
@@ -87,8 +88,8 @@ public abstract class StonecutterBuildParameters @Inject internal constructor(fl
 
     @get:Inject protected abstract val objects: ObjectFactory
 
-    @get:Internal private val stringReplacementBuilder: ReplacementBuilder<StringReplacement>
-    @get:Internal private val regexReplacementBuilder: ReplacementBuilder<RegexReplacement>
+    private val stringReplacementBuilder: ReplacementBuilder<StringReplacement>
+    private val regexReplacementBuilder: ReplacementBuilder<RegexReplacement>
 
     init {
         val replacementIdentifierPool = mutableSetOf<Identifier>()
