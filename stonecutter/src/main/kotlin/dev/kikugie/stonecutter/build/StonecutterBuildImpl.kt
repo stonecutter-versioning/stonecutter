@@ -55,27 +55,27 @@ internal abstract class StonecutterBuildImpl(val project: Project, private val p
     }
 
     private fun createProcessingTasks(src: SourceSet) {
-        // TODO: Use input-output dependencies instead
-        val overrides = project.projectDirectory.resolve("src/${src.name}")
+        val sourceDir = "src/${src.name}"
+        val localSource = project.layout.projectDirectory.asFile.resolve(sourceDir)
+        val sharedSource = project.parent!!.layout.projectDirectory.dir(sourceDir)
+
         val prepareTask = tasks.registerPrepareTask(src) {
             params.set(properties.params)
-            project.parent!!.file("src/${src.name}").let(root::set)
-            project.provider { project.parent!!.fileTree("src/${src.name}").matching(filters) }.let { source.setFrom(it) }
+            root.set(project.parent!!.file(sourceDir))
+            source.setFrom(project.parent!!.fileTree(sourceDir).matching(filters))
             tasks.processedCacheDir.resolve(src.name).let(destination::set)
         }
 
-        tasks.registerGenerateTask(src) {
+        val generateTask = tasks.registerGenerateTask(src) {
             duplicatesStrategy = DuplicatesStrategy.INCLUDE
-            from(project.parent!!.projectDirectory.resolve("src/${src.name}"), tasks.processedCacheDir.resolve(src.name))
-            exclude { !it.isDirectory && it.relativePath.getFile(overrides).exists() }
+            from(prepareTask.map { it.destination }, sharedSource)
+            exclude { !it.isDirectory && it.relativePath.getFile(localSource).exists() }
             into(tasks.generatedSourcesDir.resolve(src.name))
-            dependsOn(prepareTask)
         }
 
         tasks.registerMergeTask(src) {
-            from(tasks.processedCacheDir.resolve(src.name))
-            into(project.parent!!.projectDirectory.resolve("src/${src.name}"))
-            dependsOn(prepareTask)
+            from(generateTask.map { it.outputs.files })
+            into(sharedSource)
         }
     }
 }
