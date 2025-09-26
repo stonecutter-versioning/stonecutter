@@ -1,19 +1,24 @@
 when:
   event: push
   branch: 0.*
+  path:
+    exclude: ["tools/**"]
 
 steps:
   run-dokka:
     image: gradle:jdk17-corretto
     commands:
-      - gradle dokkaGeneratePublicationHtml --no-daemon
-  move-files:
+      - gradle dokkaGeneratePublicationHtml --no-daemon -Dorg.gradle.configuration-cache.read-only=true
+  clone-pages:
     image: alpine/git
     commands:
     - git clone --depth 1 https://codeberg.org/stonecutter/docs.git docs
-    - mkdir -p docs/setup/dokka
-    - rm -f "docs/setup/dokka${CI_COMMIT_BRANCH}.tar.xz"
-    - tar -cJf "docs/setup/dokka${CI_COMMIT_BRANCH}.tar.xz" -C build/dokka/html .
+  zip-files:
+    image: debian
+    commands:
+      - mkdir -p docs/setup/dokka
+      - rm -f "docs/setup/dokka${CI_COMMIT_BRANCH}.tar.xz"
+      - tar -cJf "docs/setup/dokka${CI_COMMIT_BRANCH}.tar.xz" -C build/dokka/html .
   push-changes:
     image: appleboy/drone-git-push
     directory: docs
