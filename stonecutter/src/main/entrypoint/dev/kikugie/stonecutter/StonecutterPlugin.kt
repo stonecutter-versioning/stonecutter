@@ -17,7 +17,7 @@ import org.gradle.kotlin.dsl.create
 public open class StonecutterPlugin : Plugin<ExtensionAware> {
     public companion object {
         /**Current Stonecutter version.*/ // Updated by ':updateVersion' task during build
-        public const val VERSION: String = "0.8-alpha.1"
+        public const val VERSION: String = "0.8-alpha.2"
     }
 
     /**

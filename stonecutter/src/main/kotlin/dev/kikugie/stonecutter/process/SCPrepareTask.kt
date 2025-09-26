@@ -33,7 +33,7 @@ import java.util.Collections
 import javax.inject.Inject
 import kotlin.io.path.*
 
-private val REPORTED_PROBLEMS: MutableSet<String> = Collections.synchronizedSet(mutableSetOf<String>())
+private val REPORTED_PROBLEMS = Collections.synchronizedSet(mutableSetOf<String>())
 
 // TODO: eventually this should use Gradle problems API, but it's still incubating
 private val GRADLE_PROBLEM_REPORTER = ProblemReporter { file, location, template ->
