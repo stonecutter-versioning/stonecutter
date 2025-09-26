@@ -29,12 +29,16 @@ import org.gradle.workers.WorkerExecutor
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import java.util.Collections
 import javax.inject.Inject
 import kotlin.io.path.*
 
+private val REPORTED_PROBLEMS: MutableSet<String> = Collections.synchronizedSet(mutableSetOf<String>())
+
 // TODO: eventually this should use Gradle problems API, but it's still incubating
 private val GRADLE_PROBLEM_REPORTER = ProblemReporter { file, location, template ->
-    System.err.println(format(file, location, template))
+    val problem = format(file, location, template)
+    if (REPORTED_PROBLEMS.add(problem)) System.err.println(problem)
 }
 
 private fun format(file: Path, location: ProblemLocation, template: ProblemTemplate): String = buildString {
