@@ -81,7 +81,7 @@ dokka {
         sourceLink {
             localDirectory = file("src/main/kotlin")
             remoteLineSuffix = "#L"
-            remoteUrl("https://codeberg.org/stonecutter/stonecutter/src/branch/0.7/stonecutter/")
+            remoteUrl("https://codeberg.org/stonecutter/stonecutter/src/branch/0.8/stonecutter/")
         }
 
         externalDocumentationLinks.register("gradle-kotlin-dsl") {

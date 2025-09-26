@@ -53,7 +53,7 @@ dokka {
         sourceLink {
             localDirectory = file("src/main/kotlin")
             remoteLineSuffix = "#L"
-            remoteUrl("https://codeberg.org/stonecutter/stonecutter/src/branch/0.8/stitcher_antlr/")
+            remoteUrl("https://codeberg.org/stonecutter/stonecutter/src/branch/0.8/stitcher/")
         }
 
         externalDocumentationLinks.register("antlr") {
