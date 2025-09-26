@@ -18,30 +18,32 @@ internal annotation class ProblemsDsl
 internal class BailException : RuntimeException()
 
 @ProblemsDsl
-internal data class ProblemTemplate(val message: String, val cause: Throwable?)
+public data class ProblemTemplate(val message: String, val cause: Throwable?)
 
 @ProblemsDsl
-internal data class ProblemLocation(val line: Int, val offset: Int, val sink: ProblemSink)
+public data class ProblemLocation(val line: Int, val offset: Int, val sink: ProblemSink)
+
+public fun interface ProblemReporter {
+    public operator fun invoke(file: Path, location: ProblemLocation, template: ProblemTemplate)
+}
 
 @ProblemsDsl
-public class ProblemSink internal constructor(private val file: Path, internal val index: FileLineIndex) {
-    private val path: String = file.absolutePathString()
+public class ProblemSink internal constructor(internal val file: Path, internal val index: FileLineIndex, private val reporter: ProblemReporter) {
     public var isSuccess: Boolean = true
         private set
 
     internal fun report(location: ProblemLocation, template: ProblemTemplate) {
-        isSuccess = false; System.err.println(format(location, template))
-    }
-
-    private fun format(location: ProblemLocation, template: ProblemTemplate): String = buildString {
-        append("e: file://$path:${location.line}:${location.offset + 1} ${template.message}")
-        if (template.cause != null) append("\nCaused by: ${template.cause.stackTraceToString()}")
+        isSuccess = false; reporter.invoke(file, location, template)
     }
 }
 
 @ProblemsDsl
 internal inline fun problem(cause: Throwable? = null, message: () -> String): ProblemTemplate =
     ProblemTemplate(message(), cause)
+
+@ProblemsDsl
+internal inline fun ProblemSink.at(pos: Int): ProblemLocation =
+    index.locate(pos, this)
 
 @ProblemsDsl
 internal inline fun ProblemSink.at(line: Int, column: Int): ProblemLocation =
