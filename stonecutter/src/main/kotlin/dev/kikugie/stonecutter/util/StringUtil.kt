@@ -9,7 +9,7 @@ internal fun Char.isIdentifierStart() = when (this) {
 }
 
 internal fun Char.isIdentifierPart() = when (this) {
-    '_', '-', '+', '.' -> true
+    '_', '-' -> true
     else -> isEnglishLetter() || isDigit()
 }
 

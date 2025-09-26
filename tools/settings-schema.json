@@ -19,7 +19,7 @@
     },
     "identifier": {
       "type": "string",
-      "pattern": "^[A-Za-z_][A-Za-z0-9_\\-+.]*$"
+      "pattern": "^[_a-zA-Z][_\\-a-zA-Z0-9]*$"
     },
     "semver": {
       "type": "string",
@@ -27,7 +27,7 @@
     },
     "primitive_project": {
       "type": "string",
-      "pattern": "^([A-Za-z0-9_][A-Za-z0-9_\\-+.]*)(:(([A-Za-z_][A-Za-z0-9_\\-+.]*)|(\\d+(?:\\.\\d+)*(?:-[A-Za-z0-9_\\-+.]+(?:\\.[A-Za-z0-9_\\-+.]+)*)?(?:\\+[A-Za-z0-9_\\-+.]+(?:\\.[A-Za-z0-9_\\-+.]+)*)?))?)?(:([A-Za-z_][A-Za-z0-9_\\-+.]*(\\.gradle)(\\.kts)?))?$"
+      "pattern": "^([_a-zA-Z][_\\-a-zA-Z0-9]*)(:(([_a-zA-Z][_\\-a-zA-Z0-9]*)|(\\d+(?:\\.\\d+)*(?:-[A-Za-z0-9_\\-+.]+(?:\\.[A-Za-z0-9_\\-+.]+)*)?(?:\\+[A-Za-z0-9_\\-+.]+(?:\\.[A-Za-z0-9_\\-+.]+)*)?))?)?(:([A-Za-z_][A-Za-z0-9_\\-+.]*(\\.gradle)(\\.kts)?))?$"
     },
     "composite_project": {
       "type": "object",
