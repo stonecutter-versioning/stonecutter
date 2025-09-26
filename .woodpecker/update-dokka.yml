@@ -14,7 +14,7 @@ steps:
     commands:
     - git clone --depth 1 https://codeberg.org/stonecutter/docs.git docs
   zip-files:
-    image: debian
+    image: ubuntu
     commands:
       - mkdir -p docs/setup/dokka
       - rm -f "docs/setup/dokka${CI_COMMIT_BRANCH}.tar.xz"
