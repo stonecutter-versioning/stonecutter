@@ -42,7 +42,13 @@ private val GRADLE_PROBLEM_REPORTER = ProblemReporter { file, location, template
 }
 
 private fun format(file: Path, location: ProblemLocation, template: ProblemTemplate): String = buildString {
-    append("e: file://${file.absolutePathString()}:${location.line}:${location.offset + 1} ${template.message}")
+    append("e: file://${file.absolutePathString()}")
+    if (location.line >= 1) {
+        append(":${location.line}")
+        if (location.offset >= 0)
+            append(":${location.offset}")
+    }
+    append(" ${template.message}")
     if (template.cause != null) append("\nCaused by: ${template.cause?.stackTraceToString()}")
 }
 
