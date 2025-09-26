@@ -1,4 +1,5 @@
 [versions]
+dokka = "2.0.0"
 antlr = "4.13.2"
 aho-corasick = "0.6.3"
 
@@ -6,3 +7,4 @@ aho-corasick = "0.6.3"
 antlr = { group = "org.antlr", name="antlr4", version.ref = "antlr" }
 antlr-runtime = { group = "org.antlr", name="antlr4-runtime", version.ref = "antlr" }
 ahocorasick = { group = "org.ahocorasick", name = "ahocorasick", version.ref = "aho-corasick" }
+dokka-versioning = { group = "org.jetbrains.dokka", name = "versioning-plugin", version.ref = "dokka" }

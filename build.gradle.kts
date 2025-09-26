@@ -16,6 +16,8 @@ repositories {
 dependencies {
     dokka(project(":stonecutter"))
     dokka(project(":stitcher"))
+
+    dokkaHtmlPlugin(libs.dokka.versioning)
 }
 
 dokka {
@@ -24,6 +26,10 @@ dokka {
     pluginsConfiguration.html {
         homepageLink = "https://stonecutter.codeberg.page/"
         footerMessage = "(c) 2025 KikuGie"
+    }
+
+    pluginsConfiguration.versioning {
+        version = property("version").toString().substringBefore('-')
     }
 }
 

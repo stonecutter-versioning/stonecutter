@@ -1,6 +1,6 @@
 when:
   event: push
-  branch: "0.7"
+  branch: 0.*
 
 steps:
   run-dokka:
@@ -10,19 +10,12 @@ steps:
   move-files:
     image: alpine/git
     commands:
-      - git clone https://codeberg.org/stonecutter/docs.git docs
-      - mkdir -p docs/docs/public/dokka
-      - rm -rf docs/docs/public/dokka/*
-      - cp -r build/dokka/html/* docs/docs/public/dokka/
-      - >-
-        if git diff-index --quiet HEAD; then
-          echo "SKIP_PUSH=true" >> envvars;
-          echo "Nothing changed...";
-        fi
+    - git clone --depth 1 https://codeberg.org/stonecutter/docs.git docs
+    - mkdir -p docs/setup/dokka
+    - rm -f "docs/setup/dokka${CI_COMMIT_BRANCH}.tar.xz"
+    - tar -cJf "docs/setup/dokka${CI_COMMIT_BRANCH}.tar.xz" -C build/dokka/html .
   push-changes:
     image: appleboy/drone-git-push
-    when:
-      evaluate: SKIP_PUSH != true
     directory: docs
     settings:
       ssh-key:
@@ -30,6 +23,6 @@ steps:
       remote: ssh://git@codeberg.org/stonecutter/docs.git
       branch: main
       commit: true
-      commit_message: "Update dokka from ${CI_PIPELINE_FORGE_URL}"
+      commit_message: Update dokka from ${CI_PIPELINE_FORGE_URL}
       author_name: stonecutter-runner
       author_email: kikugie@noreply.codeberg.org

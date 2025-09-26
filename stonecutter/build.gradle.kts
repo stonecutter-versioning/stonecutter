@@ -46,6 +46,8 @@ dependencies {
     testImplementation(common.kotest.runner)
     testImplementation(common.kotest.datatest)
     testImplementation(common.kotest.assertions)
+
+    dokkaHtmlPlugin(libs.dokka.versioning)
 }
 
 apiValidation {
@@ -61,6 +63,10 @@ dokka {
     pluginsConfiguration.html {
         homepageLink = "https://stonecutter.codeberg.page/"
         footerMessage = "(c) 2025 KikuGie"
+    }
+
+    pluginsConfiguration.versioning {
+        version = property("version").toString().substringBefore('-')
     }
 
     dokkaPublications.all {

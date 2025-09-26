@@ -25,6 +25,8 @@ dependencies {
     implementation(common.kotlin.reflect)
     testImplementation(common.kotest.runner)
     testImplementation(common.kotest.assertions)
+
+    dokkaHtmlPlugin(libs.dokka.versioning)
 }
 
 dokka {
@@ -37,6 +39,10 @@ dokka {
     pluginsConfiguration.html {
         homepageLink = "https://stonecutter.codeberg.page/"
         footerMessage = "(c) 2025 KikuGie"
+    }
+
+    pluginsConfiguration.versioning {
+        version = property("version").toString().substringBefore('-')
     }
 
     dokkaSourceSets.named("main") {
