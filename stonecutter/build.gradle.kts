@@ -126,7 +126,7 @@ tasks {
     shadowJar {
         archiveClassifier = ""
         minimize()
-        exclude("com/ibm/**", "kotlin/**", "org/jetbrains/**")
+        exclude("com/ibm/**", "org/jetbrains/**")
     }
 
     named<Jar>("javadocJar") {
