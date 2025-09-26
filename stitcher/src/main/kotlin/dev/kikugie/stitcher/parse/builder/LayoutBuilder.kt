@@ -179,7 +179,7 @@ internal class LayoutBuilder private constructor(val stream: TokenStream, val si
                 else -> return@invoke null
             }
 
-            val listener = InlineErrorListener(sink, body.startIndex)
+            val listener = InlineErrorListener(sink, FileLineIndex(this), body.startIndex)
             val lexer = StitcherLexer(this).errorListener(listener)
             val parser = StitcherParser(InlineTokenStream(lexer, body.startIndex)).errorListener(listener)
             val context = parser.definition()

@@ -25,6 +25,10 @@ internal class FileLineIndex private constructor(private val lines: IntArray) {
         return ProblemLocation(lineIndex + 1, charOffset, sink)
     }
 
+    @Throws(IndexOutOfBoundsException::class)
+    fun indexOf(line: Int, offset: Int): Int =
+        lines[line - 1] + offset
+
     private tailrec fun findLineIndex(index: Int, min: Int = 0, max: Int = this.max): Int {
         if (min == max) return min // Converged onto one position
         val middle = min + (max - min) / 2

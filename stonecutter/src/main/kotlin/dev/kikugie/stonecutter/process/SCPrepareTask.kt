@@ -1,5 +1,8 @@
 package dev.kikugie.stonecutter.process
 
+import dev.kikugie.stitcher.issue.ProblemLocation
+import dev.kikugie.stitcher.issue.ProblemReporter
+import dev.kikugie.stitcher.issue.ProblemTemplate
 import dev.kikugie.stitcher.process
 import dev.kikugie.stitcher.transform.TransformParameters
 import dev.kikugie.stonecutter.StonecutterInternalAPI
@@ -28,6 +31,16 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import javax.inject.Inject
 import kotlin.io.path.*
+
+// TODO: eventually this should use Gradle problems API, but it's still incubating
+private val GRADLE_PROBLEM_REPORTER = ProblemReporter { file, location, template ->
+    System.err.println(format(file, location, template))
+}
+
+private fun format(file: Path, location: ProblemLocation, template: ProblemTemplate): String = buildString {
+    append("e: file://${file.absolutePathString()}:${location.line}:${location.offset + 1} ${template.message}")
+    if (template.cause != null) append("\nCaused by: ${template.cause?.stackTraceToString()}")
+}
 
 @OptIn(StonecutterInternalAPI::class)
 public abstract class SCPrepareTask : DefaultTask() {
@@ -83,7 +96,7 @@ private interface SCPrepareAction : WorkAction<SCPrepareAction.Parameters> {
 
         if (!source.exists()) { output.deleteIfExists(); return }
         val contents = source.readText()
-        val modified = process(source, contents, parameters.params())
+        val modified = process(source, contents, parameters.params(), GRADLE_PROBLEM_REPORTER)
         if (contents == modified) output.deleteIfExists() else with(output) {
             parent.createDirectories()
             writeText(modified, Charsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)

@@ -6,6 +6,7 @@ import dev.kikugie.stitcher.parse.inline.InlineErrorListener
 import dev.kikugie.stitcher.parse.inline.InlineTokenStream
 import dev.kikugie.stitcher.transform.RuntimeState
 import dev.kikugie.stitcher.transform.TransformParameters
+import dev.kikugie.stitcher.util.FileLineIndex
 import dev.kikugie.stitcher.util.asSequence
 import dev.kikugie.stitcher.util.errorListener
 import dev.kikugie.stitcher.util.toStream
@@ -47,11 +48,12 @@ internal class UncommentingTokenSource(
             yield(token)
         }
         is BlockToken.Comment -> {
-            val content = params.uncommenter.uncomment(block.body.text, block.opener.text, block.closer.text)
-            val lexer = params.adapter.create(content.toStream(), runtime.sink).apply {
-                scanner.errorListener(InlineErrorListener(runtime.sink, block.body.range.first))
+            val index = block.body.range.first
+            val content = params.uncommenter.uncomment(block.body.text, block.opener.text, block.closer.text).toStream()
+            val lexer = params.adapter.create(content, runtime.sink).apply {
+                scanner.errorListener(InlineErrorListener(runtime.sink, FileLineIndex(content), index))
             }
-            val stream = InlineTokenStream(lexer, block.body.range.first)
+            val stream = InlineTokenStream(lexer, index)
             yieldAll(stream.asSequence())
         }
         else -> error("Unexpected block type: ${block::class.simpleName}")
