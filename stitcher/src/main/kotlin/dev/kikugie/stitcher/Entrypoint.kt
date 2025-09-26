@@ -3,8 +3,8 @@ package dev.kikugie.stitcher
 import dev.kikugie.stitcher.issue.ProblemReporter
 import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.parse.builder.LayoutBuilder
-import dev.kikugie.stitcher.parse.inline.InlineErrorListener
-import dev.kikugie.stitcher.parse.inline.InlineTokenConverter
+import dev.kikugie.stitcher.antlr.InlineErrorListener
+import dev.kikugie.stitcher.antlr.InlineTokenConverter
 import dev.kikugie.stitcher.transform.BlockTransformer
 import dev.kikugie.stitcher.transform.RuntimeState
 import dev.kikugie.stitcher.transform.TransformParameters

@@ -5,7 +5,7 @@ import dev.kikugie.stitcher.antlr.StitcherParser
 import dev.kikugie.stitcher.data.LeafToken
 import dev.kikugie.stitcher.data.DefinitionToken
 import dev.kikugie.stitcher.issue.ProblemSink
-import dev.kikugie.stitcher.parse.inline.InlineTokenConverter
+import dev.kikugie.stitcher.antlr.InlineTokenConverter
 import org.antlr.v4.runtime.tree.TerminalNode
 
 internal class DefinitionBuilder(sink: ProblemSink, val converter: InlineTokenConverter) : StitcherBaseVisitor<DefinitionToken>() {

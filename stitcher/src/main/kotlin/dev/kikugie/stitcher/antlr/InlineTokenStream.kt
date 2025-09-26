@@ -1,4 +1,4 @@
-package dev.kikugie.stitcher.parse.inline
+package dev.kikugie.stitcher.antlr
 
 import dev.kikugie.stitcher.util.AntlrToken
 import org.antlr.v4.runtime.CommonTokenStream

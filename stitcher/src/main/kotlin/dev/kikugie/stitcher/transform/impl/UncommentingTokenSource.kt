@@ -2,8 +2,8 @@ package dev.kikugie.stitcher.transform.impl
 
 import dev.kikugie.stitcher.data.BlockToken
 import dev.kikugie.stitcher.parse.builder.LayoutBuilder
-import dev.kikugie.stitcher.parse.inline.InlineErrorListener
-import dev.kikugie.stitcher.parse.inline.InlineTokenStream
+import dev.kikugie.stitcher.antlr.InlineErrorListener
+import dev.kikugie.stitcher.antlr.InlineTokenStream
 import dev.kikugie.stitcher.transform.RuntimeState
 import dev.kikugie.stitcher.transform.TransformParameters
 import dev.kikugie.stitcher.util.FileLineIndex

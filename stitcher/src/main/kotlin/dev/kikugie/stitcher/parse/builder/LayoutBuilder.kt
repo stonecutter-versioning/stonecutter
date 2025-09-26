@@ -14,10 +14,10 @@ import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.issue.problem
 import dev.kikugie.stitcher.issue.report
-import dev.kikugie.stitcher.parse.inline.InlineCharStream
-import dev.kikugie.stitcher.parse.inline.InlineErrorListener
-import dev.kikugie.stitcher.parse.inline.InlineTokenConverter
-import dev.kikugie.stitcher.parse.inline.InlineTokenStream
+import dev.kikugie.stitcher.antlr.InlineCharStream
+import dev.kikugie.stitcher.antlr.InlineErrorListener
+import dev.kikugie.stitcher.antlr.InlineTokenConverter
+import dev.kikugie.stitcher.antlr.InlineTokenStream
 import dev.kikugie.stitcher.util.*
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.tree.TerminalNode
