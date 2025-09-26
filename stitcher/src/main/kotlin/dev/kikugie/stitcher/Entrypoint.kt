@@ -8,6 +8,7 @@ import dev.kikugie.stitcher.transform.BlockTransformer
 import dev.kikugie.stitcher.transform.RuntimeState
 import dev.kikugie.stitcher.transform.TransformParameters
 import dev.kikugie.stitcher.transform.visitor.BlockAssembler.Companion.join
+import dev.kikugie.stitcher.util.FileLineIndex
 import dev.kikugie.stitcher.util.errorListener
 import dev.kikugie.stitcher.util.toStream
 import org.antlr.v4.runtime.CommonTokenStream
@@ -16,7 +17,8 @@ import java.nio.file.Path
 // TODO: Do what the errors say
 public fun process(file: Path, contents: String, parameters: TransformParameters): String {
     val input = contents.toStream()
-    val runtime = RuntimeState(input, ProblemSink(file))
+    val index = FileLineIndex(input)
+    val runtime = RuntimeState(input, ProblemSink(file, index))
     val source = parameters.adapter.create(input, runtime.sink).apply {
         scanner.errorListener(InlineErrorListener(runtime.sink, 0))
     }

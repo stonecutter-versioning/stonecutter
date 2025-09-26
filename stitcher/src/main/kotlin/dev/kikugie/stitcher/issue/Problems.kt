@@ -4,11 +4,12 @@ package dev.kikugie.stitcher.issue
 
 import dev.kikugie.stitcher.data.StitcherToken
 import dev.kikugie.stitcher.util.AntlrToken
-import org.antlr.v4.runtime.Token
+import dev.kikugie.stitcher.util.FileLineIndex
 import java.nio.file.Path
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
+import kotlin.io.path.absolutePathString
 
 @DslMarker @Retention(AnnotationRetention.BINARY)
 internal annotation class ProblemsDsl
@@ -20,16 +21,21 @@ internal class BailException : RuntimeException()
 internal data class ProblemTemplate(val message: String, val cause: Throwable?)
 
 @ProblemsDsl
-internal data class ProblemLocation(val line: UInt, val column: UInt, val sink: ProblemSink)
+internal data class ProblemLocation(val line: Int, val offset: Int, val sink: ProblemSink)
 
 @ProblemsDsl
-public class ProblemSink(private val file: Path) {
+public class ProblemSink internal constructor(private val file: Path, internal val index: FileLineIndex) {
+    private val path: String = file.absolutePathString()
     public var isSuccess: Boolean = true
         private set
 
     internal fun report(location: ProblemLocation, template: ProblemTemplate) {
-        isSuccess = false
-        System.err.println("At $location: $template")
+        isSuccess = false; System.err.println(format(location, template))
+    }
+
+    private fun format(location: ProblemLocation, template: ProblemTemplate): String = buildString {
+        append("e: file://$path:${location.line}:${location.offset + 1} ${template.message}")
+        if (template.cause != null) append("\nCaused by: ${template.cause.stackTraceToString()}")
     }
 }
 
@@ -39,7 +45,7 @@ internal inline fun problem(cause: Throwable? = null, message: () -> String): Pr
 
 @ProblemsDsl
 internal inline fun ProblemSink.at(line: Int, column: Int): ProblemLocation =
-    ProblemLocation(line.toUInt(), column.toUInt(), this)
+    ProblemLocation(line, column, this)
 
 @ProblemsDsl
 internal inline fun ProblemSink.at(token: AntlrToken): ProblemLocation =
@@ -47,7 +53,7 @@ internal inline fun ProblemSink.at(token: AntlrToken): ProblemLocation =
 
 @ProblemsDsl
 internal inline fun ProblemSink.at(token: StitcherToken): ProblemLocation =
-    ProblemLocation(1u, 0u, this)
+    index.locate(token.range.first, this)
 
 @ProblemsDsl
 internal inline infix fun ProblemLocation.report(template: ProblemTemplate): Unit =
