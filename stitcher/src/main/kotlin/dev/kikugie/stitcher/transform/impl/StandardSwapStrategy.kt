@@ -5,8 +5,9 @@ import dev.kikugie.stitcher.util.LINE_BREAKS
 import dev.kikugie.stitcher.util.WORD_BREAKS
 
 public object StandardSwapStrategy : SwappingStrategy {
+    private fun readResolve(): Any = StandardSwapStrategy
     override fun replace(scope: String, value: String): String {
-        val range = scope.run { countOffset()..<(length - reversed().countOffset()) }
+        val range = scope.run { countOffset()..<length - reversed().countOffset() }
         val indent = scope.lineSequence()
             .filter { it.isNotBlank() }
             .map { it.takeWhile(WORD_BREAKS::contains) }

@@ -10,13 +10,20 @@ import dev.kikugie.stitcher.transform.impl.StarCommentStrategy
 import dev.kikugie.stitcher.transform.replacement.RegexReplacement
 import dev.kikugie.stitcher.transform.replacement.ReplacementBuilder
 import dev.kikugie.stitcher.transform.replacement.StringReplacement
+import dev.kikugie.stitcher.transform.strategy.CommentingStrategy
+import dev.kikugie.stitcher.transform.strategy.SwappingStrategy
+import dev.kikugie.stitcher.transform.strategy.UncommentingStrategy
 import dev.kikugie.stonecutter.Identifier
 import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.Version
+import dev.kikugie.stonecutter.controller.StonecutterControllerExtension
+import dev.kikugie.stonecutter.controller.file.FileHandlerBuilder
+import dev.kikugie.stonecutter.controller.file.StonecutterExperimentalFilesAPI
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlag
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlags
 import dev.kikugie.stonecutter.data.dsl.impl.LenientOperations
 import dev.kikugie.stonecutter.util.get
+import dev.kikugie.stonecutter.util.invoke
 import dev.kikugie.stonecutter.util.newInstance
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
@@ -28,6 +35,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.Optional
+import org.gradle.kotlin.dsl.get
 import java.io.Serializable
 import javax.inject.Inject
 
@@ -57,7 +65,7 @@ private fun patchImplicitDependency(prop: MapProperty<Identifier, Version>, key:
  * However, the properties should not be modified directly, as it is likely to cause errors at task runtime.
  */
 @StonecutterInternalAPI
-public abstract class StonecutterBuildParameters @Inject internal constructor(flags: StonecutterFlags, current: Version, factory: ProviderFactory) {
+public abstract class StonecutterBuildParameters @Inject internal constructor(private val ext: StonecutterControllerExtension, current: Version, factory: ProviderFactory) {
     @get:Input public abstract val constants: MapProperty<Identifier, Boolean>
     @get:Input public abstract val swaps: MapProperty<Identifier, String>
     @get:Input public abstract val dependencies: MapProperty<Identifier, Version>
@@ -79,7 +87,7 @@ public abstract class StonecutterBuildParameters @Inject internal constructor(fl
 
         constants.set(mutableMapOf())
         swaps.set(mutableMapOf())
-        dependencies.set(factory.provider { patchImplicitDependency(dummyDependencies, flags[StonecutterFlag.IMPLICIT_RECEIVER], current) })
+        dependencies.set(factory.provider { patchImplicitDependency(dummyDependencies, ext.flags[StonecutterFlag.IMPLICIT_RECEIVER], current) })
 
         dummyDependencies.set(mutableMapOf())
 
@@ -90,27 +98,24 @@ public abstract class StonecutterBuildParameters @Inject internal constructor(fl
     internal fun addString(repl: StringReplacement): Unit = stringReplacementBuilder.add(repl).getOrThrow()
     internal fun addRegex(repl: RegexReplacement): Unit = regexReplacementBuilder.add(repl).getOrThrow()
 
-    // FIXME: API is not applied yet
-    internal fun toTransformParameters(): TransformParameters {
-        val adapter = ScannerAdapter.Factory { input, sink ->
-            ScannerAdapter(
-                SlashStyleScanner(input),
-                intArrayOf(SlashStyleScanner.SLASH_COMMENT_START, SlashStyleScanner.STAR_COMMENT_START),
-                intArrayOf(SlashStyleScanner.SLASH_COMMENT_END, SlashStyleScanner.STAR_COMMENT_END),
-                sink
-            )
-        }
+    @OptIn(StonecutterExperimentalFilesAPI::class)
+    internal fun toTransformParameters(): TransformParametersBuilder {
         val data = toBuildData()
-        return TransformParameters(
-            adapter,
-            StarCommentStrategy,
-            StarCommentStrategy,
-            StandardSwapStrategy,
-            data.swaps,
-            data.constants,
-            data.dependencies,
-            data.replacements
-        )
+        val scanners = mutableMapOf<String, ScannerAdapter.Factory>()
+        val commenters = mutableMapOf<String, CommentingStrategy>()
+        val uncommenters = mutableMapOf<String, UncommentingStrategy>()
+        val swappers = mutableMapOf<String, SwappingStrategy>()
+
+        for (name in ext.handlers.names) {
+            val handler = ext.handlers[name]
+            scanners[name] = handler.scanner().let { ScannerAdapter.Factory {
+                input, sink -> ScannerAdapter(it.constructor().create(input), it.openers().toIntArray(), it.closers().toIntArray(), sink)
+            } }
+            commenters[name] = handler.commenter()
+            uncommenters[name] = handler.uncommenter()
+            swappers[name] = handler.swapper()
+        }
+        return TransformParametersBuilder(data.swaps, data.constants, data.dependencies, data.replacements, scanners, commenters, uncommenters, swappers)
     }
 
     internal fun toBuildData(): StonecutterBuildData {

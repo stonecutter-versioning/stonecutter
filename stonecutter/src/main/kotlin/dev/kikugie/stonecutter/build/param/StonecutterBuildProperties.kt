@@ -26,14 +26,15 @@ import dev.kikugie.semver.data.Version as ParsedVersion
 @OptIn(StonecutterInternalAPI::class)
 internal abstract class StonecutterBuildProperties @Inject internal constructor(override val node: ProjectNode, factory: ProviderFactory, objects: ObjectFactory)
     : Named, StonecutterBuildExtension, VersionOperations<ParsedVersion> by LenientOperations {
-    override val flags: FlagContainer = node.tree.project.the<StonecutterControllerExtension>().flags
-    internal val params: StonecutterBuildParameters = objects.newInstance<StonecutterBuildParameters>(flags.container, current.version, factory)
+    private val controller = node.tree.project.the<StonecutterControllerExtension>()
+    internal val params: StonecutterBuildParameters = objects.newInstance<StonecutterBuildParameters>(controller, current.version, factory)
 
     override val constants: ConstantContainer = ConstantContainer(factory, params.constants)
     override val swaps: SwapContainer = SwapContainer(factory, params.swaps)
     override val dependencies: DependencyContainer = DependencyContainer(factory, params.dummyDependencies)
     override val replacements: ReplacementContainer = ReplacementContainer(objects, params::addString, params::addRegex)
     override val filters: PatternFilterable = PatternSet()
+    override val flags: FlagContainer = controller.flags
     override val tasks: StonecutterBuildTasks
         get() = throw UnsupportedOperationException("Build tasks are not available in the controller")
 

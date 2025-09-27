@@ -7,6 +7,7 @@ import dev.kikugie.stitcher.process
 import dev.kikugie.stitcher.transform.TransformParameters
 import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.build.param.StonecutterBuildParameters
+import dev.kikugie.stonecutter.build.param.TransformParametersBuilder
 import dev.kikugie.stonecutter.util.clearIfNotIncremental
 import dev.kikugie.stonecutter.util.execute
 import dev.kikugie.stonecutter.util.invoke
@@ -83,7 +84,7 @@ public abstract class SCPrepareTask : DefaultTask() {
         }
     }
 
-    private fun WorkQueue.processFile(change: FileChange, data: TransformParameters): Unit = submit(SCPrepareAction::class) {
+    private fun WorkQueue.processFile(change: FileChange, data: TransformParametersBuilder): Unit = submit(SCPrepareAction::class) {
         params.set(data)
         source.set(change.file)
         output.set(change.file.cacheFile())
@@ -95,7 +96,7 @@ public abstract class SCPrepareTask : DefaultTask() {
 @OptIn(StonecutterInternalAPI::class)
 private interface SCPrepareAction : WorkAction<SCPrepareAction.Parameters> {
     interface Parameters : WorkParameters {
-        val params: Property<TransformParameters>
+        val params: Property<TransformParametersBuilder>
         val source: RegularFileProperty
         val output: RegularFileProperty
     }
@@ -104,9 +105,9 @@ private interface SCPrepareAction : WorkAction<SCPrepareAction.Parameters> {
         val source: Path = parameters.source.asFile().toPath()
         val output: Path = parameters.output.asFile().toPath()
 
-        if (!source.exists()) { output.deleteIfExists(); return }
+        if (!source.exists() || source !in parameters.params()) { output.deleteIfExists(); return }
         val contents = source.readText()
-        val modified = process(source, contents, parameters.params(), GRADLE_PROBLEM_REPORTER)
+        val modified = process(source, contents, parameters.params().forFile(source), GRADLE_PROBLEM_REPORTER)
         if (contents == modified) output.deleteIfExists() else with(output) {
             parent.createDirectories()
             writeText(modified, Charsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)

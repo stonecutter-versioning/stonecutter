@@ -5,6 +5,7 @@ import dev.kikugie.stonecutter.StonecutterPlugin
 import dev.kikugie.stonecutter.build.StonecutterBuildExtension
 import dev.kikugie.stonecutter.controller.StonecutterControllerManager.Companion.getController
 import dev.kikugie.stonecutter.controller.ext.MutableFlagContainer
+import dev.kikugie.stonecutter.controller.file.FileHandlerBuilder
 import dev.kikugie.stonecutter.controller.file.ScannerBuilder
 import dev.kikugie.stonecutter.controller.file.StonecutterExperimentalFilesAPI
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlag
@@ -130,8 +131,16 @@ internal abstract class StonecutterControllerImpl(val root: Project) :
 
     @OptIn(StonecutterExperimentalFilesAPI::class)
     private fun configureFileHandlers() = with(handlers) {
-        register("java") { scanner { from(ScannerBuilder.Java) } }
-        register("kt", "kts") { scanner { from(ScannerBuilder.Kotlin) } }
+        register("java") {
+            comment(FileHandlerBuilder.Commenter.JavaMultiline)
+            uncomment(FileHandlerBuilder.Uncommenter.JavaLike)
+            scanner { from(ScannerBuilder.Java) }
+        }
+        register("kt", "kts") {
+            comment(FileHandlerBuilder.Commenter.KotlinMultiline)
+            uncomment(FileHandlerBuilder.Uncommenter.JavaLike)
+            scanner { from(ScannerBuilder.Kotlin) }
+        }
     }
 
     private fun constructTree(): ProjectTreeImpl {
