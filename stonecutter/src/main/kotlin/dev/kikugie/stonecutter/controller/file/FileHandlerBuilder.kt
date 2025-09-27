@@ -17,13 +17,14 @@ import javax.inject.Inject
 private annotation class FileHandlerDsl
 
 @StonecutterExperimentalFilesAPI @FileHandlerDsl
-public abstract class FileHandlerBuilder @Inject constructor(private val objects: ObjectFactory) : Named {
+public abstract class FileHandlerBuilder @Inject constructor(objects: ObjectFactory) : Named {
     @get:Nested public abstract val scanner: Property<ScannerBuilder>
     @get:Input public abstract val commenter: Property<CommentingStrategy>
     @get:Input public abstract val uncommenter: Property<UncommentingStrategy>
     @get:Input public abstract val swapper: Property<SwappingStrategy>
 
     init {
+        scanner.set(objects.newInstance<ScannerBuilder>())
         swapper.convention(Swapper.Standard)
     }
 
@@ -31,10 +32,7 @@ public abstract class FileHandlerBuilder @Inject constructor(private val objects
     public fun comment(strategy: CommentingStrategy): Unit = commenter.set(strategy)
     public fun uncomment(strategy: UncommentingStrategy): Unit = uncommenter.set(strategy)
 
-    public fun scanner(action: ScannerBuilder.() -> Unit) {
-        val builder = scanner.orNull ?: objects.newInstance<ScannerBuilder>()
-        scanner.set(builder.apply(action))
-    }
+    public fun scanner(action: ScannerBuilder.() -> Unit): Unit = scanner.get().action()
 
     public object Commenter {
         @JvmField public val JavaMultiline: CommentingStrategy = StarCommentStrategy(true)

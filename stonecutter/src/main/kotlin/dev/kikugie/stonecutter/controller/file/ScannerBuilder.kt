@@ -1,5 +1,6 @@
 package dev.kikugie.stonecutter.controller.file
 
+import dev.kikugie.stitcher.antlr.scanner.HashStyleScanner
 import dev.kikugie.stitcher.antlr.scanner.SlashStyleScanner
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.Lexer
@@ -28,7 +29,7 @@ public interface ScannerBuilder {
     public infix fun from(template: Template) {
         constructor.set(template.constructor)
         openers.set(template.openers)
-        closers.set(template.openers)
+        closers.set(template.closers)
     }
 
     public fun interface LexerConstructor : Serializable {
@@ -58,14 +59,20 @@ public interface ScannerBuilder {
     public companion object {
         @JvmField public val Java: Template = Template(
             ::SlashStyleScanner,
-            setOf(SlashStyleScanner.SLASH_COMMENT_START, SlashStyleScanner.STAR_COMMENT_END),
+            setOf(SlashStyleScanner.SLASH_COMMENT_START, SlashStyleScanner.STAR_COMMENT_START),
             setOf(SlashStyleScanner.SLASH_COMMENT_END, SlashStyleScanner.STAR_COMMENT_END),
         )
 
         @JvmField public val Kotlin: Template = Template(
             { SlashStyleScanner(it).apply { nestMultiLineComments = true } },
-            setOf(SlashStyleScanner.SLASH_COMMENT_START, SlashStyleScanner.STAR_COMMENT_END),
+            setOf(SlashStyleScanner.SLASH_COMMENT_START, SlashStyleScanner.STAR_COMMENT_START),
             setOf(SlashStyleScanner.SLASH_COMMENT_END, SlashStyleScanner.STAR_COMMENT_END),
+        )
+
+        @JvmField public val Properties: Template = Template(
+            ::HashStyleScanner,
+            setOf(HashStyleScanner.HASH_COMMENT_START),
+            setOf(HashStyleScanner.HASH_COMMENT_END)
         )
     }
 }
