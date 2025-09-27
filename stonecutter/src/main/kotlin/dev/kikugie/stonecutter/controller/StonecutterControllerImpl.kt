@@ -121,8 +121,8 @@ internal abstract class StonecutterControllerImpl(val root: Project) :
 
     private fun configureModelTasks() = with(tasks) {
         registerModelGroupingTask()
-//        registerTreeModelTask()
-//        for (branch in tree.branches) registerBranchModelTask(branch)
+        registerTreeModelTask()
+        for (branch in tree.branches) registerBranchModelTask(branch)
     }
 
     private fun constructTree(): ProjectTreeImpl {
