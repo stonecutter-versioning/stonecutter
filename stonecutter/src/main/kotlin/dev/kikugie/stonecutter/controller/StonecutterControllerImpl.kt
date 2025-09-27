@@ -131,12 +131,16 @@ internal abstract class StonecutterControllerImpl(val root: Project) :
 
     @OptIn(StonecutterExperimentalFilesAPI::class)
     private fun configureFileHandlers() = with(handlers) {
-        register("java") {
+        // FIXME: Used to realise all entries, but they really should be made thread-safe
+        all {
+            // no-op
+        }
+        create("java") {
             comment(FileHandlerBuilder.Commenter.JavaMultiline)
             uncomment(FileHandlerBuilder.Uncommenter.JavaLike)
             scanner { from(ScannerBuilder.Java) }
         }
-        register("kt", "kts") {
+        create("kt", "kts") {
             comment(FileHandlerBuilder.Commenter.KotlinMultiline)
             uncomment(FileHandlerBuilder.Uncommenter.JavaLike)
             scanner { from(ScannerBuilder.Kotlin) }

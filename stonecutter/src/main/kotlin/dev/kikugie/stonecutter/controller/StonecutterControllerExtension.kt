@@ -78,8 +78,4 @@ public interface StonecutterControllerExtension : ExtensionAware, VersionOperati
     @StonecutterExperimentalFilesAPI
     public fun <T : Any> NamedDomainObjectContainer<T>.create(vararg names: String, action: T.() -> Unit): Unit =
         names.forEach { create(it, action) }
-
-    @StonecutterExperimentalFilesAPI
-    public fun <T : Any> NamedDomainObjectContainer<T>.register(vararg names: String, action: T.() -> Unit): Unit =
-        names.forEach { register(it, action) }
 }
