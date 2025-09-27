@@ -41,6 +41,13 @@ public abstract class FileHandlerBuilder @Inject constructor(objects: ObjectFact
 
     public object Uncommenter {
         @JvmField public val JavaLike: UncommentingStrategy = StarCommentStrategy(true)
+        @JvmField public val Basic: UncommentingStrategy = UncommentingStrategy { it, _ , _ ->
+            it
+        }
+
+        @JvmField public val Lines: UncommentingStrategy = UncommentingStrategy { it, _, cl ->
+            if ('\r' in cl || '\n' in cl) it + cl else it
+        }
     }
 
     public object Swapper {
