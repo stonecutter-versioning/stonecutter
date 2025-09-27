@@ -4,6 +4,7 @@ import dev.kikugie.commons.text.countMatching
 import dev.kikugie.commons.text.getOrDefault
 import dev.kikugie.stitcher.transform.strategy.CommentingStrategy
 import dev.kikugie.stitcher.transform.strategy.UncommentingStrategy
+import dev.kikugie.stitcher.util.LINE_BREAKS
 import dev.kikugie.stitcher.util.WORD_BREAKS
 import dev.kikugie.stitcher.util.buildString
 
@@ -99,5 +100,6 @@ public class StarCommentStrategy(private val flattenComments: Boolean) : Comment
 
     override fun uncomment(scope: String, opener: String, closer: String): String = buildString(scope) {
         removeCommentDepth(from = '^', to = '*', surrounder = '/')
+        if (LINE_BREAKS.any(closer::contains)) append(closer)
     }
 }
