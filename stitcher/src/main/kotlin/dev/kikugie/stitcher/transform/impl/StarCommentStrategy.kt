@@ -1,7 +1,6 @@
 package dev.kikugie.stitcher.transform.impl
 
 import dev.kikugie.commons.text.countMatching
-import dev.kikugie.commons.text.countWhile
 import dev.kikugie.commons.text.getOrDefault
 import dev.kikugie.stitcher.transform.strategy.CommentingStrategy
 import dev.kikugie.stitcher.transform.strategy.UncommentingStrategy

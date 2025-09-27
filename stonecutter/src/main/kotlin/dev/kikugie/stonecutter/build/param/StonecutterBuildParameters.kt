@@ -2,11 +2,7 @@
 
 package dev.kikugie.stonecutter.build.param
 
-import dev.kikugie.stitcher.antlr.scanner.SlashStyleScanner
 import dev.kikugie.stitcher.parse.adapter.ScannerAdapter
-import dev.kikugie.stitcher.transform.TransformParameters
-import dev.kikugie.stitcher.transform.impl.StandardSwapStrategy
-import dev.kikugie.stitcher.transform.impl.StarCommentStrategy
 import dev.kikugie.stitcher.transform.replacement.RegexReplacement
 import dev.kikugie.stitcher.transform.replacement.ReplacementBuilder
 import dev.kikugie.stitcher.transform.replacement.StringReplacement
@@ -17,26 +13,18 @@ import dev.kikugie.stonecutter.Identifier
 import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.Version
 import dev.kikugie.stonecutter.controller.StonecutterControllerExtension
-import dev.kikugie.stonecutter.controller.file.FileHandlerBuilder
 import dev.kikugie.stonecutter.controller.file.StonecutterExperimentalFilesAPI
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlag
-import dev.kikugie.stonecutter.controller.flag.StonecutterFlags
 import dev.kikugie.stonecutter.data.dsl.impl.LenientOperations
-import dev.kikugie.stonecutter.util.get
 import dev.kikugie.stonecutter.util.invoke
 import dev.kikugie.stonecutter.util.newInstance
 import org.gradle.api.model.ObjectFactory
-import org.gradle.api.provider.ListProperty
-import org.gradle.api.provider.MapProperty
-import org.gradle.api.provider.Property
-import org.gradle.api.provider.ProviderFactory
-import org.gradle.api.provider.SetProperty
+import org.gradle.api.provider.*
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.Optional
 import org.gradle.kotlin.dsl.get
-import java.io.Serializable
 import javax.inject.Inject
 
 private fun ObjectFactory.stringSpec(repl: StringReplacement): StonecutterBuildParameters.StringReplacementSpec =

@@ -9,7 +9,6 @@ import dev.kikugie.stonecutter.build.ext.SwapContainer
 import dev.kikugie.stonecutter.build.task.StonecutterBuildTasks
 import dev.kikugie.stonecutter.controller.StonecutterControllerExtension
 import dev.kikugie.stonecutter.controller.ext.FlagContainer
-import dev.kikugie.stonecutter.controller.ext.MutableFlagContainer.Companion.container
 import dev.kikugie.stonecutter.data.dsl.VersionOperations
 import dev.kikugie.stonecutter.data.dsl.impl.LenientOperations
 import dev.kikugie.stonecutter.data.tree.struct.ProjectNode

@@ -4,7 +4,6 @@ import dev.kikugie.stitcher.issue.ProblemLocation
 import dev.kikugie.stitcher.issue.ProblemReporter
 import dev.kikugie.stitcher.issue.ProblemTemplate
 import dev.kikugie.stitcher.process
-import dev.kikugie.stitcher.transform.TransformParameters
 import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.build.param.StonecutterBuildParameters
 import dev.kikugie.stonecutter.build.param.TransformParametersBuilder
@@ -30,7 +29,7 @@ import org.gradle.workers.WorkerExecutor
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.Collections
+import java.util.*
 import javax.inject.Inject
 import kotlin.io.path.*
 
