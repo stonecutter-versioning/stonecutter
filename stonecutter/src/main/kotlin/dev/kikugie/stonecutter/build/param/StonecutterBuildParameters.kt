@@ -53,7 +53,11 @@ private fun patchImplicitDependency(prop: MapProperty<Identifier, Version>, key:
  * However, the properties should not be modified directly, as it is likely to cause errors at task runtime.
  */
 @StonecutterInternalAPI
-public abstract class StonecutterBuildParameters @Inject internal constructor(private val ext: StonecutterControllerExtension, current: Version, factory: ProviderFactory) {
+public abstract class StonecutterBuildParameters @Inject internal constructor(
+    private val ext: StonecutterControllerExtension,
+    current: Version,
+    factory: ProviderFactory
+) {
     @get:Input public abstract val constants: MapProperty<Identifier, Boolean>
     @get:Input public abstract val swaps: MapProperty<Identifier, String>
     @get:Input public abstract val dependencies: MapProperty<Identifier, Version>
@@ -96,14 +100,28 @@ public abstract class StonecutterBuildParameters @Inject internal constructor(pr
 
         for (name in ext.handlers.names) {
             val handler = ext.handlers[name]
-            scanners[name] = handler.scanner().let { ScannerAdapter.Factory {
-                input, sink -> ScannerAdapter(it.constructor().create(input), it.openers().toIntArray(), it.closers().toIntArray(), sink)
-            } }
+            scanners[name] = handler.scanner().let {
+                val constructor = it.constructor()
+                val openers = it.openers().toIntArray()
+                val closers = it.closers().toIntArray()
+                ScannerAdapter.Factory { input, sink ->
+                    ScannerAdapter(constructor.create(input), openers, closers, sink)
+                }
+            }
             commenters[name] = handler.commenter()
             uncommenters[name] = handler.uncommenter()
             swappers[name] = handler.swapper()
         }
-        return TransformParametersBuilder(data.swaps, data.constants, data.dependencies, data.replacements, scanners, commenters, uncommenters, swappers)
+        return TransformParametersBuilder(
+            data.swaps,
+            data.constants,
+            data.dependencies,
+            data.replacements,
+            scanners,
+            commenters,
+            uncommenters,
+            swappers
+        )
     }
 
     internal fun toBuildData(): StonecutterBuildData {
