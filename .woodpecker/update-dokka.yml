@@ -13,12 +13,14 @@ steps:
     image: alpine/git
     commands:
     - git clone --depth 1 https://codeberg.org/stonecutter/docs.git docs
+    - git lfs fetch
+    - git lfs checkout
   zip-files:
     image: ubuntu
     commands:
       - mkdir -p docs/setup/dokka
       - rm -f "docs/setup/dokka/${CI_COMMIT_BRANCH}.tar.gz"
-      - tar czvf docs/setup/dokka/${CI_COMMIT_BRANCH}.tar.xz -C build/dokka/html .
+      - tar czvf docs/setup/dokka/${CI_COMMIT_BRANCH}.tar.gz -C build/dokka/html .
   push-changes:
     image: appleboy/drone-git-push
     directory: docs
