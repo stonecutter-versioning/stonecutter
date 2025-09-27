@@ -5,6 +5,8 @@ import dev.kikugie.stonecutter.StonecutterPlugin
 import dev.kikugie.stonecutter.build.StonecutterBuildExtension
 import dev.kikugie.stonecutter.controller.StonecutterControllerManager.Companion.getController
 import dev.kikugie.stonecutter.controller.ext.MutableFlagContainer
+import dev.kikugie.stonecutter.controller.file.ScannerBuilder
+import dev.kikugie.stonecutter.controller.file.StonecutterExperimentalFilesAPI
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlag
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlags
 import dev.kikugie.stonecutter.controller.tasks.StonecutterControllerTasksImpl
@@ -52,6 +54,7 @@ internal abstract class StonecutterControllerImpl(val root: Project) :
         configureProject()
         configureSyncTask()
         configureModelTasks()
+        configureFileHandlers()
     }
 
     override fun active(provider: Any?) = initializePluginConfiguration(provider)
@@ -123,6 +126,12 @@ internal abstract class StonecutterControllerImpl(val root: Project) :
         registerModelGroupingTask()
         registerTreeModelTask()
         for (branch in tree.branches) registerBranchModelTask(branch)
+    }
+
+    @OptIn(StonecutterExperimentalFilesAPI::class)
+    private fun configureFileHandlers() = with(handlers) {
+        register("java") { scanner { from(ScannerBuilder.Java) } }
+        register("kt", "kts") { scanner { from(ScannerBuilder.Kotlin) } }
     }
 
     private fun constructTree(): ProjectTreeImpl {

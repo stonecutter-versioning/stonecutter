@@ -18,7 +18,6 @@ import dev.kikugie.stonecutter.data.tree.struct.ProjectTree
 import dev.kikugie.stonecutter.util.configure
 import groovy.lang.Closure
 import org.gradle.api.tasks.util.PatternFilterable
-import org.gradle.util.internal.ConfigureUtil
 
 @DslMarker @Retention(AnnotationRetention.BINARY)
 private annotation class BuildDsl

@@ -90,7 +90,7 @@ public abstract class StonecutterBuildParameters @Inject internal constructor(fl
     internal fun addString(repl: StringReplacement): Unit = stringReplacementBuilder.add(repl).getOrThrow()
     internal fun addRegex(repl: RegexReplacement): Unit = regexReplacementBuilder.add(repl).getOrThrow()
 
-    // TODO: API for new functionality
+    // FIXME: API is not applied yet
     internal fun toTransformParameters(): TransformParameters {
         val adapter = ScannerAdapter.Factory { input, sink ->
             ScannerAdapter(
