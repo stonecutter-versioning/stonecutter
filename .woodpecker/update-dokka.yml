@@ -16,10 +16,9 @@ steps:
   zip-files:
     image: ubuntu
     commands:
-      - apt-get install xz-utils
       - mkdir -p docs/setup/dokka
-      - rm -f "docs/setup/dokka${CI_COMMIT_BRANCH}.tar.xz"
-      - tar -cJf "docs/setup/dokka${CI_COMMIT_BRANCH}.tar.xz" -C build/dokka/html .
+      - rm -f "docs/setup/dokka/${CI_COMMIT_BRANCH}.tar.gz"
+      - tar czvf docs/setup/dokka/${CI_COMMIT_BRANCH}.tar.xz -C build/dokka/html .
   push-changes:
     image: appleboy/drone-git-push
     directory: docs
