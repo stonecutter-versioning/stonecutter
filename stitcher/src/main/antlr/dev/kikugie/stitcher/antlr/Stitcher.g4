@@ -102,5 +102,5 @@ OP_OR: '||';
 IDENTIFIER: IDENTIFIER_START IDENTIFIER_PART*;
 LOOSE_VERSION: VERSION_START VERSION_PART*;
 QUOTED: '\'' (ESC_SLASH | ESC_TICK | ~[\\'] )* '\'';
-COMMENT: '*' (ESC_SLASH | ESC_STAR | ~[*\\])* '*' -> channel(HIDDEN);
+COMMENT: '*' (ESC_SLASH | ESC_STAR | ~[\\*])* '*' -> channel(HIDDEN);
 WHITESPACE: [ \t]+ -> skip;
