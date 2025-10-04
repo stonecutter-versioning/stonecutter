@@ -92,6 +92,7 @@ private fun StringBuilder.removeCommentDepth(from: Char, to: Char, surrounder: C
     }
 }
 
+// TODO: Make it more generic
 public class StarCommentStrategy(private val flattenComments: Boolean) : CommentingStrategy, UncommentingStrategy {
     override fun comment(scope: String): String = buildString(scope) {
         if (flattenComments) applyCommentDepth(from = '*', to = '^', surrounder = '/')

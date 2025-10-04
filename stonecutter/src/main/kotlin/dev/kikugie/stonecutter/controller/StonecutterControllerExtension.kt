@@ -7,6 +7,7 @@ import dev.kikugie.stonecutter.build.StonecutterBuildExtension
 import dev.kikugie.stonecutter.controller.file.FileHandlerBuilder
 import dev.kikugie.stonecutter.controller.file.StonecutterExperimentalFilesAPI
 import dev.kikugie.stonecutter.controller.ext.MutableFlagContainer
+import dev.kikugie.stonecutter.controller.file.FileHandlerContainer
 import dev.kikugie.stonecutter.controller.tasks.StonecutterControllerTasks
 import dev.kikugie.stonecutter.data.StonecutterProject
 import dev.kikugie.stonecutter.data.dsl.VersionOperations
@@ -22,6 +23,7 @@ import dev.kikugie.semver.data.Version as ParsedVersion
 private annotation class ControllerDsl
 
 /**Stonecutter plugin available in `stonecutter.gradle[.kts]`.*/
+@OptIn(StonecutterExperimentalFilesAPI::class)
 @StonecutterAPI @ControllerDsl
 public interface StonecutterControllerExtension : ExtensionAware, VersionOperations<ParsedVersion> {
     public val tree: ProjectTree
@@ -47,9 +49,7 @@ public interface StonecutterControllerExtension : ExtensionAware, VersionOperati
 
     public val flags: MutableFlagContainer
     public val tasks: StonecutterControllerTasks
-
-    @StonecutterExperimentalFilesAPI
-    public val handlers: NamedDomainObjectContainer<FileHandlerBuilder>
+    public val handlers: FileHandlerContainer
 
     /**
      * Initialises the plugin with the given active version.
@@ -75,7 +75,6 @@ public interface StonecutterControllerExtension : ExtensionAware, VersionOperati
     public infix fun tasks(action: StonecutterControllerTasks.() -> Unit): Unit = tasks.action()
     public fun tasks(action: Closure<*>): Unit = action.configure(tasks)
 
-    @StonecutterExperimentalFilesAPI
-    public fun <T : Any> NamedDomainObjectContainer<T>.create(vararg names: String, action: T.() -> Unit): Unit =
-        names.forEach { create(it, action) }
+    public infix fun handlers(action: FileHandlerContainer.() -> Unit): Unit = handlers.action()
+    public fun handlers(action: Closure<*>): Unit = action.configure(handlers)
 }

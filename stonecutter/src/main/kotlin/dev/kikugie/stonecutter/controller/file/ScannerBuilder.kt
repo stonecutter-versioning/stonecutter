@@ -110,34 +110,4 @@ public interface ScannerBuilder {
         public val openers: Set<Int>,
         public val closers: Set<Int>
     )
-
-    public companion object {
-        /**
-         * Matches `//` and `/* */`-style comments, with non-nested multiline comments.
-         */
-        @JvmField public val Java: Template = Template(
-            ::SlashStyleScanner,
-            setOf(SlashStyleScanner.SLASH_COMMENT_START, SlashStyleScanner.STAR_COMMENT_START),
-            setOf(SlashStyleScanner.SLASH_COMMENT_END, SlashStyleScanner.STAR_COMMENT_END),
-        )
-
-        /**
-         * Matches `//` and `/* */`-style comments, with nested multiline comments.
-         * Comments inside string templates are **not** recognized.
-         */
-        @JvmField public val Kotlin: Template = Template(
-            { SlashStyleScanner(it).apply { nestMultiLineComments = true } },
-            setOf(SlashStyleScanner.SLASH_COMMENT_START, SlashStyleScanner.STAR_COMMENT_START),
-            setOf(SlashStyleScanner.SLASH_COMMENT_END, SlashStyleScanner.STAR_COMMENT_END),
-        )
-
-        /**
-         * Matches `#`-style comments.
-         */
-        @JvmField public val Properties: Template = Template(
-            ::HashStyleScanner,
-            setOf(HashStyleScanner.HASH_COMMENT_START),
-            setOf(HashStyleScanner.HASH_COMMENT_END)
-        )
-    }
 }

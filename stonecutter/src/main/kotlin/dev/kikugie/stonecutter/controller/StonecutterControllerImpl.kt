@@ -6,6 +6,8 @@ import dev.kikugie.stonecutter.build.StonecutterBuildExtension
 import dev.kikugie.stonecutter.controller.StonecutterControllerManager.Companion.getController
 import dev.kikugie.stonecutter.controller.ext.MutableFlagContainer
 import dev.kikugie.stonecutter.controller.file.FileHandlerBuilder
+import dev.kikugie.stonecutter.controller.file.FileHandlerContainer
+import dev.kikugie.stonecutter.controller.file.Presets
 import dev.kikugie.stonecutter.controller.file.ScannerBuilder
 import dev.kikugie.stonecutter.controller.file.StonecutterExperimentalFilesAPI
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlag
@@ -16,6 +18,7 @@ import dev.kikugie.stonecutter.data.ProjectHierarchy.Companion.hierarchy
 import dev.kikugie.stonecutter.data.StonecutterProject
 import dev.kikugie.stonecutter.data.container.BuildPropertiesContainer
 import dev.kikugie.stonecutter.data.container.ProjectNodeContainer
+import dev.kikugie.stonecutter.data.container.TaskCacheContainer
 import dev.kikugie.stonecutter.data.container.TreeBuilderContainer
 import dev.kikugie.stonecutter.data.container.getContainer
 import dev.kikugie.stonecutter.data.dsl.VersionOperations
@@ -30,13 +33,14 @@ import dev.kikugie.stonecutter.process.SCIdeaConfigTask
 import dev.kikugie.stonecutter.util.ActiveProvider
 import dev.kikugie.stonecutter.util.isIdeaSync
 import dev.kikugie.stonecutter.util.requestTasks
+import dev.kikugie.stonecutter.util.service
 import dev.kikugie.stonecutter.util.set
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.named
 import dev.kikugie.semver.data.Version as ParsedVersion
 
-@OptIn(StonecutterInternalAPI::class)
+@OptIn(StonecutterInternalAPI::class, StonecutterExperimentalFilesAPI::class)
 internal abstract class StonecutterControllerImpl(val root: Project) :
     StonecutterControllerExtension, VersionOperations<ParsedVersion> by LenientOperations {
     private val nodes by lazy { root.gradle.getContainer<ProjectNodeContainer>() }
@@ -45,10 +49,14 @@ internal abstract class StonecutterControllerImpl(val root: Project) :
     internal var activeInfo: ActiveInfo = ActiveInfo.empty()
         private set
 
-    override val tree: ProjectTreeImpl = constructTree()
-    override val tasks: StonecutterControllerTasksImpl = StonecutterControllerTasksImpl(this)
+    override val tree: ProjectTreeImpl =
+        constructTree()
+    override val tasks: StonecutterControllerTasksImpl =
+        StonecutterControllerTasksImpl(this)
     override val flags: MutableFlagContainer =
         MutableFlagContainer(StonecutterFlags { root.findProperty("dev.kikugie.stonecutter.${it.key}")?.toString() })
+    override val handlers: FileHandlerContainer =
+        root.gradle.service<TaskCacheContainer>("stonecutter-cache").handlers
 
     init {
         nodes += tree
@@ -129,21 +137,17 @@ internal abstract class StonecutterControllerImpl(val root: Project) :
         for (branch in tree.branches) registerBranchModelTask(branch)
     }
 
-    @OptIn(StonecutterExperimentalFilesAPI::class)
-    private fun configureFileHandlers() = with(handlers) {
-        // FIXME: Used to realise all entries, but they really should be made thread-safe
-        all {
-            // no-op
+    private fun configureFileHandlers() {
+        handlers.configureIfAbsent("java") {
+            comment(Presets.Commenter.SlashStarNested)
+            uncomment(Presets.Uncommenter.DoubleSlashStar)
+            scanner { from(Presets.Scanner.DoubleSlashStar) }
         }
-        create("java") {
-            comment(FileHandlerBuilder.Commenter.JavaMultiline)
-            uncomment(FileHandlerBuilder.Uncommenter.JavaLike)
-            scanner { from(ScannerBuilder.Java) }
-        }
-        create("kt", "kts") {
-            comment(FileHandlerBuilder.Commenter.KotlinMultiline)
-            uncomment(FileHandlerBuilder.Uncommenter.JavaLike)
-            scanner { from(ScannerBuilder.Kotlin) }
+
+        handlers.configureIfAbsent("kt", "kts") {
+            comment(Presets.Commenter.SlashStarFlat)
+            uncomment(Presets.Uncommenter.DoubleSlashStar)
+            scanner { from(Presets.Scanner.DoubleSlashStarNested) }
         }
     }
 

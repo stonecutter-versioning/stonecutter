@@ -2,21 +2,15 @@
 
 package dev.kikugie.stonecutter.build.param
 
-import dev.kikugie.stitcher.parse.adapter.ScannerAdapter
 import dev.kikugie.stitcher.transform.replacement.RegexReplacement
 import dev.kikugie.stitcher.transform.replacement.ReplacementBuilder
 import dev.kikugie.stitcher.transform.replacement.StringReplacement
-import dev.kikugie.stitcher.transform.strategy.CommentingStrategy
-import dev.kikugie.stitcher.transform.strategy.SwappingStrategy
-import dev.kikugie.stitcher.transform.strategy.UncommentingStrategy
 import dev.kikugie.stonecutter.Identifier
 import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.Version
 import dev.kikugie.stonecutter.controller.StonecutterControllerExtension
-import dev.kikugie.stonecutter.controller.file.StonecutterExperimentalFilesAPI
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlag
 import dev.kikugie.stonecutter.data.dsl.impl.LenientOperations
-import dev.kikugie.stonecutter.util.invoke
 import dev.kikugie.stonecutter.util.newInstance
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.*
@@ -24,7 +18,6 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.Optional
-import org.gradle.kotlin.dsl.get
 import javax.inject.Inject
 
 private fun ObjectFactory.stringSpec(repl: StringReplacement): StonecutterBuildParameters.StringReplacementSpec =
@@ -89,40 +82,6 @@ public abstract class StonecutterBuildParameters @Inject internal constructor(
 
     internal fun addString(repl: StringReplacement): Unit = stringReplacementBuilder.add(repl).getOrThrow()
     internal fun addRegex(repl: RegexReplacement): Unit = regexReplacementBuilder.add(repl).getOrThrow()
-
-    @OptIn(StonecutterExperimentalFilesAPI::class)
-    internal fun toTransformParameters(): TransformParametersBuilder {
-        val data = toBuildData()
-        val scanners = mutableMapOf<String, ScannerAdapter.Factory>()
-        val commenters = mutableMapOf<String, CommentingStrategy>()
-        val uncommenters = mutableMapOf<String, UncommentingStrategy>()
-        val swappers = mutableMapOf<String, SwappingStrategy>()
-
-        for (name in ext.handlers.names) {
-            val handler = ext.handlers[name]
-            scanners[name] = handler.scanner().let {
-                val constructor = it.constructor()
-                val openers = it.openers().toIntArray()
-                val closers = it.closers().toIntArray()
-                ScannerAdapter.Factory { input, sink ->
-                    ScannerAdapter(constructor.create(input), openers, closers, sink)
-                }
-            }
-            commenters[name] = handler.commenter()
-            uncommenters[name] = handler.uncommenter()
-            swappers[name] = handler.swapper()
-        }
-        return TransformParametersBuilder(
-            data.swaps,
-            data.constants,
-            data.dependencies,
-            data.replacements,
-            scanners,
-            commenters,
-            uncommenters,
-            swappers
-        )
-    }
 
     internal fun toBuildData(): StonecutterBuildData {
         val constants = constants.get()

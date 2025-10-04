@@ -5,6 +5,8 @@ import dev.kikugie.stonecutter.build.StonecutterBuildImpl
 import dev.kikugie.stonecutter.controller.StonecutterControllerExtension
 import dev.kikugie.stonecutter.controller.StonecutterControllerImpl
 import dev.kikugie.stonecutter.controller.StonecutterControllerManager.Companion.getController
+import dev.kikugie.stonecutter.controller.file.StonecutterExperimentalFilesAPI
+import dev.kikugie.stonecutter.data.container.TaskCacheContainer
 import dev.kikugie.stonecutter.settings.StonecutterSettingsExtension
 import dev.kikugie.stonecutter.settings.StonecutterSettingsImpl
 import org.gradle.api.Plugin
@@ -13,6 +15,7 @@ import org.gradle.api.initialization.Settings
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.kotlin.dsl.add
 import org.gradle.kotlin.dsl.create
+import org.gradle.kotlin.dsl.registerIfAbsent
 
 public open class StonecutterPlugin : Plugin<ExtensionAware> {
     public companion object {
@@ -24,10 +27,12 @@ public open class StonecutterPlugin : Plugin<ExtensionAware> {
      * Applies the plugin either to [Settings] or [Project].
      * Applying the plugin to an incorrect target will throw an exception.
      */
-    @OptIn(StonecutterInternalAPI::class)
+    @OptIn(StonecutterInternalAPI::class, StonecutterExperimentalFilesAPI::class)
     override fun apply(target: ExtensionAware): Unit = when (target) {
-        is Settings ->
+        is Settings -> {
+            target.gradle.sharedServices.registerIfAbsent("stonecutter-cache", TaskCacheContainer::class)
             target.stonecutter<StonecutterSettingsExtension, StonecutterSettingsImpl>()
+        }
 
         is Project ->
             if (target.getController() == null) target.stonecutter<StonecutterBuildExtension, StonecutterBuildImpl>()

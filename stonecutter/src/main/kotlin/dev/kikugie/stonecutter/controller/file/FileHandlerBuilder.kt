@@ -1,7 +1,5 @@
 package dev.kikugie.stonecutter.controller.file
 
-import dev.kikugie.stitcher.transform.impl.StandardSwapStrategy
-import dev.kikugie.stitcher.transform.impl.StarCommentStrategy
 import dev.kikugie.stitcher.transform.strategy.CommentingStrategy
 import dev.kikugie.stitcher.transform.strategy.SwappingStrategy
 import dev.kikugie.stitcher.transform.strategy.UncommentingStrategy
@@ -93,8 +91,8 @@ public abstract class FileHandlerBuilder @Inject constructor(objects: ObjectFact
 
     init {
         scanner.set(objects.newInstance<ScannerBuilder>())
-        swapper.convention(Swapper.Standard)
-        uncommenter.convention(Uncommenter.Basic)
+        swapper.convention(Presets.Swapper.Default)
+        uncommenter.convention(Presets.Uncommenter.Basic)
     }
 
     /**
@@ -166,38 +164,4 @@ public abstract class FileHandlerBuilder @Inject constructor(objects: ObjectFact
      * @see ScannerBuilder
      */
     public fun scanner(action: ScannerBuilder.() -> Unit): Unit = scanner.get().action()
-
-    public object Commenter {
-        /**
-         * Wraps the text in `/* */`-style comments, replacing nested cases with `/^ ^/` placeholders.
-         */
-        @JvmField public val JavaMultiline: CommentingStrategy = StarCommentStrategy(true)
-
-        /**
-         * Wraps the text in `/* */`-style comments, but doesn't insert `/^ ^/` placeholders like [JavaMultiline]
-         * because Kotlin handles comment depth.
-         */
-        @JvmField public val KotlinMultiline: CommentingStrategy = StarCommentStrategy(false)
-    }
-
-    public object Uncommenter {
-        /**
-         * Removes single- and multi-line comments, handling the `/^ ^/` placeholders produced by [Commenter.JavaMultiline].
-         */
-        @JvmField public val JavaLike: UncommentingStrategy = StarCommentStrategy(true)
-
-        /**
-         * Removes single- and multi-line comments, inserting line breaks for the former ones.
-         */
-        @JvmField public val Basic: UncommentingStrategy = UncommentingStrategy { it, _, cl ->
-            if ('\r' in cl || '\n' in cl) it + cl else it
-        }
-    }
-
-    public object Swapper {
-        /**
-         * Replaces the content with the swap value, padding it with the content's indentation.
-         */
-        @JvmField public val Standard: SwappingStrategy = StandardSwapStrategy
-    }
 }

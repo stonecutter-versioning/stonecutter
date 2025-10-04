@@ -13,6 +13,7 @@ import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ProviderFactory
+import org.gradle.api.services.BuildService
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.internal.DefaultTaskExecutionRequest
@@ -88,3 +89,6 @@ internal fun Closure<*>.configure(any: Any) {
 internal fun <T : Any> Property<T>.set(factory: ProviderFactory, provider: () -> T) {
     set(factory.provider(provider))
 }
+
+internal inline fun <reified T : BuildService<*>> Gradle.service(name: String) =
+    sharedServices.registrations[name].service.get() as T

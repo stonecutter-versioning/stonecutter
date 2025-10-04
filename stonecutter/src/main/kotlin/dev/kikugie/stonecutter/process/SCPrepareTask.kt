@@ -5,8 +5,10 @@ import dev.kikugie.stitcher.issue.ProblemReporter
 import dev.kikugie.stitcher.issue.ProblemTemplate
 import dev.kikugie.stitcher.process
 import dev.kikugie.stonecutter.StonecutterInternalAPI
+import dev.kikugie.stonecutter.build.param.StonecutterBuildData
 import dev.kikugie.stonecutter.build.param.StonecutterBuildParameters
-import dev.kikugie.stonecutter.build.param.TransformParametersBuilder
+import dev.kikugie.stonecutter.controller.file.StonecutterExperimentalFilesAPI
+import dev.kikugie.stonecutter.data.container.TaskCacheContainer
 import dev.kikugie.stonecutter.util.clearIfNotIncremental
 import dev.kikugie.stonecutter.util.execute
 import dev.kikugie.stonecutter.util.invoke
@@ -17,6 +19,7 @@ import org.gradle.api.file.FileType
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
+import org.gradle.api.services.ServiceReference
 import org.gradle.api.tasks.*
 import org.gradle.kotlin.dsl.submit
 import org.gradle.work.FileChange
@@ -52,7 +55,7 @@ private fun format(file: Path, location: ProblemLocation, template: ProblemTempl
     if (template.cause != null) append("\nCaused by: ${template.cause?.stackTraceToString()}")
 }
 
-@OptIn(StonecutterInternalAPI::class)
+@OptIn(StonecutterInternalAPI::class, StonecutterExperimentalFilesAPI::class)
 public abstract class SCPrepareTask : DefaultTask() {
     @get:Nested
     public abstract val params: Property<StonecutterBuildParameters>
@@ -72,10 +75,13 @@ public abstract class SCPrepareTask : DefaultTask() {
     @get:Inject
     public abstract val executor: WorkerExecutor
 
+    @get:ServiceReference("stonecutter-cache")
+    internal abstract val cache: Property<TaskCacheContainer>
+
     @TaskAction
     public fun run(inputs: InputChanges) {
         inputs.clearIfNotIncremental(destination.asFile())
-        val data = params().toTransformParameters()
+        val data = params().toBuildData()
 
         executor.execute {
             for (change in inputs.getFileChanges(source))
@@ -83,19 +89,21 @@ public abstract class SCPrepareTask : DefaultTask() {
         }
     }
 
-    private fun WorkQueue.processFile(change: FileChange, data: TransformParametersBuilder): Unit = submit(SCPrepareAction::class) {
-        params.set(data)
+    private fun WorkQueue.processFile(change: FileChange, params: StonecutterBuildData): Unit = submit(SCPrepareAction::class) {
+        data.set(params)
         source.set(change.file)
         output.set(change.file.cacheFile())
+        cache.set(this@SCPrepareTask.cache)
     }
 
     private fun File.cacheFile(): File = destination.asFile().resolve(relativeTo(root()))
 }
 
-@OptIn(StonecutterInternalAPI::class)
+@OptIn(StonecutterInternalAPI::class, StonecutterExperimentalFilesAPI::class)
 private interface SCPrepareAction : WorkAction<SCPrepareAction.Parameters> {
     interface Parameters : WorkParameters {
-        val params: Property<TransformParametersBuilder>
+        val cache: Property<TaskCacheContainer>
+        val data: Property<StonecutterBuildData>
         val source: RegularFileProperty
         val output: RegularFileProperty
     }
@@ -104,9 +112,10 @@ private interface SCPrepareAction : WorkAction<SCPrepareAction.Parameters> {
         val source: Path = parameters.source.asFile().toPath()
         val output: Path = parameters.output.asFile().toPath()
 
-        if (!source.exists() || source !in parameters.params()) { output.deleteIfExists(); return }
+        val parameters = parameters.data().forFile(source, parameters.cache().handlers)
+        if (!source.exists() || parameters == null) { output.deleteIfExists(); return }
         val contents = source.readText()
-        val modified = process(source, contents, parameters.params().forFile(source), GRADLE_PROBLEM_REPORTER)
+        val modified = process(source, contents, parameters, GRADLE_PROBLEM_REPORTER)
         if (contents == modified) output.deleteIfExists() else with(output) {
             parent.createDirectories()
             writeText(modified, Charsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
