@@ -3,7 +3,7 @@ package dev.kikugie.stitcher.transform.strategy
 /**
  * Defines a strategy for uncommenting a given scope of text.
  */
-public fun interface UncommentingStrategy : java.io.Serializable {
+public fun interface UncommentingStrategy {
     /**
      * Removes comments from the specified [scope].
      *

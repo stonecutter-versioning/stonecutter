@@ -23,21 +23,21 @@ private fun ScannerBuilder.toFactory(): ScannerAdapter.Factory {
 /**
  * Represents the build data serialized in `node.json`.
  */
-@Serializable
+@Serializable @JvmRecord
 public data class StonecutterBuildData(
     public val constants: Map<Identifier, Boolean>,
     public val swaps: Map<Identifier, String>,
     public val dependencies: Map<Identifier, Version>,
     public val replacements: List<Replacement>,
-) {
+) : java.io.Serializable {
     @OptIn(StonecutterExperimentalFilesAPI::class)
-    internal fun forFile(file: Path, handlers: FileHandlerContainer): TransformParameters? {
+    internal fun forFile(file: Path, handlers: FileHandlerContainer): TransformParameters? = synchronized(handlers) {
         val handler = handlers[file.extension] ?: return null
         val scanner = handler.scanner.map(ScannerBuilder::toFactory).get()
         val commenter = handler.commenter.get()
         val uncommenter = handler.uncommenter.get()
         val swapper = handler.swapper.get()
 
-        return TransformParameters(scanner, commenter, uncommenter, swapper, swaps, constants, dependencies, replacements)
+        TransformParameters(scanner, commenter, uncommenter, swapper, swaps, constants, dependencies, replacements)
     }
 }

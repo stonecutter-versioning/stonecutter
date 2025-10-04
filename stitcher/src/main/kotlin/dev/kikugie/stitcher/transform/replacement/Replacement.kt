@@ -2,10 +2,11 @@ package dev.kikugie.stitcher.transform.replacement
 
 import org.intellij.lang.annotations.Language
 
-public sealed interface Replacement {
+public sealed interface Replacement : java.io.Serializable {
     public val identifier: String?
 }
 
+@JvmRecord
 public data class StringReplacement(
     val target: String,
     val sources: Set<String>,
@@ -15,6 +16,7 @@ public data class StringReplacement(
         : this(target, sources.toSet(), identifier)
 }
 
+@JvmRecord
 public data class RegexReplacement(
     val target: String,
     val pattern: Regex,
