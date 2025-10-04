@@ -4,15 +4,18 @@ import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.build.param.StonecutterBuildParameters
 import dev.kikugie.stonecutter.build.param.StonecutterBuildProperties
 import dev.kikugie.stonecutter.build.task.StonecutterBuildTasksImpl
+import dev.kikugie.stonecutter.controller.file.StonecutterExperimentalFilesAPI
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlag
 import dev.kikugie.stonecutter.data.ProjectHierarchy.Companion.hierarchy
 import dev.kikugie.stonecutter.data.container.BuildPropertiesContainer
 import dev.kikugie.stonecutter.data.container.ProjectNodeContainer
+import dev.kikugie.stonecutter.data.container.TaskCacheContainer
 import dev.kikugie.stonecutter.data.container.getContainer
 import dev.kikugie.stonecutter.data.tree.struct.ProjectNode
 import dev.kikugie.stonecutter.util.isIdeaSync
 import dev.kikugie.stonecutter.util.projectDirectory
 import dev.kikugie.stonecutter.util.requestTasks
+import dev.kikugie.stonecutter.util.service
 import dev.kikugie.stonecutter.util.sourceSets
 import org.gradle.api.Project
 import org.gradle.api.file.DuplicatesStrategy
@@ -25,7 +28,7 @@ private fun Project.findNode(): ProjectNode = checkNotNull(gradle.getContainer<P
 private fun Project.findProperties(): StonecutterBuildProperties =
     gradle.getContainer<BuildPropertiesContainer>()[findNode()]
 
-@OptIn(StonecutterInternalAPI::class)
+@OptIn(StonecutterInternalAPI::class, StonecutterExperimentalFilesAPI::class)
 internal abstract class StonecutterBuildImpl(val project: Project, private val properties: StonecutterBuildProperties) :
     StonecutterBuildExtension by properties {
     constructor(project: Project) : this(project, project.findProperties())
@@ -38,12 +41,15 @@ internal abstract class StonecutterBuildImpl(val project: Project, private val p
     }
 
     private fun configureProject() {
+        val service = project.gradle.service<TaskCacheContainer>("stonecutter-cache")
         project.plugins.apply("java")
         project.sourceSets.all {
             createProcessingTasks(this)
             tasks.configureSource(this)
         }
-        filters.include("**/*.java", "**/*.kt", "**/*.kts", "**/*.groovy", "**/*.gradle", "**/*.scala", "**/*.sc", "**/*.json5", "**/*.hjson")
+        filters.include {
+            service.handlers[it.file.extension] != null
+        }
         tasks.registerNodeModelTask()
         configureTaskDependencies()
     }
