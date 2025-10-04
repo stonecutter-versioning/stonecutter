@@ -5,10 +5,8 @@ import dev.kikugie.stonecutter.StonecutterPlugin
 import dev.kikugie.stonecutter.build.StonecutterBuildExtension
 import dev.kikugie.stonecutter.controller.StonecutterControllerManager.Companion.getController
 import dev.kikugie.stonecutter.controller.ext.MutableFlagContainer
-import dev.kikugie.stonecutter.controller.file.FileHandlerBuilder
 import dev.kikugie.stonecutter.controller.file.FileHandlerContainer
 import dev.kikugie.stonecutter.controller.file.Presets
-import dev.kikugie.stonecutter.controller.file.ScannerBuilder
 import dev.kikugie.stonecutter.controller.file.StonecutterExperimentalFilesAPI
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlag
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlags
@@ -139,15 +137,15 @@ internal abstract class StonecutterControllerImpl(val root: Project) :
 
     private fun configureFileHandlers() {
         handlers.configureIfAbsent("java") {
-            comment(Presets.Commenter.SlashStarNested)
-            uncomment(Presets.Uncommenter.DoubleSlashStar)
-            scanner { from(Presets.Scanner.DoubleSlashStar) }
+            comment(Presets.Commenter.JavaStar)
+            uncomment(Presets.Uncommenter.Java)
+            scanner { from(Presets.Scanner.Java) }
         }
 
         handlers.configureIfAbsent("kt", "kts") {
-            comment(Presets.Commenter.SlashStarFlat)
-            uncomment(Presets.Uncommenter.DoubleSlashStar)
-            scanner { from(Presets.Scanner.DoubleSlashStarNested) }
+            comment(Presets.Commenter.KotlinStar)
+            uncomment(Presets.Uncommenter.Java)
+            scanner { from(Presets.Scanner.Kotlin) }
         }
     }
 

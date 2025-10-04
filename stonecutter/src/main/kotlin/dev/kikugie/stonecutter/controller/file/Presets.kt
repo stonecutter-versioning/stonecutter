@@ -16,7 +16,7 @@ public sealed interface Presets {
         /**
          * Matches `//` and `/* */`-style comments, with non-nested multiline comments.
          */
-        @JvmField public val DoubleSlashStar: Template = Template(
+        @JvmField public val Java: Template = Template(
             ::SlashStyleScanner,
             setOf(SlashStyleScanner.SLASH_COMMENT_START, SlashStyleScanner.STAR_COMMENT_START),
             setOf(SlashStyleScanner.SLASH_COMMENT_END, SlashStyleScanner.STAR_COMMENT_END),
@@ -26,7 +26,7 @@ public sealed interface Presets {
          * Matches `//` and `/* */`-style comments, with nested multiline comments.
          * Comments inside string templates are **not** recognized.
          */
-        @JvmField public val DoubleSlashStarNested: Template = Template(
+        @JvmField public val Kotlin: Template = Template(
             { SlashStyleScanner(it).apply { nestMultiLineComments = true } },
             setOf(SlashStyleScanner.SLASH_COMMENT_START, SlashStyleScanner.STAR_COMMENT_START),
             setOf(SlashStyleScanner.SLASH_COMMENT_END, SlashStyleScanner.STAR_COMMENT_END),
@@ -46,13 +46,13 @@ public sealed interface Presets {
         /**
          * Wraps the text in `/* */`-style comments, replacing nested cases with `/^ ^/` placeholders.
          */
-        @JvmField public val SlashStarFlat: CommentingStrategy = StarCommentStrategy(true)
+        @JvmField public val JavaStar: CommentingStrategy = StarCommentStrategy(true)
 
         /**
          * Wraps the text in `/* */`-style comments, but doesn't insert `/^ ^/` placeholders like [SlashStarFlat]
          * because Kotlin handles comment depth.
          */
-        @JvmField public val SlashStarNested: CommentingStrategy = StarCommentStrategy(false)
+        @JvmField public val KotlinStar: CommentingStrategy = StarCommentStrategy(false)
 
         @JvmField public val Hash: CommentingStrategy = lines("#")
         @JvmField public val DoubleSlash: CommentingStrategy = lines("//")
@@ -64,7 +64,7 @@ public sealed interface Presets {
         /**
          * Removes single- and multi-line comments, handling the `/^ ^/` placeholders produced by [Commenter.JavaMultiline].
          */
-        @JvmField public val DoubleSlashStar: UncommentingStrategy = StarCommentStrategy(true)
+        @JvmField public val Java: UncommentingStrategy = StarCommentStrategy(true)
 
         /**
          * Removes single- and multi-line comments, inserting line breaks for the former ones.
