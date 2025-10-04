@@ -17,6 +17,7 @@ THE_REST: . -> skip;
 
 mode IN_HASH;
 HASH_COMMENT_END: LINE_BREAK -> popMode;
+HASH_THE_REST: . -> skip;
 
 mode IN_CHAR;
 CH_END: '\'' -> popMode, skip;

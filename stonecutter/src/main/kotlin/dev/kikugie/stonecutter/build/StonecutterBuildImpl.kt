@@ -48,7 +48,7 @@ internal abstract class StonecutterBuildImpl(val project: Project, private val p
             tasks.configureSource(this)
         }
         filters.include {
-            service.handlers[it.file.extension] != null
+            it.isDirectory || service.handlers[it.file.extension] != null
         }
         tasks.registerNodeModelTask()
         configureTaskDependencies()
