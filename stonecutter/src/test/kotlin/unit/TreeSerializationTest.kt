@@ -1,5 +1,7 @@
 @file:OptIn(ExperimentalSerializationApi::class)
 
+package unit
+
 import dev.kikugie.stonecutter.data.tree.json.SerializedTree
 import dev.kikugie.stonecutter.data.tree.json.SerializedVersion
 import dev.kikugie.stonecutter.data.tree.json.TreeScheme

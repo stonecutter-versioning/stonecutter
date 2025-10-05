@@ -222,10 +222,8 @@ internal class LayoutBuilder private constructor(val stream: TokenStream, val si
         const val COMMENT_BODY: Int = 3
         const val COMMENT_CLOSE: Int = 4
 
-        @JvmField val VOCABULARY: Vocabulary = VocabularyImpl(
-            emptyArray(),
-            arrayOf("CONTENT", "COMMENT_OPEN", "COMMENT_BODY", "COMMENT_CLOSE")
-        )
+        @JvmField val TOKEN_NAMES = listOf("CONTENT", "COMMENT_OPEN", "COMMENT_BODY", "COMMENT_CLOSE")
+        @JvmField val VOCABULARY: Vocabulary = VocabularyImpl(emptyArray(), arrayOf(null, *TOKEN_NAMES.toTypedArray()))
 
         fun build(input: TokenStream, sink: ProblemSink, converter: InlineTokenConverter): BlockToken.Root =
             LayoutBuilder(input, sink, converter).collect()

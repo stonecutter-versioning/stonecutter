@@ -139,16 +139,6 @@ tasks {
         from(named("dokkaGeneratePublicationJavadoc"))
     }
 
-    register<Test>("lightTest") {
-        group = "verification"
-        jvmArgs("-Dkotest.tags=\"!HeavyTest\"")
-    }
-
-    register<Test>("heavyTest") {
-        group = "verification"
-        jvmArgs("-Dkotest.tags=\"HeavyTest\"")
-    }
-
     register<ShadowJar>("slimJar") {
         group = "build"
         archiveClassifier = "slim"
