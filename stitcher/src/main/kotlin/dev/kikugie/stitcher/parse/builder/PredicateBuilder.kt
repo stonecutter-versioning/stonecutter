@@ -26,7 +26,8 @@ internal class PredicateBuilder(val sink: ProblemSink, val converter: InlineToke
 
     override fun visitSemanticPredicate(ctx: StitcherParser.SemanticPredicateContext): PredicateToken {
         val comparator = ctx.semanticComparator()?.resolve()
-            ?: ctx.stringComparator().resolve()
+            ?: ctx.stringComparator()?.resolve()
+            ?: VersionOperator.IMPLICIT_EQUAL
         val node = ctx.LOOSE_VERSION()
         val version = cacheVersion(SEMVER_CACHE, SemanticVersion, node)
         return PredicateToken(comparator, version, converter(StitcherParser.LOOSE_VERSION, ctx))
