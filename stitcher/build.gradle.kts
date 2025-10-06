@@ -23,8 +23,8 @@ dependencies {
     implementation(common.misc.commons)
     implementation(common.kotlin.stdlib)
     implementation(common.kotlin.reflect)
-    testImplementation(common.kotest.runner)
-    testImplementation(common.kotest.assertions)
+    testImplementation(common.kotest6.runner)
+    testImplementation(common.kotest6.assertions)
 
     dokkaHtmlPlugin(libs.dokka.versioning)
 }

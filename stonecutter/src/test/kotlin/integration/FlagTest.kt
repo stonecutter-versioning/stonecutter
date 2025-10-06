@@ -12,7 +12,7 @@ import io.kotest.matchers.string.shouldNotContain
 private fun <T : Any> flag(flag: StonecutterFlag<T>, value: T) = "-Pdev.kikugie.stonecutter.${flag.key}=$value"
 
 class FlagTest : AnnotationSpec(), GradleProjectTest {
-    @Test fun `hard_mode`() = build("flags/hard_mode") { directory, build ->
+    @Test fun `hard_mode`() = build("hard_mode") { directory, build ->
         val header = "NOTICE: Limited Groovy DSL support for Stonecutter"
 
         // Should print warning
@@ -22,7 +22,7 @@ class FlagTest : AnnotationSpec(), GradleProjectTest {
         build.run("-Pdev.kikugie.stonecutter.hard_mode=true").output shouldNotContain header
     }
 
-    @Test fun `auto_apply_plugin`() = build("flags/auto_apply_plugin") { directory, build ->
+    @Test fun `auto_apply_plugin`() = build("auto_apply_plugin") { directory, build ->
         // Should apply plugin
         build.run()
 
@@ -33,7 +33,7 @@ class FlagTest : AnnotationSpec(), GradleProjectTest {
     }
 
     @Ignore // FIXME: Setting the system property doesn't work
-    @Test fun `generate_sources_on_sync`() = build("flags/generate_sources_on_sync") { directory, build ->
+    @Test fun `generate_sources_on_sync`() = build("generate_sources_on_sync") { directory, build ->
         build.run("-Didea.sync.active=true")
             .output shouldContain "stonecutterIdea"
 
@@ -42,7 +42,7 @@ class FlagTest : AnnotationSpec(), GradleProjectTest {
 
     }
 
-    @Test fun `implicit_receiver`() = build("flags/implicit_receiver") { directory, build ->
+    @Test fun `implicit_receiver`() = build("implicit_receiver") { directory, build ->
         build.run(flag(StonecutterFlag.IMPLICIT_RECEIVER, "minceraft"))
 
         shouldFailBuild {

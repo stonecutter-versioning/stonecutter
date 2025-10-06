@@ -43,9 +43,8 @@ dependencies {
     implementation(common.kotlin.serialization.json)
 
     testImplementation(gradleTestKit())
-    testImplementation(common.kotest.runner)
-    testImplementation(common.kotest.datatest)
-    testImplementation(common.kotest.assertions)
+    testImplementation(common.kotest6.runner)
+    testImplementation(common.kotest6.assertions)
 
     dokkaHtmlPlugin(libs.dokka.versioning)
 }

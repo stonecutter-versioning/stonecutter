@@ -16,14 +16,14 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class TaskHookTest : AnnotationSpec(), GradleProjectTest {
-    @Test fun `aggregation`() = build("tasks/aggregation") { directory, build ->
+    @Test fun `aggregation`() = build("aggregation") { directory, build ->
         val output = build.run("sayHelloAndGoodbye").output
         output shouldContain "Hello!"
         output shouldContainOnlyOnce "Goodbye!"
         output.lastIndexOf("Hello") shouldBeLessThan output.indexOf("Goodbye!")
     }
 
-    @Test suspend fun `ordering`() = sbuild("tasks/ordering") { directory, build ->
+    @Test suspend fun `ordering`() = sbuild("ordering") { directory, build ->
         fun String.printOrder() = lineSequence()
             .mapNotNull { it.substringAfter("My version is ", "").ifEmpty { return@mapNotNull null }.toInt() }
 

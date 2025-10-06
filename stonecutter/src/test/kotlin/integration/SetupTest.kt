@@ -13,22 +13,22 @@ import org.gradle.testkit.runner.TaskOutcome
 import util.shouldReturn
 
 class SetupTest : AnnotationSpec(), GradleProjectTest {
-    @Test fun `kotlin controller init`() = build("builds/init") { directory, build ->
+    @Test fun `kotlin controller init`() = build("init") { directory, build ->
         build.run()
         directory shouldContainFile "stonecutter.gradle.kts"
     }
 
-    @Test fun `groovy top controller init`() = build("builds/init") { directory, build ->
+    @Test fun `groovy top controller init`() = build("init") { directory, build ->
         build.run("-Ptop-groovy-controller=true")
         directory shouldContainFile "stonecutter.gradle"
     }
 
-    @Test fun `groovy tree controller init`() = build("builds/init") { directory, build ->
+    @Test fun `groovy tree controller init`() = build("init") { directory, build ->
         build.run("-Ptree-groovy-controller=true")
         directory shouldContainFile "stonecutter.gradle"
     }
 
-    @Test fun `implicit controller init`() = build("builds/init") { directory, build ->
+    @Test fun `implicit controller init`() = build("init") { directory, build ->
         directory.resolve("stonecutter.gradle") write """
             plugins {
                 id "dev.kikugie.stonecutter"
@@ -41,7 +41,7 @@ class SetupTest : AnnotationSpec(), GradleProjectTest {
         directory shouldNotContainFile "stonecutter.gradle.kts"
     }
 
-    @Test fun `normal setup`() = build("builds/normal") { directory, build ->
+    @Test fun `normal setup`() = build("normal") { directory, build ->
         with(build.run("printCurrentProject")) {
             task(":1.20.1:printCurrentProject") shouldReturn TaskOutcome.SUCCESS
             task(":1.21.1:printCurrentProject") shouldReturn TaskOutcome.SUCCESS
@@ -49,13 +49,13 @@ class SetupTest : AnnotationSpec(), GradleProjectTest {
         }
     }
 
-    @Test fun `inconsistent version`() = build("builds/inconsistent") { directory, build ->
+    @Test fun `inconsistent version`() = build("inconsistent") { directory, build ->
         val exception = shouldFailBuild { build.run() }
         exception.message shouldContain "Project 'snapshot' is registered with a different version"
     }
 
     @Ignore // FIXME: Currently does the same as "inconsistent version"
-    @Test fun `json override`() = build("builds/override_json") { directory, build ->
+    @Test fun `json override`() = build("override_json") { directory, build ->
         build.run("printCurrentProject").output shouldContainOnlyOnce "1.21.9"
     }
 }
