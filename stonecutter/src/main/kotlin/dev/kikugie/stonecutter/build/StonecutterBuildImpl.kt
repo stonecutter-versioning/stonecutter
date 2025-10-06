@@ -74,7 +74,7 @@ internal abstract class StonecutterBuildImpl(val project: Project, private val p
 
         val generateTask = tasks.registerGenerateTask(src) {
             duplicatesStrategy = DuplicatesStrategy.INCLUDE
-            from(prepareTask.map { it.destination }, localSource)
+            from(prepareTask.map { it.destination }, sharedSource)
             exclude { !it.isDirectory && it.relativePath.getFile(localSource).exists() }
             into(tasks.generatedSourcesDir.resolve(src.name))
         }
