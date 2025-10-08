@@ -32,11 +32,9 @@ class ReplacementValidationTest : FunSpec({
         }
 
         test("existing id") {
-            shouldThrow<IllegalArgumentException> {
-                replacements {
-                    string("a", "b", "id")
-                    regex("a", "b", "id")
-                }
+            replacements {
+                string("a", "b", "id")
+                regex("a", "b", "id")
             }
         }
     }

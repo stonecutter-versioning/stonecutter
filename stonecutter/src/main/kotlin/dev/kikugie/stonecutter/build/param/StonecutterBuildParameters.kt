@@ -62,14 +62,10 @@ public abstract class StonecutterBuildParameters @Inject internal constructor(
 
     @get:Inject protected abstract val objects: ObjectFactory
 
-    private val stringReplacementBuilder: ReplacementBuilder<StringReplacement>
-    private val regexReplacementBuilder: ReplacementBuilder<RegexReplacement>
+    private val stringReplacementBuilder: ReplacementBuilder<StringReplacement> = ReplacementBuilder.string()
+    private val regexReplacementBuilder: ReplacementBuilder<RegexReplacement> = ReplacementBuilder.regex()
 
     init {
-        val replacementIdentifierPool = mutableSetOf<Identifier>()
-        stringReplacementBuilder = ReplacementBuilder.string(replacementIdentifierPool)
-        regexReplacementBuilder = ReplacementBuilder.regex(replacementIdentifierPool)
-
         constants.set(mutableMapOf())
         swaps.set(mutableMapOf())
         dependencies.set(factory.provider { patchImplicitDependency(dummyDependencies, ext.flags[StonecutterFlag.IMPLICIT_RECEIVER], current) })

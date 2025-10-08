@@ -1,22 +1,10 @@
 package dev.kikugie.stonecutter.util
 
-internal fun Char.isEnglishLetter() =
-    this in 'a'..'z' || this in 'A'..'Z'
-
-internal fun Char.isIdentifierStart() = when (this) {
-    '_' -> true
-    else -> isEnglishLetter()
-}
-
-internal fun Char.isIdentifierPart() = when (this) {
-    '_', '-' -> true
-    else -> isEnglishLetter() || isDigit()
-}
+import dev.kikugie.stitcher.util.isValidIdentifier
 
 /**
  * Checks if the string matches the [dev.kikugie.stonecutter.Identifier]
  * requirements.
  */
-public fun isIdentifier(str: String): Boolean = str.isNotEmpty()
-    && str.first().isIdentifierStart()
-    && str.all(Char::isIdentifierPart)
+// Can't be bothered to update it with the new function everywhere
+public fun isIdentifier(str: String): Boolean = str.isValidIdentifier()
