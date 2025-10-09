@@ -18,6 +18,7 @@ import dev.kikugie.stitcher.antlr.InlineCharStream
 import dev.kikugie.stitcher.antlr.InlineErrorListener
 import dev.kikugie.stitcher.antlr.InlineTokenConverter
 import dev.kikugie.stitcher.antlr.InlineTokenStream
+import dev.kikugie.stitcher.data.StitcherToken
 import dev.kikugie.stitcher.util.*
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.tree.TerminalNode
@@ -103,8 +104,10 @@ internal class LayoutBuilder private constructor(val stream: TokenStream, val si
         }
 
         while (builder !is ScopeBuilder.Root) {
-            // TODO: Report at the comment
-            sink.at(current) report problem { "Unclosed scope" }
+            val closer = builder.takeAs<ScopeBuilder.Code>().definition.opener
+                ?.takeIf { it.type == StitcherParser.SCOPE_OPEN }
+            if (closer != null)
+                sink.at(closer) report problem { "Unclosed scope" }
             builder = builder.parent!!
         }
 
@@ -132,7 +135,7 @@ internal class LayoutBuilder private constructor(val stream: TokenStream, val si
             builder.content(factory.create(stream.tokenSource, CONTENT, start, host.index() - 1, 1, 0, host))
             builder = builder.parent!!
 
-            // FIXME: Line and offset are not counted in InlineCharStream
+            // FIXME: Line and column are not counted in InlineCharStream
             if (unfinished) builder.content(factory.create(stream.tokenSource, CONTENT, host.index(), end - 1, 1, 0, host))
         }
     }
