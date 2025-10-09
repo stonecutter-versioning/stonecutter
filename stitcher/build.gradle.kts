@@ -5,6 +5,7 @@ plugins {
     antlr
     alias(common.plugins.kotlin.jvm)
     alias(common.plugins.kotlin.dokka)
+    alias(common.plugins.kotlin.serialization)
 }
 
 version = "1.0-SNAPSHOT"
@@ -23,6 +24,7 @@ dependencies {
     implementation(common.misc.commons)
     implementation(common.kotlin.stdlib)
     implementation(common.kotlin.reflect)
+    implementation(common.kotlin.serialization)
     testImplementation(common.kotest6.runner)
     testImplementation(common.kotest6.assertions)
 

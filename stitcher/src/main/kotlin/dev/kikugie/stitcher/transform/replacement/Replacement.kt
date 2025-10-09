@@ -1,12 +1,14 @@
 package dev.kikugie.stitcher.transform.replacement
 
+import kotlinx.serialization.Serializable
 import org.intellij.lang.annotations.Language
 
+@Serializable
 public sealed interface Replacement : java.io.Serializable {
     public val identifier: String?
 }
 
-@JvmRecord
+@Serializable @JvmRecord
 public data class StringReplacement(
     val target: String,
     val sources: Set<String>,
@@ -16,12 +18,14 @@ public data class StringReplacement(
         : this(target, sources.toSet(), identifier)
 }
 
-@JvmRecord
+@Serializable @JvmRecord
 public data class RegexReplacement(
     val target: String,
-    val pattern: Regex,
+    val pattern: String,
+    val flags: Set<RegexOption> = emptySet(),
     override val identifier: String? = null,
 ) : Replacement {
     public constructor(target: String, @Language("RegExp") pattern: String, vararg options: RegexOption, identifier: String? = null)
-        : this(target, Regex(pattern, options.toSet()), identifier)
+        : this(target, pattern, options.toSet(), identifier)
+    val regex: Regex get() = Regex(pattern, flags)
 }

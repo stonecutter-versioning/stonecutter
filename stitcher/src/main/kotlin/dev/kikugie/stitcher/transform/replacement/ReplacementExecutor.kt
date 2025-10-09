@@ -70,7 +70,7 @@ private class RegexReplacementExecutor(replacements: List<Replacement>, identifi
     }
 
     override fun replace(builder: StringBuilder) {
-        for (repl in replacements) for (match in repl.pattern.findAll(builder).toList().reversed())
+        for (repl in replacements) for (match in repl.regex.findAll(builder).toList().reversed())
             builder.replaceRange(match.range, repl.target)
     }
 }

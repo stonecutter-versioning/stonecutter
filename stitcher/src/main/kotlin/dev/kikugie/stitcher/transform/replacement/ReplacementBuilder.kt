@@ -94,7 +94,7 @@ private class RegexReplacementBuilder() : ReplacementBuilder<RegexReplacement> {
     override fun build(): List<RegexReplacement> = replacements.toList()
 
     override fun add(replacement: RegexReplacement): Result<Unit> = replacement.runCatching {
-        require(pattern.pattern.isNotEmpty() && target.isNotEmpty()) { "Cannot perform replacement with empty values ${pair(pattern.pattern, target)}" }
+        require(pattern.isNotEmpty() && target.isNotEmpty()) { "Cannot perform replacement with empty values ${pair(pattern, target)}" }
         require(identifier == null || identifier.isValidIdentifier()) { "Invalid regex replacement identifier '$identifier'" }
         replacements += replacement
     }

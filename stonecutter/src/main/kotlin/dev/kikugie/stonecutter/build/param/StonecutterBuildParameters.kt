@@ -24,10 +24,10 @@ private fun ObjectFactory.stringSpec(repl: StringReplacement): StonecutterBuildP
     newInstance { target.set(repl.target); sources.set(repl.sources); identifier.set(repl.identifier) }
 
 private fun ObjectFactory.regexSpec(repl: RegexReplacement): StonecutterBuildParameters.RegexReplacementSpec =
-    newInstance { target.set(repl.target); pattern.set(repl.pattern.pattern); flags.set(repl.pattern.options); identifier.set(repl.identifier) }
+    newInstance { target.set(repl.target); pattern.set(repl.pattern); flags.set(repl.flags); identifier.set(repl.identifier) }
 
 private fun StonecutterBuildParameters.RegexReplacementSpec.build(): RegexReplacement =
-    RegexReplacement(target.get(), Regex(pattern.get()), identifier.orNull)
+    RegexReplacement(target.get(), pattern.get(), emptySet(), identifier.orNull)
 
 private fun StonecutterBuildParameters.StringReplacementSpec.build(): StringReplacement =
     StringReplacement(target.get(), sources.get(), identifier.orNull)

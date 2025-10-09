@@ -20,7 +20,7 @@ private inline fun ReplacementBuilder<Replacement>.string(from: String, to: Stri
     add(StringReplacement(to, from, identifier = id)).getOrThrow()
 
 private inline fun ReplacementBuilder<Replacement>.regex(@Language("RegExp") from: String, to: String, id: String? = null) =
-    add(RegexReplacement(to, Regex(from), id)).getOrThrow()
+    add(RegexReplacement(to, from, identifier = id)).getOrThrow()
 
 class ReplacementValidationTest : FunSpec({
     context("generic") {
