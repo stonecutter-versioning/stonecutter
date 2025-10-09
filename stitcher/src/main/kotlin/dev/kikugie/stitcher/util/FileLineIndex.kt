@@ -22,7 +22,7 @@ internal class FileLineIndex private constructor(private val lines: IntArray) {
     fun locate(index: Int, sink: ProblemSink): ProblemLocation {
         val lineIndex = findLineIndex(index)
         val charOffset = index - lines[lineIndex]
-        return ProblemLocation(lineIndex + 1, charOffset, sink)
+        return ProblemLocation(lineIndex + 1, charOffset + 1, sink)
     }
 
     @Throws(IndexOutOfBoundsException::class)

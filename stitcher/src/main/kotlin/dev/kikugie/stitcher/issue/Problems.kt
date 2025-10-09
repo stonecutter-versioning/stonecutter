@@ -9,7 +9,6 @@ import java.nio.file.Path
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
-import kotlin.io.path.absolutePathString
 
 @DslMarker @Retention(AnnotationRetention.BINARY)
 internal annotation class ProblemsDsl
@@ -21,7 +20,7 @@ internal class BailException : RuntimeException()
 public data class ProblemTemplate(val message: String, val cause: Throwable?)
 
 @ProblemsDsl
-public data class ProblemLocation(val line: Int, val offset: Int, val sink: ProblemSink)
+public data class ProblemLocation(val line: Int, val column: Int, val sink: ProblemSink)
 
 public fun interface ProblemReporter {
     public operator fun invoke(file: Path, location: ProblemLocation, template: ProblemTemplate)
@@ -51,7 +50,7 @@ internal inline fun ProblemSink.at(line: Int, column: Int): ProblemLocation =
 
 @ProblemsDsl
 internal inline fun ProblemSink.at(token: AntlrToken): ProblemLocation =
-    at(token.line, token.charPositionInLine)
+    at(token.line, token.charPositionInLine + 1)
 
 @ProblemsDsl
 internal inline fun ProblemSink.at(token: StitcherToken): ProblemLocation =

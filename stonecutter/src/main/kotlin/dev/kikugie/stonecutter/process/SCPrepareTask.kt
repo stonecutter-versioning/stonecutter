@@ -48,8 +48,8 @@ private fun format(file: Path, location: ProblemLocation, template: ProblemTempl
     append("e: file://${file.absolutePathString()}")
     if (location.line >= 1) {
         append(":${location.line}")
-        if (location.offset >= 0)
-            append(":${location.offset}")
+        if (location.column >= 1)
+            append(":${location.column}")
     }
     append(" ${template.message}")
     if (template.cause != null) append("\nCaused by: ${template.cause?.stackTraceToString()}")
