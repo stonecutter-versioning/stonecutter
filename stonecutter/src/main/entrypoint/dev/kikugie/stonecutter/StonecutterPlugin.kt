@@ -28,7 +28,7 @@ public open class StonecutterPlugin @Inject constructor(
 ) : Plugin<ExtensionAware> {
     public companion object {
         /**Current Stonecutter version.*/ // Updated by ':updateVersion' task during build
-        public const val VERSION: String = "0.8-alpha.4"
+        public const val VERSION: String = "0.8-alpha.5"
     }
 
     /**
