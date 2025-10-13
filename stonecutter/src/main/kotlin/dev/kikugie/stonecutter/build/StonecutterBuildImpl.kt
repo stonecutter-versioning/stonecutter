@@ -42,13 +42,14 @@ internal abstract class StonecutterBuildImpl(val project: Project, private val p
 
     private fun configureProject() {
         val service = project.gradle.service<TaskCacheContainer>("stonecutter-cache")
+        val handlers = service.handlers
         project.plugins.apply("java")
         project.sourceSets.all {
             createProcessingTasks(this)
             tasks.configureSource(this)
         }
         filters.include {
-            it.isDirectory || service.handlers[it.file.extension] != null
+            it.isDirectory || handlers[it.file.extension] != null
         }
         tasks.registerNodeModelTask()
         configureTaskDependencies()

@@ -1,5 +1,6 @@
 package dev.kikugie.stonecutter.process
 
+import dev.kikugie.commons.collections.present
 import dev.kikugie.stitcher.issue.ProblemLocation
 import dev.kikugie.stitcher.issue.ProblemReporter
 import dev.kikugie.stitcher.issue.ProblemTemplate

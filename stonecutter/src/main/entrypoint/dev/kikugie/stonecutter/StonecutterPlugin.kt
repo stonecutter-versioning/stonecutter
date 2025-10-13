@@ -5,6 +5,7 @@ import dev.kikugie.stonecutter.build.StonecutterBuildImpl
 import dev.kikugie.stonecutter.controller.StonecutterControllerExtension
 import dev.kikugie.stonecutter.controller.StonecutterControllerImpl
 import dev.kikugie.stonecutter.controller.StonecutterControllerManager.Companion.getController
+import dev.kikugie.stonecutter.controller.file.FileHandlerContainer
 import dev.kikugie.stonecutter.controller.file.StonecutterExperimentalFilesAPI
 import dev.kikugie.stonecutter.data.container.TaskCacheContainer
 import dev.kikugie.stonecutter.settings.StonecutterSettingsExtension
@@ -12,12 +13,19 @@ import dev.kikugie.stonecutter.settings.StonecutterSettingsImpl
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.initialization.Settings
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.ExtensionAware
+import org.gradle.build.event.BuildEventsListenerRegistry
 import org.gradle.kotlin.dsl.add
 import org.gradle.kotlin.dsl.create
+import org.gradle.kotlin.dsl.newInstance
 import org.gradle.kotlin.dsl.registerIfAbsent
+import javax.inject.Inject
 
-public open class StonecutterPlugin : Plugin<ExtensionAware> {
+public open class StonecutterPlugin @Inject constructor(
+    private val objects: ObjectFactory,
+    private val registry: BuildEventsListenerRegistry
+) : Plugin<ExtensionAware> {
     public companion object {
         /**Current Stonecutter version.*/ // Updated by ':updateVersion' task during build
         public const val VERSION: String = "0.8-alpha.4"
@@ -30,7 +38,9 @@ public open class StonecutterPlugin : Plugin<ExtensionAware> {
     @OptIn(StonecutterInternalAPI::class, StonecutterExperimentalFilesAPI::class)
     override fun apply(target: ExtensionAware): Unit = when (target) {
         is Settings -> {
-            target.gradle.sharedServices.registerIfAbsent("stonecutter-cache", TaskCacheContainer::class)
+            target.gradle.sharedServices.registerIfAbsent("stonecutter-cache", TaskCacheContainer::class) {
+                parameters.handlers.set(objects.newInstance<FileHandlerContainer>())
+            }.let(registry::onTaskCompletion)
             target.stonecutter<StonecutterSettingsExtension, StonecutterSettingsImpl>()
         }
 

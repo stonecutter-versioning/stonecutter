@@ -9,6 +9,7 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Nested
 import org.gradle.kotlin.dsl.newInstance
+import org.gradle.kotlin.dsl.property
 import javax.inject.Inject
 
 @DslMarker @Retention(AnnotationRetention.BINARY)
@@ -18,7 +19,7 @@ private annotation class FileHandlerDsl
  * Provides a strategy for processing a file format.
  */
 @StonecutterExperimentalFilesAPI @FileHandlerDsl
-public abstract class FileHandlerBuilder @Inject constructor(objects: ObjectFactory) : Named {
+public abstract class FileHandlerBuilder @Inject constructor(objects: ObjectFactory) : Named, java.io.Serializable {
     /**
      * Provides a strategy for parsing file comments.
      *

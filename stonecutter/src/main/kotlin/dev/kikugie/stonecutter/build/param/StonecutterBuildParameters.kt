@@ -47,7 +47,7 @@ private fun patchImplicitDependency(prop: MapProperty<Identifier, Version>, key:
  */
 @StonecutterInternalAPI
 public abstract class StonecutterBuildParameters @Inject internal constructor(
-    private val ext: StonecutterControllerExtension,
+    ext: StonecutterControllerExtension,
     current: Version,
     factory: ProviderFactory
 ) {
