@@ -1,3 +1,5 @@
 tasks.register("printVersion") {
-    doFirst { println("My version is ${stonecutter.current.version}") }
+    val version = stonecutter.current.version
+
+    doFirst { println("My version is ${version}") }
 }

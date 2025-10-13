@@ -1,3 +1,5 @@
 tasks.register("printCurrentProject") {
-    doFirst { println(stonecutter.current.version) }
+    val version = stonecutter.current.version
+
+    doFirst { println(version) }
 }
