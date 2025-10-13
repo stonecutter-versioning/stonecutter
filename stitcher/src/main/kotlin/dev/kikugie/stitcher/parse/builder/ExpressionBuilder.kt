@@ -5,8 +5,11 @@ import dev.kikugie.stitcher.antlr.StitcherParser
 import dev.kikugie.stitcher.data.ExpressionToken
 import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.antlr.InlineTokenConverter
+import dev.kikugie.stitcher.issue.at
+import dev.kikugie.stitcher.issue.problem
+import dev.kikugie.stitcher.issue.report
 
-internal class ExpressionBuilder(sink: ProblemSink, val converter: InlineTokenConverter) : StitcherBaseVisitor<ExpressionToken>() {
+internal class ExpressionBuilder(val sink: ProblemSink, val converter: InlineTokenConverter) : StitcherBaseVisitor<ExpressionToken>() {
     private val predicateBuilder: PredicateBuilder = PredicateBuilder(sink, converter)
 
     override fun visitConditionExpression(ctx: StitcherParser.ConditionExpressionContext): ExpressionToken {
@@ -36,8 +39,11 @@ internal class ExpressionBuilder(sink: ProblemSink, val converter: InlineTokenCo
     override fun visitEndpointExpression(ctx: StitcherParser.EndpointExpressionContext): ExpressionToken {
         val identifier = ctx.IDENTIFIER()?.let(converter::invoke)
         val operator = ctx.OP_ASSIGN()?.let(converter::invoke)
-        val predicates = ctx.versionPredicate()
-            .map { it.accept(predicateBuilder) }
+        val predicates = ctx.versionPredicate().mapNotNull {
+            it.runCatching { accept(predicateBuilder) }.getOrElse { e ->
+                sink.at(it.start) report problem(e) { "Failed to parse version predicate" }; null
+            }
+        }
 
         return when {
             identifier != null && operator == null -> ExpressionToken.Constant(identifier)

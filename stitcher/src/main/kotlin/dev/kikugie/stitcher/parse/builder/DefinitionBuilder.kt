@@ -6,9 +6,12 @@ import dev.kikugie.stitcher.data.LeafToken
 import dev.kikugie.stitcher.data.DefinitionToken
 import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.antlr.InlineTokenConverter
+import dev.kikugie.stitcher.issue.at
+import dev.kikugie.stitcher.issue.problem
+import dev.kikugie.stitcher.issue.report
 import org.antlr.v4.runtime.tree.TerminalNode
 
-internal class DefinitionBuilder(sink: ProblemSink, val converter: InlineTokenConverter) : StitcherBaseVisitor<DefinitionToken>() {
+internal class DefinitionBuilder(val sink: ProblemSink, val converter: InlineTokenConverter) : StitcherBaseVisitor<DefinitionToken>() {
     private val expressionBuilder: ExpressionBuilder = ExpressionBuilder(sink, converter)
     override fun visitReplacement(ctx: StitcherParser.ReplacementContext): DefinitionToken =
         DefinitionToken.Replacement(converter(ctx.IDENTIFIER()))
@@ -28,8 +31,9 @@ internal class DefinitionBuilder(sink: ProblemSink, val converter: InlineTokenCo
         val opener = ctx.scopeOpener()?.start?.let(converter::invoke)
         val sugar = listOfNotNull(ctx.SUGAR_IF(), ctx.SUGAR_ELIF(), ctx.SUGAR_ELSE())
             .map(converter::invoke)
-        val expression = ctx.conditionExpression()
-            ?.accept(expressionBuilder)
+        val expression = ctx.conditionExpression()?.runCatching { accept(expressionBuilder) }?.getOrElse {
+            sink.at(ctx.start) report problem(it) { "Failed to parse expression" }; null
+        }
 
         return when {
             closer != null && opener == null && expression == null && sugar.isEmpty() -> DefinitionToken.Condition(closer)
