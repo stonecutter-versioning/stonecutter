@@ -50,12 +50,14 @@ interface GradleProjectTest {
     private fun TestConfiguration.prepareParameters(name: String, vararg args: String): Pair<Path, Runner> {
         val project = "${this::class.simpleName}/$name"
         val dir = tempdir(suffix = project.replace('/', '-'), keepOnFailure = true)
+        println("Running $project in file://$dir")
         copyResources(project, dir.toPath())
 
         val defaultArgs = mutableListOf<String>()
         defaultArgs += "--stacktrace"
         defaultArgs += "--parallel"
         defaultArgs += "--rerun-tasks"
+        defaultArgs += "--configuration-cache"
 
         val build = GradleRunner.create()
             .withProjectDir(dir)
