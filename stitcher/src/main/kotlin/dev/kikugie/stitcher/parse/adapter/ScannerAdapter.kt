@@ -9,6 +9,7 @@ import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.issue.problem
 import dev.kikugie.stitcher.issue.report
 import dev.kikugie.stitcher.parse.builder.LayoutBuilder
+import dev.kikugie.stitcher.util.create
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.Lexer
 import org.antlr.v4.runtime.Token
@@ -146,7 +147,7 @@ public class ScannerAdapter(
 
     private fun push(type: Int, host: Token) {
         queue += tokenFactory.create(
-            Pair(this, inputStream), type, null, Token.DEFAULT_CHANNEL,
+            Pair(this, inputStream), type, if (host.type == Token.EOF) "" else null, Token.DEFAULT_CHANNEL,
             host.startIndex, host.stopIndex, host.line, host.charPositionInLine
         )
     }

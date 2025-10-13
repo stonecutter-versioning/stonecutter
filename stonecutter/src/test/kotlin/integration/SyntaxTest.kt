@@ -7,6 +7,7 @@ import io.kotest.core.spec.style.AnnotationSpec
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
+import kotlin.io.path.readText
 import kotlin.io.path.useLines
 
 class SyntaxTest : AnnotationSpec(), GradleProjectTest {
@@ -62,5 +63,12 @@ class SyntaxTest : AnnotationSpec(), GradleProjectTest {
         val err = build.fail("run")
         // Check the correct position for the error
         err.buildResult.output shouldContain "Example.java:7:16"
+    }
+
+    @Test fun `no newline`() = build("no_newline") { directory, build ->
+        build.run("stonecutterSwitchTo2")
+        build.run("stonecutterSwitchTo1")
+        build.run(":1:run").output shouldContain "Hello world!"
+        directory.resolve("src/main/java/Example.java").readText() shouldNotContain "<EOF>"
     }
 }
