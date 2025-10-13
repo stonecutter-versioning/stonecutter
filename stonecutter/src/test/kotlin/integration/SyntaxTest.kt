@@ -3,6 +3,7 @@ package integration
 
 import gradle.GradleProjectTest
 import gradle.fail
+import gradle.shouldFailBuild
 import io.kotest.core.spec.style.AnnotationSpec
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
@@ -70,5 +71,13 @@ class SyntaxTest : AnnotationSpec(), GradleProjectTest {
         build.run("stonecutterSwitchTo1")
         build.run(":1:run").output shouldContain "Hello world!"
         directory.resolve("src/main/java/Example.java").readText() shouldNotContain "<EOF>"
+    }
+
+    @Test fun `included comments`() = build("included_comments") { directory, build ->
+        build.run("stonecutterSwitchTo2")
+        directory.resolve("src/main/java/Example.java").readText() shouldContain "/^¹nested¹^/"
+
+        build.run("stonecutterSwitchTo1")
+        directory.resolve("src/main/java/Example.java").readText() shouldContain "/^nested^/"
     }
 }
