@@ -80,4 +80,9 @@ class SyntaxTest : AnnotationSpec(), GradleProjectTest {
         build.run("stonecutterSwitchTo1")
         directory.resolve("src/main/java/Example.java").readText() shouldContain "/^nested^/"
     }
+
+    @Test fun `nested conditions`() = build("nested_conditions") { directory, build ->
+        build.run("stonecutterSwitchTo1.20.1")
+        build.run(":1.20.1:run").output shouldContain "CASE B"
+    }
 }
