@@ -15,4 +15,16 @@ class ReplacementTest : AnnotationSpec(), GradleProjectTest {
     @Test fun contained() = build("contained") { directory, build ->
         build.run(":2:run").output shouldNotContain "prefix.a.suffix.b.b"
     }
+
+    @Test fun named() = build("named") { directory, build ->
+        with(build.run(":1:run").output) {
+            shouldContain("Primary Hello World!")
+            shouldContain("Secondary Hello World!")
+        }
+
+        with(build.run(":2:run").output) {
+            shouldContain("Primary Hello World!")
+            shouldContain("Secondary !dlroW olleH")
+        }
+    }
 }

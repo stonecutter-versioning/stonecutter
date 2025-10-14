@@ -51,7 +51,7 @@ private class StringReplacementBuilder() : ReplacementBuilder<StringReplacement>
         require(source.isNotEmpty() && target.isNotEmpty()) { "Cannot perform replacement with empty values ${pair(source, target)}" }
 
         val matching = stubs.asSequence().filter { it.identifier == identifier }
-        if (matching.none { it.tryMerge(target, source) }) stubs += StringReplacementStub(target, source)
+        if (matching.none { it.tryMerge(target, source) }) stubs += StringReplacementStub(target, source, identifier)
     }
 
     private fun StringReplacementStub.tryMerge(newTarget: String, newSource: String): Boolean = when {
