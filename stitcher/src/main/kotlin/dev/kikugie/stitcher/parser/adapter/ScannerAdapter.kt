@@ -1,4 +1,4 @@
-package dev.kikugie.stitcher.parse.adapter
+package dev.kikugie.stitcher.parser.adapter
 
 import dev.kikugie.commons.collections.FixedQueue
 import dev.kikugie.commons.collections.first
@@ -8,13 +8,13 @@ import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.issue.problem
 import dev.kikugie.stitcher.issue.report
-import dev.kikugie.stitcher.parse.builder.LayoutBuilder
-import dev.kikugie.stitcher.util.create
+import dev.kikugie.stitcher.parser.layout.LayoutParser
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.Lexer
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.TokenSource
 import org.antlr.v4.runtime.misc.Pair
+import java.io.Serializable
 
 /**
  * Adapts the output of a user-defined comment [Lexer],
@@ -56,7 +56,7 @@ public class ScannerAdapter(
      * Encapsulates the creation of a [ScannerAdapter] configured with
      * a specific [Lexer], [openers][ScannerAdapter.openers] and [closers][ScannerAdapter.closers].
      */
-    public fun interface Factory : java.io.Serializable {
+    public fun interface Factory : Serializable {
         public fun create(input: CharStream, sink: ProblemSink): ScannerAdapter
     }
 
@@ -96,7 +96,7 @@ public class ScannerAdapter(
     private fun handleEOF(token: Token): Boolean {
         if (checkpoint.comment) handleCommentEnd(token)
         else if (checkpoint.cursor < token.startIndex)
-            push(LayoutBuilder.CONTENT, token.startIndex)
+            push(LayoutParser.CONTENT, token.startIndex)
         queue += token
         checkpoint = Checkpoint(-1, -1, -1, false)
         return true
@@ -109,8 +109,8 @@ public class ScannerAdapter(
         })
             .also { return false }
         if (checkpoint.cursor < token.startIndex)
-            push(LayoutBuilder.CONTENT, token.startIndex)
-        push(LayoutBuilder.COMMENT_OPEN, token)
+            push(LayoutParser.CONTENT, token.startIndex)
+        push(LayoutParser.COMMENT_OPEN, token)
         checkpoint = Checkpoint(token, true)
         return true
     }
@@ -121,8 +121,8 @@ public class ScannerAdapter(
             "Unmatched comment closer in $cls; closers outside a comment mode must be skipped"
         })
             .also { return false }
-        push(LayoutBuilder.COMMENT_BODY, token.startIndex)
-        push(LayoutBuilder.COMMENT_CLOSE, token)
+        push(LayoutParser.COMMENT_BODY, token.startIndex)
+        push(LayoutParser.COMMENT_CLOSE, token)
         checkpoint = Checkpoint(token, false)
         return true
     }

@@ -10,8 +10,9 @@ internal sealed interface BlockToken {
         fun visitRoot(it: Root): T
     }
 
-    data class Content(val leaf: LeafToken) : BlockToken {
+    data class Content(val leaf: LeafToken, private val blank: Boolean) : BlockToken {
         override fun <T> accept(visitor: Visitor<T>): T = visitor.visitContent(this)
+        fun isBlank(): Boolean = blank
     }
 
     data class Comment(val opener: LeafToken, val body: LeafToken, val closer: LeafToken) : BlockToken {

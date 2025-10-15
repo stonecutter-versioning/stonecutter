@@ -6,47 +6,48 @@ package dev.kikugie.stitcher.antlr;
 
 /* PARSER */
 definition
-    : COND_MARK condition EOF
-    | SWAP_MARK swap EOF
-    | REPL_MARK replacement EOF
+    : COND_MARK condition EOF   # conditionDefinition
+    | SWAP_MARK swap EOF        # swapDefinition
+    | REPL_MARK replacement EOF # replacementDefinition
     ;
 
-scopeOpener: SCOPE_OPEN | SCOPE_WORD;
+scopeOpener: op=(SCOPE_OPEN | SCOPE_WORD);
 
 replacement: IDENTIFIER;
 
 swap
-    : IDENTIFIER swapArguments scopeOpener?
-    | SCOPE_CLOSE
+    : IDENTIFIER swapArguments? scopeOpener? # openerSwap
+    | SCOPE_CLOSE                            # closerSwap
     ;
 
-swapArguments: (IDENTIFIER | QUOTED)*;
+swapArguments: (IDENTIFIER | QUOTED)+;
 
 condition
-    : SUGAR_IF? conditionExpression scopeOpener?
-    | SCOPE_CLOSE
-      (
-        (SUGAR_ELSE SUGAR_IF | SUGAR_ELIF | SUGAR_ELSE)? conditionExpression scopeOpener?
-        | SUGAR_ELSE scopeOpener?
-        |
-      )
+    : SUGAR_IF? conditionExpression scopeOpener?                                                                                    # openerCondition
+    | SCOPE_CLOSE (((SUGAR_ELSE SUGAR_IF | SUGAR_ELIF | SUGAR_ELSE)? conditionExpression scopeOpener?) | (SUGAR_ELSE scopeOpener?)) # extensionCondition
+    | SCOPE_CLOSE                                                                                                                   # closerCondition
     ;
 
 conditionExpression
-    : conditionExpression (OP_AND | OP_OR) conditionExpression
-    | OP_NOT conditionExpression
-    | LEFT_BRACE conditionExpression RIGHT_BRACE
-    | endpointExpression
+    : conditionExpression op=(OP_AND | OP_OR) conditionExpression # binaryExpression
+    | OP_NOT conditionExpression                                  # unaryExpression
+    | LEFT_BRACE conditionExpression RIGHT_BRACE                  # groupExpression
+    | IDENTIFIER                                                  # constantExpression
+    | (IDENTIFIER OP_ASSIGN)? versionPredicate+                   # assignmentExpression
     ;
 
-endpointExpression
+versionPredicate
+    : (stringComparator | semanticComparator)? semanticVersion # semanticPredicate
+    | stringComparator stringVersion?                         # stringPredicate
+    ;
+
+semanticVersion
+    : versionCore (DASH preRelease)? (PLUS buildMetadata)?
+    ;
+
+stringVersion
     : IDENTIFIER
-    | (IDENTIFIER OP_ASSIGN)? versionPredicate+
     ;
-
-versionPredicate: semanticPredicate | stringPredicate;
-semanticPredicate: (semanticComparator | stringComparator)? LOOSE_VERSION;
-stringPredicate: stringComparator IDENTIFIER?;
 
 semanticComparator
     : REPL_MARK
@@ -54,17 +55,24 @@ semanticComparator
     ;
 
 stringComparator
-    : OP_NOT? COMP_EQUAL
-    | COMP_MORE COMP_EQUAL?
-    | COMP_LESS COMP_EQUAL?
+    : COMP_EQUAL
+    | COMP_NEQUAL
+    | COMP_MORE
+    | COMP_GMORE
+    | COMP_LESS
+    | COMP_GLESS
     ;
 
+versionCore: NUMERIC (DOT NUMERIC)*;
+preRelease: metadata (DOT metadata)*;
+buildMetadata: metadata (DOT metadata)*;
+
+metadata: NUMERIC | IDENTIFIER;
+
 /* LEXER */
+fragment NUMBER: '0'|[1-9][0-9]*;
 fragment IDENTIFIER_START: [_a-zA-Z];
 fragment IDENTIFIER_PART: [_\-a-zA-Z0-9];
-
-fragment VERSION_START: [0-9];
-fragment VERSION_PART: IDENTIFIER_PART | '+' | '-' | '.';
 
 fragment ESC_SLASH: '\\\\';
 fragment ESC_STAR: '\\*';
@@ -91,16 +99,19 @@ SUGAR_ELIF: 'elif';
 
 COMP_MAJOR: '^';
 COMP_EQUAL: '=';
+COMP_NEQUAL: '!=';
 COMP_MORE: '>';
+COMP_GMORE: '>=';
 COMP_LESS: '<';
+COMP_GLESS: '<=';
 
 OP_ASSIGN: ':';
 OP_NOT: '!';
 OP_AND: '&&';
 OP_OR: '||';
 
+NUMERIC: NUMBER;
 IDENTIFIER: IDENTIFIER_START IDENTIFIER_PART*;
-LOOSE_VERSION: VERSION_START VERSION_PART*;
 QUOTED: '\'' (ESC_SLASH | ESC_TICK | ~[\\'] )* '\'';
 COMMENT: '*' (ESC_SLASH | ESC_STAR | ~[\\*])* '*' -> channel(HIDDEN);
-WHITESPACE: [ \t]+ -> skip;
+WHITESPACE: [ \t]+ -> channel(HIDDEN);

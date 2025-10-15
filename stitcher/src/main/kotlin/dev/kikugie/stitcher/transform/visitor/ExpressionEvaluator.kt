@@ -1,6 +1,6 @@
 package dev.kikugie.stitcher.transform.visitor
 
-import dev.kikugie.stitcher.antlr.StitcherParser
+import dev.kikugie.stitcher.antlr.StitcherLexer
 import dev.kikugie.stitcher.data.ExpressionToken
 import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.issue.bail
@@ -12,15 +12,15 @@ import dev.kikugie.stitcher.transform.TransformParameters
 internal class ExpressionEvaluator(val runtime: RuntimeState, val parameters: TransformParameters) : ExpressionToken.Visitor<Boolean> {
     override fun visitGroup(it: ExpressionToken.Group): Boolean = it.body.accept(this)
 
-    override fun visitUnary(it: ExpressionToken.Unary): Boolean = when (it.operator.type) {
-        StitcherParser.OP_NOT -> !it.operand.accept(this)
-        else -> runtime.sink.at(it.operator) bail problem { "Unsupported unary operator ${it.operator.name}" }
+    override fun visitUnary(it: ExpressionToken.Unary): Boolean = when (it.operator.type.value) {
+        StitcherLexer.OP_NOT -> !it.operand.accept(this)
+        else -> runtime.sink.at(it.operator) bail problem { "Unsupported unary operator ${it.operator.type.name}" }
     }
 
-    override fun visitBinary(it: ExpressionToken.Binary): Boolean = when (it.operator.type) {
-        StitcherParser.OP_AND -> it.left.accept(this) && it.right.accept(this)
-        StitcherParser.OP_OR -> it.left.accept(this) || it.right.accept(this)
-        else -> runtime.sink.at(it.operator) bail problem { "Unsupported binary operator ${it.operator.name}" }
+    override fun visitBinary(it: ExpressionToken.Binary): Boolean = when (it.operator.type.value) {
+        StitcherLexer.OP_AND -> it.left.accept(this) && it.right.accept(this)
+        StitcherLexer.OP_OR -> it.left.accept(this) || it.right.accept(this)
+        else -> runtime.sink.at(it.operator) bail problem { "Unsupported binary operator ${it.operator.type.name}" }
     }
 
     override fun visitConstant(it: ExpressionToken.Constant): Boolean = runtime.sink.verifyNotNull(parameters.constants[it.value.text]) {
