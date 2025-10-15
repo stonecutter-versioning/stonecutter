@@ -1,7 +1,9 @@
 package dev.kikugie.stitcher.transform
 
-import dev.kikugie.commons.collections.present
 import dev.kikugie.commons.takeAs
+import dev.kikugie.stitcher.antlr.InlineErrorListener
+import dev.kikugie.stitcher.antlr.InlineTokenStream
+import dev.kikugie.stitcher.antlr.StitcherLexer
 import dev.kikugie.stitcher.antlr.StitcherParser
 import dev.kikugie.stitcher.antlr.SwapTemplate
 import dev.kikugie.stitcher.data.BlockToken
@@ -11,18 +13,27 @@ import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.issue.problem
 import dev.kikugie.stitcher.issue.report
 import dev.kikugie.stitcher.issue.verifyNotNull
-import dev.kikugie.stitcher.antlr.InlineTokenConverter
-import dev.kikugie.stitcher.parse.builder.LayoutBuilder
-import dev.kikugie.stitcher.transform.visitor.BlockAssembler.Companion.join
-import dev.kikugie.stitcher.transform.visitor.RangeFinder.range
+import dev.kikugie.stitcher.parser.StitcherTokenFactory
+import dev.kikugie.stitcher.parser.layout.LayoutParser
 import dev.kikugie.stitcher.transform.impl.UncommentingTokenSource
+import dev.kikugie.stitcher.transform.visitor.BlockAssembler.Companion.join
 import dev.kikugie.stitcher.transform.visitor.ExpressionEvaluator
+import dev.kikugie.stitcher.transform.visitor.RangeFinder.range
+import dev.kikugie.stitcher.util.AntlrToken
+import dev.kikugie.stitcher.util.FileLineIndex
+import dev.kikugie.stitcher.util.asSequence
 import dev.kikugie.stitcher.util.buildString
+import dev.kikugie.stitcher.util.errorListener
 import dev.kikugie.stitcher.util.isEOF
 import dev.kikugie.stitcher.util.range
 import dev.kikugie.stitcher.util.toStream
+import org.antlr.v4.runtime.CharStream
+import org.antlr.v4.runtime.CommonTokenFactory
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.Token
+import org.antlr.v4.runtime.TokenFactory
+import org.antlr.v4.runtime.TokenSource
+import org.antlr.v4.runtime.misc.Pair
 
 private fun List<BlockToken>.join(): String = buildString {
     for (it in this@join) it.join(this)
@@ -34,7 +45,7 @@ private fun List<BlockToken>.isCommented(): Boolean =
 internal data class BlockTransformer(
     val runtime: RuntimeState,
     val params: TransformParameters,
-    val converter: InlineTokenConverter
+    val factory: StitcherTokenFactory
 ) : BlockToken.Visitor<BlockToken> {
     private var visitedEnabledBlock: Boolean = false
 
@@ -49,7 +60,7 @@ internal data class BlockTransformer(
             return it
 
         val transformed = buildString(text) { runtime.replacer!!.replace(this) }
-        BlockToken.Content(copy(text = transformed))
+        it.copy(leaf = copy(text = transformed), blank = transformed.isBlank())
     }
 
     private fun List<BlockToken>.reprocess(): List<BlockToken> = BlockToken.Root(this).reprocess()
@@ -59,7 +70,6 @@ internal data class BlockTransformer(
         override fun visitReplacement(it: Replacement): List<BlockToken> {
             if (runtime.replacer != null) runtime.sink.at(host.marker) report problem { "Late replacement token" }
             else runtime.includeReplacement(it.identifier.text)
-
             return emptyList()
         }
 
@@ -74,8 +84,8 @@ internal data class BlockTransformer(
             }
 
             val text = params.replacer.replace(host.scope.join(), template)
-            val token = converter(LayoutBuilder.CONTENT, host.scope.range(), text)
-            return listOf(BlockToken.Content(token))
+            val token = factory.create(LeafToken.Type(StitcherLexer.IDENTIFIER), host.scope.range(), text)
+            return BlockToken.Content(token, text.isBlank()).let(::listOf)
         }
 
         override fun visitCondition(it: Condition): List<BlockToken> {
@@ -95,15 +105,19 @@ internal data class BlockTransformer(
         }
 
         private fun uncommentScope(): List<BlockToken> {
+            val start = host.scope.ifEmpty { return emptyList() }
+                .first().range().first
             val source = UncommentingTokenSource(runtime, params, host.scope)
-            return LayoutBuilder.build(CommonTokenStream(source), runtime.sink, InlineTokenConverter(host.host.closer.range.last + 1)).reprocess()
+            return LayoutParser.parse(CommonTokenStream(source), runtime.sink, StitcherTokenFactory.Inline(start)).reprocess()
         }
 
         private fun commentScope(): List<BlockToken> {
+            val start = host.scope.ifEmpty { return emptyList() }
+                .first().range().first
             val blocks = host.scope.reprocess()
             val text = params.commenter.comment(blocks.join())
             val source = params.adapter.create(text.toStream(), runtime.sink)
-            return LayoutBuilder.build(CommonTokenStream(source), runtime.sink, InlineTokenConverter(host.host.closer.range.last + 1)).scope
+            return LayoutParser.parse(CommonTokenStream(source), runtime.sink, StitcherTokenFactory.Inline(start)).scope
         }
 
         private fun String.processTemplate(tokens: List<LeafToken>): String {
@@ -128,5 +142,40 @@ internal data class BlockTransformer(
             }
             return builder.toString()
         }
+    }
+}
+
+private class UncommentingTokenSource(val runtime: RuntimeState, val params: TransformParameters, val blocks: List<BlockToken>) : TokenSource {
+    private var factory: TokenFactory<*> = CommonTokenFactory()
+    private val source: Pair<TokenSource?, CharStream?> = Pair(this, runtime.input)
+    private val sequence: Iterator<Token> = sequence {
+        for (it in blocks) expand(it)
+        yield(factory.create(Token.EOF, ""))
+    }.iterator()
+
+    private lateinit var token: Token
+
+    override fun nextToken(): Token = sequence.next().also { token = it }
+    override fun getLine(): Int = if (::token.isInitialized) token.line else 1
+    override fun getCharPositionInLine(): Int = if (::token.isInitialized) token.charPositionInLine else 0
+    override fun getInputStream(): CharStream = runtime.input
+    override fun getSourceName(): String = runtime.input.sourceName
+    override fun getTokenFactory(): TokenFactory<*> = factory
+    override fun setTokenFactory(factory: TokenFactory<*>) { this.factory = factory }
+
+    private suspend fun SequenceScope<AntlrToken>.expand(block: BlockToken): Unit = when (block) {
+        is BlockToken.Content -> {
+            val range = block.range()
+            yield(factory.create(source, LayoutParser.CONTENT, block.leaf.text, Token.DEFAULT_CHANNEL, range.first, range.last, -1, -1))
+        }
+        is BlockToken.Comment -> {
+            val start = block.body.range.first
+            val content = params.uncommenter.uncomment(block.body.text, block.opener.text, block.closer.text).toStream()
+            val lexer = params.adapter.create(content, runtime.sink).apply {
+                scanner.errorListener(InlineErrorListener(runtime.sink, FileLineIndex(content), start))
+            }
+            yieldAll(InlineTokenStream(lexer, start).asSequence())
+        }
+        else -> error("Unexpected block type: ${block::class.simpleName}")
     }
 }

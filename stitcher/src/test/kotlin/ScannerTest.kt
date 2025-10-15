@@ -1,7 +1,7 @@
 import dev.kikugie.stitcher.antlr.scanner.HashStyleScanner
 import dev.kikugie.stitcher.antlr.scanner.SlashStyleScanner
 import dev.kikugie.stitcher.issue.ProblemSink
-import dev.kikugie.stitcher.parse.adapter.ScannerAdapter
+import dev.kikugie.stitcher.parser.adapter.ScannerAdapter
 import dev.kikugie.stitcher.parse.builder.LayoutBuilder
 import dev.kikugie.stitcher.util.FileLineIndex
 import dev.kikugie.stitcher.util.asSequence

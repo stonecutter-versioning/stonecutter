@@ -1,7 +1,5 @@
 package dev.kikugie.stonecutter.controller.file
 
-import dev.kikugie.stitcher.antlr.scanner.HashStyleScanner
-import dev.kikugie.stitcher.antlr.scanner.SlashStyleScanner
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.Lexer
 import org.antlr.v4.tool.LexerGrammar
@@ -26,7 +24,7 @@ private annotation class ScannerDsl
  * ```
  * Since the token stream is monotone - after `<Content>` always comes `<Comment-Start>`,
  * and after `<Comment-Body>` always comes `<Comment-End>`, the lexer can only provide
- * comment opening and closing tokens, leaving the [ScannerAdapter][dev.kikugie.stitcher.parse.adapter.ScannerAdapter]
+ * comment opening and closing tokens, leaving the [ScannerAdapter][dev.kikugie.stitcher.parser.adapter.ScannerAdapter]
  * to fill in the rest.
  *
  * ### Lexer registration

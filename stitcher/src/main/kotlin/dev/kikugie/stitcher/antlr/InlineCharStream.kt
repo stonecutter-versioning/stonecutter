@@ -24,8 +24,6 @@ internal class InlineCharStream(val host: CharStream, val start: Int, val end: I
         host.seek(start)
     }
 
-    inline operator fun <T> invoke(action: InlineCharStream.() -> T): T = use(action)
-
     override fun size(): Int = end - start + 1 // With the EOF
     override fun index(): Int = host.index() - start
 
@@ -50,5 +48,12 @@ internal class InlineCharStream(val host: CharStream, val start: Int, val end: I
     override fun close() {
         host.seek(index)
         host.release(marker)
+    }
+
+    companion object {
+        inline fun <T> inlineStream(host: CharStream, range: IntRange, action: InlineCharStream.() -> T): T =
+            InlineCharStream(host, range.first, range.last + 1).use(action)
+        inline fun <T> inlineStream(host: Token, action: InlineCharStream.() -> T): T =
+            InlineCharStream(host).use(action)
     }
 }

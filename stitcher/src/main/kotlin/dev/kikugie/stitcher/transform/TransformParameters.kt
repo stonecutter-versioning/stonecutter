@@ -1,7 +1,7 @@
 package dev.kikugie.stitcher.transform
 
 import dev.kikugie.semver.data.Version
-import dev.kikugie.stitcher.parse.adapter.ScannerAdapter
+import dev.kikugie.stitcher.parser.adapter.ScannerAdapter
 import dev.kikugie.stitcher.transform.replacement.Replacement
 import dev.kikugie.stitcher.transform.strategy.CommentingStrategy
 import dev.kikugie.stitcher.transform.strategy.SwappingStrategy
