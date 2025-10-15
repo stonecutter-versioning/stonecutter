@@ -17,6 +17,7 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.copyToRecursively
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.notExists
+import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 @DslMarker @Retention(AnnotationRetention.BINARY)
@@ -46,6 +47,9 @@ interface GradleProjectTest {
         createParentDirectories()
         writeText(text, Charsets.UTF_8, StandardOpenOption.CREATE_NEW)
     }
+
+    infix fun Path.read(file: String): String =
+        resolve(file).readText()
 
     private fun TestConfiguration.prepareParameters(name: String, vararg args: String): Pair<Path, Runner> {
         val project = "${this::class.simpleName}/$name"

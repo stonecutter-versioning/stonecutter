@@ -176,18 +176,17 @@ internal class LayoutBuilder private constructor(val stream: TokenStream, val si
         if (body.stopIndex < body.startIndex)
             return null // Empty comment body
 
-        return InlineCharStream(body).invoke {
-            when (LC(1)) {
-                '?', '$', '~' -> {}
-                else -> return@invoke null
-            }
-
-            val listener = InlineErrorListener(sink, FileLineIndex(this), body.startIndex)
-            val lexer = StitcherLexer(this).errorListener(listener)
-            val parser = StitcherParser(InlineTokenStream(lexer, body.startIndex)).errorListener(listener)
-            val context = parser.definition()
-            constructCode(context)
+        val input = body.text.toStream()
+        when (input.LC(1)) {
+            '?', '$', '~' -> {}
+            else -> return null
         }
+
+        val listener = InlineErrorListener(sink, FileLineIndex(input), body.startIndex)
+        val lexer = StitcherLexer(input).errorListener(listener)
+        val parser = StitcherParser(InlineTokenStream(lexer, body.startIndex)).errorListener(listener)
+        val context = parser.definition()
+        return constructCode(context)
     }
 
     private fun constructCode(def: StitcherParser.DefinitionContext): Pair<LeafToken, DefinitionToken> {

@@ -1,5 +1,6 @@
 package dev.kikugie.stitcher.transform
 
+import dev.kikugie.commons.collections.present
 import dev.kikugie.commons.takeAs
 import dev.kikugie.stitcher.antlr.StitcherParser
 import dev.kikugie.stitcher.antlr.SwapTemplate
@@ -51,6 +52,9 @@ internal data class BlockTransformer(
         BlockToken.Content(copy(text = transformed))
     }
 
+    private fun List<BlockToken>.reprocess(): List<BlockToken> = BlockToken.Root(this).reprocess()
+    private fun BlockToken.Root.reprocess(): List<BlockToken> = accept(this@BlockTransformer.copy()).takeAs<BlockToken.Root>().scope
+
     private inner class ScopeTransformer(val host: BlockToken.Code) : Visitor<List<BlockToken>> {
         override fun visitReplacement(it: Replacement): List<BlockToken> {
             if (runtime.replacer != null) runtime.sink.at(host.marker) report problem { "Late replacement token" }
@@ -83,20 +87,23 @@ internal data class BlockTransformer(
             val shouldEnable = it.expression?.accept(ExpressionEvaluator(runtime, params)) ?: true
                 && !visitedEnabledBlock
             visitedEnabledBlock = shouldEnable || visitedEnabledBlock
-            val isCommented = host.scope.isCommented()
 
-            return if (shouldEnable && isCommented) {
-                val source = UncommentingTokenSource(runtime, params, host.scope)
-                val scope = LayoutBuilder.build(CommonTokenStream(source), runtime.sink, InlineTokenConverter(host.host.closer.range.last + 1))
-                scope.accept(this@BlockTransformer.copy()).takeAs<BlockToken.Root>().scope
+            return when {
+                shouldEnable -> if (host.scope.isCommented()) uncommentScope() else host.scope.reprocess()
+                else -> if (!host.scope.isCommented()) commentScope() else host.scope
             }
-            else if (!shouldEnable && !isCommented) {
-                val text = params.commenter.comment(host.scope.join())
-                val source = params.adapter.create(text.toStream(), runtime.sink)
-                val scope = LayoutBuilder.build(CommonTokenStream(source), runtime.sink, InlineTokenConverter(host.host.closer.range.last + 1))
-                scope.accept(this@BlockTransformer.copy()).takeAs<BlockToken.Root>().scope
-            }
-            else host.scope
+        }
+
+        private fun uncommentScope(): List<BlockToken> {
+            val source = UncommentingTokenSource(runtime, params, host.scope)
+            return LayoutBuilder.build(CommonTokenStream(source), runtime.sink, InlineTokenConverter(host.host.closer.range.last + 1)).reprocess()
+        }
+
+        private fun commentScope(): List<BlockToken> {
+            val blocks = host.scope.reprocess()
+            val text = params.commenter.comment(blocks.join())
+            val source = params.adapter.create(text.toStream(), runtime.sink)
+            return LayoutBuilder.build(CommonTokenStream(source), runtime.sink, InlineTokenConverter(host.host.closer.range.last + 1)).scope
         }
 
         private fun String.processTemplate(tokens: List<LeafToken>): String {

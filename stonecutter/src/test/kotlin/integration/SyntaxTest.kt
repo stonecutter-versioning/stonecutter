@@ -70,15 +70,15 @@ class SyntaxTest : AnnotationSpec(), GradleProjectTest {
         build.run("stonecutterSwitchTo2")
         build.run("stonecutterSwitchTo1")
         build.run(":1:run").output shouldContain "Hello world!"
-        directory.resolve("src/main/java/Example.java").readText() shouldNotContain "<EOF>"
+        directory read "src/main/java/Example.java" shouldNotContain "<EOF>"
     }
 
     @Test fun `included comments`() = build("included_comments") { directory, build ->
         build.run("stonecutterSwitchTo2")
-        directory.resolve("src/main/java/Example.java").readText() shouldContain "/^¹nested¹^/"
+        directory read "src/main/java/Example.java" shouldContain "/^¹nested¹^/"
 
         build.run("stonecutterSwitchTo1")
-        directory.resolve("src/main/java/Example.java").readText() shouldContain "/^nested^/"
+        directory read "src/main/java/Example.java" shouldContain "/^nested^/"
     }
 
     @Test fun `nested conditions`() = build("nested_conditions") { directory, build ->
