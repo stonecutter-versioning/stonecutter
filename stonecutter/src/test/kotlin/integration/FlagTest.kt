@@ -1,18 +1,17 @@
-@file:Suppress( "unused", "PublicApiImplicitType", "RemoveRedundantBackticks")
-
 package integration
 
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlag
-import gradle.GradleProjectTest
+import gradle.GradleTest
+import gradle.minus
 import gradle.shouldFailBuild
-import io.kotest.core.spec.style.AnnotationSpec
+import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 
 private fun <T : Any> flag(flag: StonecutterFlag<T>, value: T) = "-Pdev.kikugie.stonecutter.${flag.key}=$value"
 
-class FlagTest : AnnotationSpec(), GradleProjectTest {
-    @Test fun `hard_mode`() = build("hard_mode") { directory, build ->
+class FlagTest : GradleTest, FreeSpec({
+    "hard mode" - { directory, build ->
         val header = "NOTICE: Limited Groovy DSL support for Stonecutter"
 
         // Should print warning
@@ -22,7 +21,7 @@ class FlagTest : AnnotationSpec(), GradleProjectTest {
         build.run("-Pdev.kikugie.stonecutter.hard_mode=true").output shouldNotContain header
     }
 
-    @Test fun `auto_apply_plugin`() = build("auto_apply_plugin") { directory, build ->
+    "auto apply plugin" - { directory, build ->
         // Should apply plugin
         build.run()
 
@@ -32,21 +31,20 @@ class FlagTest : AnnotationSpec(), GradleProjectTest {
         }
     }
 
-    @Ignore // FIXME: Setting the system property doesn't work
-    @Test fun `generate_sources_on_sync`() = build("generate_sources_on_sync") { directory, build ->
-        build.run("-Didea.sync.active=true")
-            .output shouldContain "stonecutterIdea"
-
-        build.run("-Didea.sync.active=true", flag(StonecutterFlag.GENERATE_SOURCES_ON_SYNC, false))
-            .output shouldNotContain "stonecutterIdea"
-
-    }
-
-    @Test fun `implicit_receiver`() = build("implicit_receiver") { directory, build ->
+    "implicit receiver" - { directory, build ->
         build.run(flag(StonecutterFlag.IMPLICIT_RECEIVER, "minceraft"))
 
         shouldFailBuild {
             build.run("stonecutterGenerate")
         }
     }
-}
+
+    // FIXME: Setting the system property doesn't work
+    "generate sources on sync".config(enabled = false) - { directory, build ->
+        build.run("-Didea.sync.active=true")
+            .output shouldContain "stonecutterIdea"
+
+        build.run("-Didea.sync.active=true", flag(StonecutterFlag.GENERATE_SOURCES_ON_SYNC, false))
+            .output shouldNotContain "stonecutterIdea"
+    }
+})

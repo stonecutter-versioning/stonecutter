@@ -7,4 +7,4 @@ import org.gradle.testkit.runner.UnexpectedBuildFailure
 
 inline fun shouldFailBuild(block: () -> Unit): UnexpectedBuildFailure = shouldThrow<UnexpectedBuildFailure>(block)
 
-inline fun GradleProjectTest.Runner.fail(vararg args: String): UnexpectedBuildFailure = shouldFailBuild { run(*args) }
+inline fun GradleTest.Runner.fail(vararg args: String): UnexpectedBuildFailure = shouldFailBuild { run(*args) }

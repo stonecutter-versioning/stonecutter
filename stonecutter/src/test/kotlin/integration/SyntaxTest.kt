@@ -1,77 +1,76 @@
-@file:Suppress("unused", "PublicApiImplicitType")
 package integration
 
-import gradle.GradleProjectTest
+import gradle.GradleTest
+import gradle.minus
 import gradle.fail
-import io.kotest.core.spec.style.AnnotationSpec
-import io.kotest.matchers.string.shouldContain
-import io.kotest.matchers.string.shouldNotContain
-import io.kotest.matchers.string.shouldStartWith
+import gradle.read
+import io.kotest.core.spec.style.FreeSpec
+import io.kotest.matchers.string.*
 import kotlin.io.path.useLines
 
-class SyntaxTest : AnnotationSpec(), GradleProjectTest {
-    @Test fun `simple version`() = build("simple_version") { directory, build ->
+class SyntaxTest : GradleTest, FreeSpec({
+    "simple version" - { directory, build ->
         build.run(":1:run").output shouldContain "Hello world!"
         build.run(":2:run").output shouldNotContain "Hello world!"
     }
 
-    @Test fun `unclosed scope`() = build("unclosed_scope") { directory, build ->
+    "unclosed scope" - { directory, build ->
         val err = build.fail("run")
         // Check the correct position for the error
         err.buildResult.output shouldContain "Example.java:3:19"
     }
 
-    @Test fun `nested line scope`() = build("nested_line_scope") { directory, build ->
+    "nested line scope" - { directory, build ->
         build.run(":1:run").output shouldNotContain "Hello world!"
         build.run(":2:run").output shouldNotContain "Hello world!"
         build.run(":3:run").output shouldContain "Hello world!"
     }
 
-    @Test fun `simple swap`() = build("simple_swap") { directory, build ->
+    "simple swap" - { directory, build ->
         build.run(":1:run").output shouldContain "Hello Tim!"
         build.run(":2:run").output shouldContain "Hello Lace!"
     }
 
-    @Test fun `swap arguments`() = build("swap_arguments") { directory, build ->
+    "swap arguments" - { directory, build ->
         build.run(":1:run").output shouldContain "Hello Lace!"
         build.run(":2:run").output shouldContain "Bye Lace!"
     }
 
-    @Test fun `swap indents`() = build("swap_indents") { directory, build ->
+    "swap indents" - { directory, build ->
         build.run("stonecutterSwitchTo2")
         directory.resolve("src/main/java/Example.java")
             .useLines { lines -> lines.first { "Hello Lace!" in it } }
             .shouldStartWith(" ".repeat(8))
     }
 
-    @Test fun `simple constant`() = build("simple_constant") { directory, build ->
+    "simple constant" - { directory, build ->
         build.run(":1:run").output shouldContain "Hello world!"
         build.run(":2:run").output shouldNotContain "Hello world!"
     }
 
-    @Test fun `simple dependency`() = build("simple_dependency") { directory, build ->
+    "simple dependency" - { directory, build ->
         build.run(":1:run").output shouldContain "Hello world!"
         build.run(":2:run").output shouldNotContain "Hello world!"
     }
 
-    @Test fun `if-else chain`() = build("if_else_chain") { directory, build ->
+    "if-else chain" - { directory, build ->
         for (i in 1..4) build.run(":$i:run").output shouldContain "$i!"
     }
 
-    @Test fun `duplicate else`() = build("duplicate_else") { directory, build ->
+    "duplicate else" - { directory, build ->
         val err = build.fail("run")
         // Check the correct position for the error
         err.buildResult.output shouldContain "Example.java:7:16"
     }
 
-    @Test fun `no newline`() = build("no_newline") { directory, build ->
+    "no newline" - { directory, build ->
         build.run("stonecutterSwitchTo2")
         build.run("stonecutterSwitchTo1")
         build.run(":1:run").output shouldContain "Hello world!"
         directory read "src/main/java/Example.java" shouldNotContain "<EOF>"
     }
 
-    @Test fun `included comments`() = build("included_comments") { directory, build ->
+    "included comments" - { directory, build ->
         build.run("stonecutterSwitchTo2")
         directory read "src/main/java/Example.java" shouldContain "/^¹nested¹^/"
 
@@ -79,8 +78,8 @@ class SyntaxTest : AnnotationSpec(), GradleProjectTest {
         directory read "src/main/java/Example.java" shouldContain "/^nested^/"
     }
 
-    @Test fun `nested conditions`() = build("nested_conditions") { directory, build ->
+    "nested conditions" - { directory, build ->
         build.run("stonecutterSwitchTo1.20.1")
         build.run(":1.20.1:run").output shouldContain "CASE B"
     }
-}
+})

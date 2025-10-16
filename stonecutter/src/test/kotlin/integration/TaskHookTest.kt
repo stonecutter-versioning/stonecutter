@@ -1,12 +1,12 @@
-@file:Suppress("unused", "PublicApiImplicitType", "RemoveRedundantBackticks")
 package integration
 
-import gradle.GradleProjectTest
+import gradle.GradleTest
+import gradle.minus
 import io.kotest.assertions.nondeterministic.continually
 import io.kotest.assertions.nondeterministic.continuallyConfig
 import io.kotest.assertions.retry
 import io.kotest.assertions.retryConfig
-import io.kotest.core.spec.style.AnnotationSpec
+import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldBeStrictlyIncreasingWith
 import io.kotest.matchers.collections.shouldNotBeStrictlyIncreasingWith
 import io.kotest.matchers.comparables.shouldBeLessThan
@@ -15,15 +15,15 @@ import io.kotest.matchers.string.shouldContainOnlyOnce
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-class TaskHookTest : AnnotationSpec(), GradleProjectTest {
-    @Test fun `aggregation`() = build("aggregation") { directory, build ->
+class TaskHookTest : GradleTest, FreeSpec({
+    "aggregation" - { directory, build ->
         val output = build.run("sayHelloAndGoodbye").output
         output shouldContain "Hello!"
         output shouldContainOnlyOnce "Goodbye!"
         output.lastIndexOf("Hello") shouldBeLessThan output.indexOf("Goodbye!")
     }
 
-    @Test suspend fun `ordering`() = sbuild("ordering") { directory, build ->
+    "ordering" - { directory, build ->
         fun String.printOrder() = lineSequence()
             .mapNotNull { it.substringAfter("My version is ", "").ifEmpty { return@mapNotNull null }.toInt() }
 
@@ -37,4 +37,4 @@ class TaskHookTest : AnnotationSpec(), GradleProjectTest {
             result.printOrder() shouldNotBeStrictlyIncreasingWith Comparator.naturalOrder()
         }
     }
-}
+})

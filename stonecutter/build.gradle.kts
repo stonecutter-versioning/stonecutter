@@ -46,6 +46,11 @@ dependencies {
     testImplementation(common.kotest.runner)
     testImplementation(common.kotest.assertions)
 
+    testImplementation(common.ktor.json)
+    testImplementation(common.ktor.client)
+    testImplementation(common.ktor.client.java)
+    testImplementation(common.ktor.client.negotiation)
+
     dokkaHtmlPlugin(libs.dokka.versioning)
 }
 
@@ -121,6 +126,7 @@ tasks {
         compilerOptions {
             languageVersion = KotlinVersion.KOTLIN_2_2
             apiVersion = KotlinVersion.KOTLIN_2_2
+            freeCompilerArgs.add("-Xcontext-parameters")
         }
     }
 
