@@ -51,15 +51,9 @@ internal data class BlockTransformer(
     override fun visitRoot(it: BlockToken.Root) = it.copy(scope = it.scope.map { it.accept(this) })
     override fun visitCode(it: BlockToken.Code) = it.copy(scope = it.definition.accept(ScopeTransformer(it)))
     override fun visitComment(it: BlockToken.Comment) = it
-    override fun visitContent(it: BlockToken.Content): BlockToken = with(it.leaf) {
-        if (text.isNotBlank())
-            runtime.initializeReplacements(params.replacements)
-
-        if (runtime.replacer == null || params.replacements.isEmpty())
-            return it
-
-        val transformed = buildString(text) { runtime.replacer!!.replace(this) }
-        it.copy(leaf = copy(text = transformed), blank = transformed.isBlank())
+    override fun visitContent(it: BlockToken.Content): BlockToken {
+        if (it.leaf.text.isNotBlank()) runtime.initializeReplacements(params.replacements)
+        return it
     }
 
     private fun List<BlockToken>.reprocess(): List<BlockToken> = BlockToken.Root(this).reprocess()
