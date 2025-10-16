@@ -25,8 +25,6 @@ dependencies {
     implementation(common.kotlin.stdlib)
     implementation(common.kotlin.reflect)
     implementation(common.kotlin.serialization)
-    testImplementation(common.kotest6.runner)
-    testImplementation(common.kotest6.assertions)
 
     dokkaHtmlPlugin(libs.dokka.versioning)
 }

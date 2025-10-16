@@ -3,12 +3,10 @@ package integration
 
 import gradle.GradleProjectTest
 import gradle.fail
-import gradle.shouldFailBuild
 import io.kotest.core.spec.style.AnnotationSpec
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
-import kotlin.io.path.readText
 import kotlin.io.path.useLines
 
 class SyntaxTest : AnnotationSpec(), GradleProjectTest {
