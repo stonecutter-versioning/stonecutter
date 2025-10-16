@@ -1,0 +1,327 @@
+public abstract interface class dev/kikugie/stonecutter/build/StonecutterBuildExtension : dev/kikugie/stonecutter/data/dsl/VersionOperations {
+	public fun constants (Lgroovy/lang/Closure;)V
+	public fun constants (Lkotlin/jvm/functions/Function1;)V
+	public fun dependencies (Lgroovy/lang/Closure;)V
+	public fun dependencies (Lkotlin/jvm/functions/Function1;)V
+	public fun flags (Lgroovy/lang/Closure;)V
+	public fun flags (Lkotlin/jvm/functions/Function1;)V
+	public fun getActive ()Ldev/kikugie/stonecutter/data/StonecutterProject;
+	public fun getBranch ()Ldev/kikugie/stonecutter/data/tree/struct/ProjectBranch;
+	public abstract fun getConstants ()Ldev/kikugie/stonecutter/build/ext/ConstantContainer;
+	public fun getCurrent ()Ldev/kikugie/stonecutter/data/StonecutterProject;
+	public abstract fun getDependencies ()Ldev/kikugie/stonecutter/build/ext/DependencyContainer;
+	public abstract fun getFilters ()Lorg/gradle/api/tasks/util/PatternFilterable;
+	public abstract fun getFlags ()Ldev/kikugie/stonecutter/controller/ext/FlagContainer;
+	public abstract fun getNode ()Ldev/kikugie/stonecutter/data/tree/struct/ProjectNode;
+	public abstract fun getReplacements ()Ldev/kikugie/stonecutter/build/ext/ReplacementContainer;
+	public fun getSemantics ()Ldev/kikugie/stonecutter/data/dsl/VersionOperations;
+	public abstract fun getSwaps ()Ldev/kikugie/stonecutter/build/ext/SwapContainer;
+	public abstract fun getTasks ()Ldev/kikugie/stonecutter/build/task/StonecutterBuildTasks;
+	public fun getTree ()Ldev/kikugie/stonecutter/data/tree/struct/ProjectTree;
+	public fun getVersions ()Ljava/util/Collection;
+	public fun replacements (Lgroovy/lang/Closure;)V
+	public fun replacements (Lkotlin/jvm/functions/Function1;)V
+	public fun swaps (Lgroovy/lang/Closure;)V
+	public fun swaps (Lkotlin/jvm/functions/Function1;)V
+	public fun tasks (Lgroovy/lang/Closure;)V
+	public fun tasks (Lkotlin/jvm/functions/Function1;)V
+}
+
+public abstract interface class dev/kikugie/stonecutter/build/ext/ConstantContainer : dev/kikugie/stonecutter/build/util/DynamicMap {
+	public fun match (Ljava/lang/String;Ljava/lang/Iterable;)V
+	public fun match (Ljava/lang/String;[Ljava/lang/String;)V
+}
+
+public abstract interface class dev/kikugie/stonecutter/build/ext/DependencyContainer : dev/kikugie/stonecutter/build/util/DynamicMap {
+}
+
+public abstract interface class dev/kikugie/stonecutter/build/ext/ReplacementContainer {
+	public fun regex (Ljava/lang/String;Ljava/lang/Boolean;Lorg/gradle/api/Action;)V
+	public abstract fun regex (Lorg/gradle/api/Action;)V
+	public fun regex (ZLorg/gradle/api/Action;)V
+	public static synthetic fun regex$default (Ldev/kikugie/stonecutter/build/ext/ReplacementContainer;Ljava/lang/String;Ljava/lang/Boolean;Lorg/gradle/api/Action;ILjava/lang/Object;)V
+	public fun string (Ljava/lang/String;Ljava/lang/Boolean;Lorg/gradle/api/Action;)V
+	public abstract fun string (Lorg/gradle/api/Action;)V
+	public fun string (ZLorg/gradle/api/Action;)V
+	public static synthetic fun string$default (Ldev/kikugie/stonecutter/build/ext/ReplacementContainer;Ljava/lang/String;Ljava/lang/Boolean;Lorg/gradle/api/Action;ILjava/lang/Object;)V
+}
+
+public abstract interface class dev/kikugie/stonecutter/build/ext/ReplacementContainer$RegexReplacementSpec {
+	public abstract fun getDirection ()Lorg/gradle/api/provider/Property;
+	public abstract fun getFromPattern ()Lorg/gradle/api/provider/Property;
+	public abstract fun getId ()Lorg/gradle/api/provider/Property;
+	public abstract fun getReversePattern ()Lorg/gradle/api/provider/Property;
+	public abstract fun getReverseValue ()Lorg/gradle/api/provider/Property;
+	public abstract fun getToValue ()Lorg/gradle/api/provider/Property;
+	public fun replace (Ljava/lang/String;Ljava/lang/String;)V
+	public fun reverse (Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public abstract interface class dev/kikugie/stonecutter/build/ext/ReplacementContainer$StringReplacementSpec {
+	public abstract fun getDirection ()Lorg/gradle/api/provider/Property;
+	public abstract fun getFrom ()Lorg/gradle/api/provider/Property;
+	public abstract fun getId ()Lorg/gradle/api/provider/Property;
+	public abstract fun getTo ()Lorg/gradle/api/provider/Property;
+	public fun replace (Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public abstract interface class dev/kikugie/stonecutter/build/ext/SwapContainer : dev/kikugie/stonecutter/build/util/DynamicMap {
+}
+
+public abstract interface class dev/kikugie/stonecutter/build/task/StonecutterBuildTasks {
+	public abstract fun configureSource (Lorg/gradle/api/tasks/SourceSet;)V
+	public fun generateTaskName (Lorg/gradle/api/tasks/SourceSet;)Ljava/lang/String;
+	public abstract fun getGenerate ()Ljava/util/Map;
+	public abstract fun getGeneratedSourcesDir ()Ljava/io/File;
+	public abstract fun getMerge ()Ljava/util/Map;
+	public abstract fun getPrepare ()Ljava/util/Map;
+	public abstract fun getProcessedCacheDir ()Ljava/io/File;
+	public fun mergeTaskName (Lorg/gradle/api/tasks/SourceSet;)Ljava/lang/String;
+	public fun prepareTaskName (Lorg/gradle/api/tasks/SourceSet;)Ljava/lang/String;
+	public fun taskSuffix (Lorg/gradle/api/tasks/SourceSet;)Ljava/lang/String;
+}
+
+public abstract interface class dev/kikugie/stonecutter/controller/StonecutterControllerExtension : dev/kikugie/stonecutter/data/dsl/VersionOperations, org/gradle/api/plugins/ExtensionAware {
+	public abstract fun active (Ljava/lang/Object;)V
+	public fun flags (Lgroovy/lang/Closure;)V
+	public fun flags (Lkotlin/jvm/functions/Function1;)V
+	public fun getCurrent ()Ldev/kikugie/stonecutter/data/StonecutterProject;
+	public abstract fun getFlags ()Ldev/kikugie/stonecutter/controller/ext/MutableFlagContainer;
+	public abstract fun getHandlers ()Ldev/kikugie/stonecutter/controller/file/FileHandlerContainer;
+	public fun getSemantics ()Ldev/kikugie/stonecutter/data/dsl/VersionOperations;
+	public abstract fun getTasks ()Ldev/kikugie/stonecutter/controller/tasks/StonecutterControllerTasks;
+	public abstract fun getTree ()Ldev/kikugie/stonecutter/data/tree/struct/ProjectTree;
+	public fun getVcsVersion ()Ldev/kikugie/stonecutter/data/StonecutterProject;
+	public fun getVersions ()Ljava/util/Collection;
+	public fun handlers (Lgroovy/lang/Closure;)V
+	public fun handlers (Lkotlin/jvm/functions/Function1;)V
+	public fun parameters (Lgroovy/lang/Closure;)V
+	public abstract fun parameters (Lkotlin/jvm/functions/Function1;)V
+	public fun tasks (Lgroovy/lang/Closure;)V
+	public fun tasks (Lkotlin/jvm/functions/Function1;)V
+}
+
+public abstract interface class dev/kikugie/stonecutter/controller/ext/FlagContainer {
+	public abstract fun get (Ldev/kikugie/stonecutter/controller/flag/StonecutterFlag;)Ljava/lang/Object;
+	public fun get (Ljava/lang/String;)Ljava/lang/Object;
+	public fun invoke (Ldev/kikugie/stonecutter/controller/flag/StonecutterFlag;)Ljava/lang/Object;
+}
+
+public abstract interface class dev/kikugie/stonecutter/controller/ext/MutableFlagContainer : dev/kikugie/stonecutter/controller/ext/FlagContainer {
+	public fun invoke (Ldev/kikugie/stonecutter/controller/flag/StonecutterFlag;Ljava/lang/Object;)V
+	public abstract fun set (Ldev/kikugie/stonecutter/controller/flag/StonecutterFlag;Ljava/lang/Object;)V
+	public fun set (Ljava/lang/String;Ljava/lang/Object;)V
+}
+
+public final class dev/kikugie/stonecutter/controller/flag/StonecutterFlag {
+	public static final field APPEND_SOURCES_AFTER_EVAL Ldev/kikugie/stonecutter/controller/flag/StonecutterFlag;
+	public static final field APPLY_PLUGIN_TO_NODES Ldev/kikugie/stonecutter/controller/flag/StonecutterFlag;
+	public static final field Companion Ldev/kikugie/stonecutter/controller/flag/StonecutterFlag$Companion;
+	public static final field GENERATE_SOURCES_ON_SYNC Ldev/kikugie/stonecutter/controller/flag/StonecutterFlag;
+	public static final field GENERATE_SWITCH_ACTIONS Ldev/kikugie/stonecutter/controller/flag/StonecutterFlag;
+	public static final field IMPLICIT_RECEIVER Ldev/kikugie/stonecutter/controller/flag/StonecutterFlag;
+	public static final field SERIALIZE_TREE_MODEL Ldev/kikugie/stonecutter/controller/flag/StonecutterFlag;
+	public fun <init> (Ljava/lang/String;Ljava/lang/Object;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Object;
+	public final fun copy (Ljava/lang/String;Ljava/lang/Object;)Ldev/kikugie/stonecutter/controller/flag/StonecutterFlag;
+	public static synthetic fun copy$default (Ldev/kikugie/stonecutter/controller/flag/StonecutterFlag;Ljava/lang/String;Ljava/lang/Object;ILjava/lang/Object;)Ldev/kikugie/stonecutter/controller/flag/StonecutterFlag;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun fromString (Ljava/lang/String;)Ljava/lang/Object;
+	public final fun getDefault ()Ljava/lang/Object;
+	public final fun getKey ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static final fun named (Ljava/lang/String;)Ldev/kikugie/stonecutter/controller/flag/StonecutterFlag;
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class dev/kikugie/stonecutter/controller/tasks/StonecutterControllerTasks {
+	public static final field Companion Ldev/kikugie/stonecutter/controller/tasks/StonecutterControllerTasks$Companion;
+	public static final field VERSION_COMPARATOR Ljava/util/Comparator;
+	public abstract fun getSwitch ()Ljava/util/Map;
+	public fun getVersionComparator ()Ljava/util/Comparator;
+	public abstract fun named (Ljava/lang/String;Ljava/lang/Class;Lkotlin/jvm/functions/Function1;)Lorg/gradle/api/provider/MapProperty;
+	public abstract fun named (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lorg/gradle/api/provider/MapProperty;
+	public fun named (Ljava/lang/String;Lkotlin/reflect/KClass;Lkotlin/jvm/functions/Function1;)Lorg/gradle/api/provider/MapProperty;
+	public static synthetic fun named$default (Ldev/kikugie/stonecutter/controller/tasks/StonecutterControllerTasks;Ljava/lang/String;Ljava/lang/Class;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/gradle/api/provider/MapProperty;
+	public static synthetic fun named$default (Ldev/kikugie/stonecutter/controller/tasks/StonecutterControllerTasks;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/gradle/api/provider/MapProperty;
+	public static synthetic fun named$default (Ldev/kikugie/stonecutter/controller/tasks/StonecutterControllerTasks;Ljava/lang/String;Lkotlin/reflect/KClass;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/gradle/api/provider/MapProperty;
+	public abstract fun order (Ljava/lang/String;Ljava/util/Comparator;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun order$default (Ldev/kikugie/stonecutter/controller/tasks/StonecutterControllerTasks;Ljava/lang/String;Ljava/util/Comparator;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public fun switchTaskName (Ljava/lang/String;)Ljava/lang/String;
+	public fun switchTaskProvider (Ljava/lang/String;)Lorg/gradle/api/tasks/TaskProvider;
+}
+
+public final class dev/kikugie/stonecutter/data/ProjectHierarchy : java/util/List, kotlin/jvm/internal/markers/KMappedMarker {
+	public static final field Companion Ldev/kikugie/stonecutter/data/ProjectHierarchy$Companion;
+	public synthetic fun add (ILjava/lang/Object;)V
+	public fun add (ILjava/lang/String;)V
+	public synthetic fun add (Ljava/lang/Object;)Z
+	public fun add (Ljava/lang/String;)Z
+	public fun addAll (ILjava/util/Collection;)Z
+	public fun addAll (Ljava/util/Collection;)Z
+	public static final synthetic fun box-impl (Ljava/lang/String;)Ldev/kikugie/stonecutter/data/ProjectHierarchy;
+	public fun clear ()V
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final fun contains (Ljava/lang/Object;)Z
+	public fun contains (Ljava/lang/String;)Z
+	public static fun contains-impl (Ljava/lang/String;Ljava/lang/String;)Z
+	public fun containsAll (Ljava/util/Collection;)Z
+	public static fun containsAll-impl (Ljava/lang/String;Ljava/util/Collection;)Z
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public synthetic fun get (I)Ljava/lang/Object;
+	public fun get (I)Ljava/lang/String;
+	public static fun get-impl (Ljava/lang/String;I)Ljava/lang/String;
+	public static final fun getSegments-impl (Ljava/lang/String;)Lkotlin/sequences/Sequence;
+	public fun getSize ()I
+	public static fun getSize-impl (Ljava/lang/String;)I
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public final fun indexOf (Ljava/lang/Object;)I
+	public fun indexOf (Ljava/lang/String;)I
+	public static fun indexOf-impl (Ljava/lang/String;Ljava/lang/String;)I
+	public fun isEmpty ()Z
+	public static fun isEmpty-impl (Ljava/lang/String;)Z
+	public fun iterator ()Ljava/util/Iterator;
+	public static fun iterator-impl (Ljava/lang/String;)Ljava/util/Iterator;
+	public final fun lastIndexOf (Ljava/lang/Object;)I
+	public fun lastIndexOf (Ljava/lang/String;)I
+	public static fun lastIndexOf-impl (Ljava/lang/String;Ljava/lang/String;)I
+	public fun listIterator ()Ljava/util/ListIterator;
+	public fun listIterator (I)Ljava/util/ListIterator;
+	public static fun listIterator-impl (Ljava/lang/String;)Ljava/util/ListIterator;
+	public static fun listIterator-impl (Ljava/lang/String;I)Ljava/util/ListIterator;
+	public static final fun minus-3NqLo2s (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public static final fun orBlank-impl (Ljava/lang/String;)Ljava/lang/String;
+	public static final fun plus-3NqLo2s (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public static final fun relativize-qHRS2DI (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public synthetic fun remove (I)Ljava/lang/Object;
+	public fun remove (I)Ljava/lang/String;
+	public fun remove (Ljava/lang/Object;)Z
+	public fun removeAll (Ljava/util/Collection;)Z
+	public fun replaceAll (Ljava/util/function/UnaryOperator;)V
+	public fun retainAll (Ljava/util/Collection;)Z
+	public synthetic fun set (ILjava/lang/Object;)Ljava/lang/Object;
+	public fun set (ILjava/lang/String;)Ljava/lang/String;
+	public synthetic fun size ()I
+	public fun sort (Ljava/util/Comparator;)V
+	public fun subList (II)Ljava/util/List;
+	public static fun subList-impl (Ljava/lang/String;II)Ljava/util/List;
+	public fun toArray ()[Ljava/lang/Object;
+	public fun toArray ([Ljava/lang/Object;)[Ljava/lang/Object;
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final class dev/kikugie/stonecutter/data/StonecutterProject {
+	public static final field Companion Ldev/kikugie/stonecutter/data/StonecutterProject$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Ldev/kikugie/stonecutter/data/StonecutterProject;
+	public static synthetic fun copy$default (Ldev/kikugie/stonecutter/data/StonecutterProject;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/kikugie/stonecutter/data/StonecutterProject;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getProject ()Ljava/lang/String;
+	public final fun getVersion ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isActive ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class dev/kikugie/stonecutter/data/dsl/VersionOperations {
+	public fun compare (Ljava/lang/String;Ljava/lang/String;)I
+	public abstract fun eval (Ldev/kikugie/semver/data/Version;[Ljava/lang/String;)Z
+	public fun eval (Ljava/lang/String;[Ljava/lang/String;)Z
+	public abstract fun parse (Ljava/lang/String;)Ldev/kikugie/semver/data/Version;
+}
+
+public abstract class dev/kikugie/stonecutter/data/tree/builder/BranchBuilder {
+	public fun <init> ()V
+	public abstract fun getBranchScript ()Lorg/gradle/api/provider/Property;
+	public abstract fun inherit ()V
+	public final fun vers (Ljava/lang/String;Ljava/lang/String;)Ldev/kikugie/stonecutter/data/tree/builder/NodeBuilder;
+	public final fun version (Ljava/lang/String;)Ldev/kikugie/stonecutter/data/tree/builder/NodeBuilder;
+	public final fun version (Ljava/lang/String;Ljava/lang/String;)Ldev/kikugie/stonecutter/data/tree/builder/NodeBuilder;
+	public final fun versionPairs (Ljava/lang/Iterable;)Ldev/kikugie/stonecutter/data/tree/builder/NodeBuilder;
+	public final fun versionPairs ([Lkotlin/Pair;)Ldev/kikugie/stonecutter/data/tree/builder/NodeBuilder;
+	public final fun versions (Ljava/lang/Iterable;)Ldev/kikugie/stonecutter/data/tree/builder/NodeBuilder;
+	protected abstract fun versions (Ljava/util/List;)Ldev/kikugie/stonecutter/data/tree/builder/NodeBuilder;
+	public final fun versions (Ljava/util/Map;)Ldev/kikugie/stonecutter/data/tree/builder/NodeBuilder;
+	public final fun versions ([Ljava/lang/String;)Ldev/kikugie/stonecutter/data/tree/builder/NodeBuilder;
+}
+
+public abstract class dev/kikugie/stonecutter/data/tree/builder/TreeBuilder : dev/kikugie/stonecutter/data/tree/builder/BranchBuilder {
+	public fun <init> ()V
+	public final fun branch (Ljava/lang/String;)V
+	public final fun branch (Ljava/lang/String;Lgroovy/lang/Closure;)V
+	public abstract fun branch (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public abstract fun getCentralScript ()Lorg/gradle/api/provider/Property;
+	public abstract fun getKotlinController ()Lorg/gradle/api/provider/Property;
+	public abstract fun getVcsVersion ()Lorg/gradle/api/provider/Property;
+	public abstract fun mapBuilds (Lkotlin/jvm/functions/Function2;)V
+}
+
+public abstract interface class dev/kikugie/stonecutter/data/tree/struct/GradleMember {
+	public abstract fun getHierarchy-L6On-oY ()Ljava/lang/String;
+	public abstract fun getLocation ()Ljava/nio/file/Path;
+	public abstract fun getProject ()Lorg/gradle/api/Project;
+}
+
+public abstract interface class dev/kikugie/stonecutter/data/tree/struct/ProjectBranch : dev/kikugie/stonecutter/data/tree/struct/GradleMember, java/util/Map, kotlin/jvm/internal/markers/KMappedMarker {
+	public abstract fun get-qHRS2DI (Ljava/lang/String;)Ldev/kikugie/stonecutter/data/tree/struct/ProjectNode;
+	public abstract fun getId ()Ljava/lang/String;
+	public abstract fun getNodes ()Ljava/util/Collection;
+	public abstract fun getTree ()Ldev/kikugie/stonecutter/data/tree/struct/ProjectTree;
+	public abstract fun getVersions ()Ljava/util/Collection;
+}
+
+public abstract interface class dev/kikugie/stonecutter/data/tree/struct/ProjectNode : dev/kikugie/stonecutter/data/tree/struct/GradleMember {
+	public fun find (Ljava/lang/String;Ljava/lang/String;)Ldev/kikugie/stonecutter/data/tree/struct/ProjectNode;
+	public abstract fun getBranch ()Ldev/kikugie/stonecutter/data/tree/struct/ProjectBranch;
+	public abstract fun getMetadata ()Ldev/kikugie/stonecutter/data/StonecutterProject;
+	public fun getTree ()Ldev/kikugie/stonecutter/data/tree/struct/ProjectTree;
+	public fun peer (Ljava/lang/String;)Ldev/kikugie/stonecutter/data/tree/struct/ProjectNode;
+	public fun sibling (Ljava/lang/String;)Ldev/kikugie/stonecutter/data/tree/struct/ProjectNode;
+}
+
+public abstract interface class dev/kikugie/stonecutter/data/tree/struct/ProjectTree : dev/kikugie/stonecutter/data/tree/struct/GradleMember, java/util/Map, kotlin/jvm/internal/markers/KMappedMarker {
+	public abstract fun get-qHRS2DI (Ljava/lang/String;)Ldev/kikugie/stonecutter/data/tree/struct/ProjectBranch;
+	public abstract fun getBranches ()Ljava/util/Collection;
+	public abstract fun getCurrent ()Ldev/kikugie/stonecutter/data/StonecutterProject;
+	public abstract fun getNodes ()Ljava/util/Collection;
+	public abstract fun getVcs ()Ldev/kikugie/stonecutter/data/StonecutterProject;
+	public abstract fun getVersions ()Ljava/util/Collection;
+	public abstract fun node-qHRS2DI (Ljava/lang/String;)Ldev/kikugie/stonecutter/data/tree/struct/ProjectNode;
+}
+
+public abstract class dev/kikugie/stonecutter/settings/StonecutterSettingsExtension : dev/kikugie/stonecutter/data/dsl/VersionOperations {
+	public fun <init> (Lorg/gradle/api/model/ObjectFactory;)V
+	public final fun create (Ljava/lang/Iterable;)V
+	public final fun create (Ljava/lang/Iterable;Ljava/io/File;)V
+	public final fun create (Ljava/lang/Iterable;Ljava/io/File;Lorg/gradle/api/Action;)V
+	public final fun create (Ljava/lang/Iterable;Lorg/gradle/api/Action;)V
+	public final fun create (Ljava/lang/Object;)V
+	protected abstract fun create (Ljava/lang/Object;Ldev/kikugie/stonecutter/data/tree/builder/TreeBuilder;)V
+	public final fun create (Ljava/lang/Object;Ljava/io/File;)V
+	public final fun create (Ljava/lang/Object;Ljava/io/File;Lorg/gradle/api/Action;)V
+	public final fun create (Ljava/lang/Object;Lorg/gradle/api/Action;)V
+	public final fun create ([Ljava/lang/Object;)V
+	public final fun create ([Ljava/lang/Object;Ljava/io/File;)V
+	public final fun create ([Ljava/lang/Object;Ljava/io/File;Lorg/gradle/api/Action;)V
+	public final fun create ([Ljava/lang/Object;Lorg/gradle/api/Action;)V
+	public static synthetic fun create$default (Ldev/kikugie/stonecutter/settings/StonecutterSettingsExtension;Ljava/lang/Iterable;Ljava/io/File;Lorg/gradle/api/Action;ILjava/lang/Object;)V
+	public static synthetic fun create$default (Ldev/kikugie/stonecutter/settings/StonecutterSettingsExtension;Ljava/lang/Iterable;Lorg/gradle/api/Action;ILjava/lang/Object;)V
+	public static synthetic fun create$default (Ldev/kikugie/stonecutter/settings/StonecutterSettingsExtension;Ljava/lang/Object;Ljava/io/File;Lorg/gradle/api/Action;ILjava/lang/Object;)V
+	public static synthetic fun create$default (Ldev/kikugie/stonecutter/settings/StonecutterSettingsExtension;Ljava/lang/Object;Lorg/gradle/api/Action;ILjava/lang/Object;)V
+	public static synthetic fun create$default (Ldev/kikugie/stonecutter/settings/StonecutterSettingsExtension;[Ljava/lang/Object;Ljava/io/File;Lorg/gradle/api/Action;ILjava/lang/Object;)V
+	public static synthetic fun create$default (Ldev/kikugie/stonecutter/settings/StonecutterSettingsExtension;[Ljava/lang/Object;Lorg/gradle/api/Action;ILjava/lang/Object;)V
+	public abstract fun getCentralScript ()Lorg/gradle/api/provider/Property;
+	public abstract fun getKotlinController ()Lorg/gradle/api/provider/Property;
+	public final fun getSemantics ()Ldev/kikugie/stonecutter/data/dsl/VersionOperations;
+	public final fun getShared ()Lorg/gradle/api/Action;
+	public final fun shared (Lorg/gradle/api/Action;)V
+}
+
