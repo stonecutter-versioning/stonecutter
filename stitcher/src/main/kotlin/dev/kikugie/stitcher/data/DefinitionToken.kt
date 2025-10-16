@@ -1,20 +1,20 @@
 package dev.kikugie.stitcher.data
 
-import dev.kikugie.stitcher.antlr.StitcherParser
+import dev.kikugie.stitcher.antlr.StitcherLexer
 import dev.kikugie.stitcher.data.DefinitionType.*
 
-private fun LeafToken?.openerType(): DefinitionType = when(this?.type) {
-    StitcherParser.SCOPE_OPEN -> SCOPED_OPENER
-    StitcherParser.SCOPE_WORD -> WORD_OPENER
+private fun LeafToken?.openerType(): DefinitionType = when(this?.type?.value) {
+    StitcherLexer.SCOPE_OPEN -> SCOPED_OPENER
+    StitcherLexer.SCOPE_WORD -> WORD_OPENER
     null -> LINE_OPENER
-    else -> error("Invalid opener type $name")
+    else -> error("Invalid opener type ${type.name}")
 }
 
-private fun LeafToken?.extensionType(): DefinitionType = when(this?.type) {
-    StitcherParser.SCOPE_OPEN -> SCOPED_EXTENSION
-    StitcherParser.SCOPE_WORD -> WORD_EXTENSION
+private fun LeafToken?.extensionType(): DefinitionType = when(this?.type?.value) {
+    StitcherLexer.SCOPE_OPEN -> SCOPED_EXTENSION
+    StitcherLexer.SCOPE_WORD -> WORD_EXTENSION
     null -> LINE_EXTENSION
-    else -> error("Invalid opener type $name")
+    else -> error("Invalid opener type ${type.name}")
 }
 
 internal sealed interface DefinitionToken {

@@ -15,7 +15,6 @@ import dev.kikugie.stitcher.issue.report
 import dev.kikugie.stitcher.issue.verifyNotNull
 import dev.kikugie.stitcher.parser.StitcherTokenFactory
 import dev.kikugie.stitcher.parser.layout.LayoutParser
-import dev.kikugie.stitcher.transform.impl.UncommentingTokenSource
 import dev.kikugie.stitcher.transform.visitor.BlockAssembler.Companion.join
 import dev.kikugie.stitcher.transform.visitor.ExpressionEvaluator
 import dev.kikugie.stitcher.transform.visitor.RangeFinder.range
@@ -125,7 +124,7 @@ internal data class BlockTransformer(
 
             // Collect insertable values
             val arguments = tokens.map {
-                if (it.type == StitcherParser.QUOTED) it.text.substring(1, it.range.last) else it.text
+                if (it.type.value == StitcherLexer.QUOTED) it.text.substring(1, it.range.last) else it.text
             }
             // Collect insertable tokens
             val places = SwapTemplate(this.toStream()).run {
