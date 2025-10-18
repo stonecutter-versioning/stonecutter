@@ -33,6 +33,17 @@ public class StonecutterVersion(public val value: Version) : Comparable<Any> {
         LenientOperations.eval(value, predicate)
 
     /**
+     * Provides loose unchecked equality of the [equals] function.
+     * ```kt
+     * val version = StonecutterVersion("1.21.1")
+     * assert(version == "1.21.1") // Compile error!
+     * assert(version eq "1.21.1") // OK!
+     * ```
+     */
+    public infix fun eq(other: Any?): Boolean =
+        equals(other)
+
+    /**
      * Compares this [value] against a [String], a parsed [Version], or a boxed [StonecutterVersion].
      * ```kt
      * // Work the same
@@ -59,11 +70,11 @@ public class StonecutterVersion(public val value: Version) : Comparable<Any> {
      * For **strict** equality, compare the underlying [value].
      * ```kt
      * val version = StonecutterVersion("1.21.1")
-     * assert(version == "1.21.1") // Also true!
-     * assert(version.value != "1.21.1") // Strict equality
+     * assert(version.equals("1.21.1")) // Also true!
+     * assert(!version.value.equals("1.21.1")) // Strict equality
      * ```
      */
-    override fun equals(other: Any?): Boolean = when {
+    public override operator fun equals(other: Any?): Boolean = when {
         this === other -> true
         other == null -> false
         else -> try {
