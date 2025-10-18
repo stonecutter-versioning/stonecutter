@@ -14,6 +14,15 @@ public data class StonecutterProject(
     /**The assigned version of this project, used in comment evaluation.*/
     public val version: Version,
 ) {
+    /**
+     * The parsed variant of the [version] field, allowing additional operations.
+     * @throws IllegalArgumentException Upon access if [version] cannot be parsed
+     * to a [SemanticVersion][dev.kikugie.semver.data.SemanticVersion] or a
+     * [StringVersion][dev.kikugie.semver.data.StringVersion].
+     */
+    public val parsed: StonecutterVersion
+        by lazy { StonecutterVersion(version) }
+
     @Transient
     public var isActive: Boolean = false
         private set
