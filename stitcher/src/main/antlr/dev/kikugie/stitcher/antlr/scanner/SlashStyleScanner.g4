@@ -27,12 +27,20 @@ SLASH_THE_REST: . -> skip;
 
 mode IN_STAR;
 STAR_COMMENT_NEST: '/*' {
-    if (nestMultiLineComments) commentDepth++;
+if (nestMultiLineComments)
+    commentDepth++;
 } -> skip;
 STAR_COMMENT_END: '*/' {
-    if (!nestMultiLineComments) popMode();
-    else if (commentDepth-- <= 0) popMode();
-    else skip();
+if (!nestMultiLineComments)
+    popMode();
+else if (commentDepth <= 0) {
+    commentDepth = 0;
+    popMode();
+}
+else {
+    commentDepth--;
+    skip();
+}
 };
 STAR_THE_REST: . -> skip;
 

@@ -5,6 +5,7 @@ import gradle.minus
 import gradle.fail
 import gradle.read
 import io.kotest.core.spec.style.FreeSpec
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.*
 import kotlin.io.path.useLines
 
@@ -81,6 +82,17 @@ class SyntaxTest : GradleTest, FreeSpec({
     "nested conditions" - { _, build ->
         build.run("stonecutterSwitchTo1.20.1")
         build.run(":1.20.1:run").output shouldContain "CASE B"
+    }
+
+    /**
+     * Checks if nested comments are correctly counted for Kotlin files.
+     * @see <a href="https://codeberg.org/stonecutter/stonecutter/issues/18">#18</a>
+     */
+    "nested conditions kt" - { directory, build ->
+        build.run("stonecutterSwitchTo1.14.4")
+        val file = directory read "src/main/java/PopupScreen.kt"
+        val line = file.lines()[24]
+        line shouldBe "      /*renderBlurredBackground(/*? if <=1.21.1 {*/partialTick/*?}*/)"
     }
 
     /**
