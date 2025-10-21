@@ -1,40 +1,37 @@
 package dev.kikugie.stitcher.parser.component
 
-import dev.kikugie.commons.takeAsOrNull
 import dev.kikugie.stitcher.antlr.StitcherBaseVisitor
-import dev.kikugie.stitcher.antlr.StitcherLexer
 import dev.kikugie.stitcher.antlr.StitcherParser
 import dev.kikugie.stitcher.antlr.StitcherVisitor
-import dev.kikugie.stitcher.data.DefinitionToken
+import dev.kikugie.stitcher.data.composite.*
+import dev.kikugie.stitcher.data.custom.ClosedScope
+import dev.kikugie.stitcher.data.custom.ScopeToken
+import dev.kikugie.stitcher.data.custom.WordScope
 import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.issue.bail
 import dev.kikugie.stitcher.issue.problem
 import dev.kikugie.stitcher.parser.StitcherTokenFactory
 import dev.kikugie.stitcher.util.AntlrToken
-import org.antlr.v4.runtime.tree.ParseTree
-import org.antlr.v4.runtime.tree.TerminalNode
-import kotlin.collections.orEmpty
 
 internal class DefinitionBuilder(val problems: ProblemSink, val factory: StitcherTokenFactory) : StitcherBaseVisitor<DefinitionToken>() {
     private val expressionBuilder: ExpressionBuilder by lazy { ExpressionBuilder(problems, factory) }
+    private val scopeTokenBuilder: ScopeTokenBuilder by lazy { ScopeTokenBuilder(problems, factory) }
 
     override fun visitReplacement(ctx: StitcherParser.ReplacementContext): DefinitionToken =
-        DefinitionToken.Replacement(factory.fromAntlrNode(ctx.IDENTIFIER()))
+        ReplacementDefinition(factory.fromAntlrNode(ctx.IDENTIFIER()))
 
     override fun visitOpenerSwap(ctx: StitcherParser.OpenerSwapContext): DefinitionToken {
         val identifier = factory.fromAntlrNode(ctx.IDENTIFIER())
-        val arguments = ctx.swapArguments()?.children.orEmpty<ParseTree>().asSequence()
-            .mapNotNull { it.takeAsOrNull<TerminalNode>()?.symbol }
-            .filter { it.type == StitcherLexer.IDENTIFIER || it.type == StitcherLexer.QUOTED }
-            .map { factory.fromAntlrToken(it) }
-        val opener = ctx.scopeOpener()?.op?.let(factory::fromAntlrToken)
-        return DefinitionToken.Swap(identifier, arguments.toList(), opener)
+        val arguments = ctx.swapArguments()?.literal().orEmpty<StitcherParser.LiteralContext>()
+            .map { factory.fromAntlrToken(it.start) }
+        val opener = ctx.scopeOpener()?.accept(scopeTokenBuilder)
+        return SwapDefinition.Opener(identifier, arguments.toList(), opener)
     }
 
     override fun visitCloserSwap(ctx: StitcherParser.CloserSwapContext): DefinitionToken {
         val closer = factory.fromAntlrNode(ctx.SCOPE_CLOSE())
-        return DefinitionToken.Swap(closer)
+        return SwapDefinition.Closer(closer)
     }
 
     override fun visitOpenerCondition(ctx: StitcherParser.OpenerConditionContext): DefinitionToken {
@@ -42,8 +39,8 @@ internal class DefinitionBuilder(val problems: ProblemSink, val factory: Stitche
         val expression = ctx.conditionExpression().runCatching { accept(expressionBuilder) }.getOrElse {
             problems.at(ctx.start) bail problem(it) { "Failed to parse expression" }
         }
-        val opener = ctx.scopeOpener()?.op?.let(factory::fromAntlrToken)
-        return DefinitionToken.Condition(sugar, expression, opener)
+        val opener = ctx.scopeOpener()?.accept(scopeTokenBuilder)
+        return ConditionDefinition.Opener(sugar, expression, opener)
     }
 
     override fun visitExtensionCondition(ctx: StitcherParser.ExtensionConditionContext): DefinitionToken {
@@ -53,13 +50,13 @@ internal class DefinitionBuilder(val problems: ProblemSink, val factory: Stitche
         val expression = ctx.conditionExpression()?.runCatching { accept(expressionBuilder) }?.getOrElse {
             problems.at(ctx.start) bail problem(it) { "Failed to parse expression" }
         }
-        val opener = ctx.scopeOpener()?.op?.let(factory::fromAntlrToken)
-        return DefinitionToken.Condition(closer, sugar, expression, opener)
+        val opener = ctx.scopeOpener()?.accept(scopeTokenBuilder)
+        return ConditionDefinition.Extension(closer, sugar, expression, opener)
     }
 
     override fun visitCloserCondition(ctx: StitcherParser.CloserConditionContext): DefinitionToken {
         val closer = ctx.SCOPE_CLOSE().let(factory::fromAntlrNode)
-        return DefinitionToken.Condition(closer)
+        return ConditionDefinition.Closer(closer)
     }
 
     private class PairDefinitionBuilder(problems: ProblemSink, factory: StitcherTokenFactory) : StitcherBaseVisitor<Pair<AntlrToken, DefinitionToken>>() {
@@ -73,6 +70,18 @@ internal class DefinitionBuilder(val problems: ProblemSink, val factory: Stitche
 
         override fun visitReplacementDefinition(ctx: StitcherParser.ReplacementDefinitionContext): Pair<AntlrToken, DefinitionToken> =
             ctx.REPL_MARK().symbol to ctx.replacement().accept(definitionBuilder)
+    }
+
+    private class ScopeTokenBuilder(val problems: ProblemSink, val factory: StitcherTokenFactory) : StitcherBaseVisitor<ScopeToken>() {
+        override fun visitClosedScopeOpener(ctx: StitcherParser.ClosedScopeOpenerContext): ScopeToken = ClosedScope(
+            ctx.SCOPE_OPEN().let(factory::fromAntlrNode)
+        )
+
+        override fun visitWordScopeOpener(ctx: StitcherParser.WordScopeOpenerContext): ScopeToken = WordScope(
+            ctx.SCOPE_WORD().let(factory::fromAntlrNode),
+            ctx.PLUS()?.let(factory::fromAntlrNode),
+            ctx.literal()?.start?.let(factory::fromAntlrToken)
+        )
     }
 
     companion object {

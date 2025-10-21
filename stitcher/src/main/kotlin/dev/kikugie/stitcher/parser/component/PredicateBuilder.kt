@@ -5,16 +5,17 @@ import dev.kikugie.semver.data.SemanticVersion
 import dev.kikugie.semver.data.StringVersion
 import dev.kikugie.semver.data.Version
 import dev.kikugie.semver.data.VersionOperator
+import dev.kikugie.semver.data.VersionPredicate
 import dev.kikugie.stitcher.antlr.StitcherBaseVisitor
 import dev.kikugie.stitcher.antlr.StitcherLexer
 import dev.kikugie.stitcher.antlr.StitcherParser
-import dev.kikugie.stitcher.data.LeafToken
-import dev.kikugie.stitcher.data.PredicateToken
+import dev.kikugie.stitcher.data.custom.PredicateToken
 import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.issue.bail
 import dev.kikugie.stitcher.issue.problem
 import dev.kikugie.stitcher.parser.StitcherTokenFactory
+import dev.kikugie.stitcher.util.range
 import org.antlr.v4.runtime.tree.ParseTree
 import org.antlr.v4.runtime.tree.TerminalNode
 
@@ -27,13 +28,13 @@ internal class PredicateBuilder(val problems: ProblemSink, val factory: Stitcher
             ?: ctx.stringComparator()?.resolve()
             ?: VersionOperator.IMPLICIT_EQUAL
         val version = ctx.semanticVersion().build()
-        return PredicateToken(comparator, version, factory.fromAntlrRule(LeafToken.Type(StitcherLexer.NUMERIC), ctx))
+        return PredicateToken(VersionPredicate(comparator, version), ctx.range)
     }
 
     override fun visitStringPredicate(ctx: StitcherParser.StringPredicateContext): PredicateToken {
         val comparator = ctx.stringComparator().resolve()
         val version = ctx.stringVersion().build()
-        return PredicateToken(comparator, version, factory.fromAntlrRule(LeafToken.Type(StitcherLexer.IDENTIFIER), ctx))
+        return PredicateToken(VersionPredicate(comparator, version), ctx.range)
     }
 
     private fun StitcherParser.StringComparatorContext.resolve(): VersionOperator = when(getChild(0).type) {

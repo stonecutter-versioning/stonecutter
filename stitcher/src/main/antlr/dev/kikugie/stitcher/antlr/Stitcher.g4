@@ -11,7 +11,10 @@ definition
     | REPL_MARK replacement EOF # replacementDefinition
     ;
 
-scopeOpener: op=(SCOPE_OPEN | SCOPE_WORD);
+scopeOpener
+    : SCOPE_OPEN                  # closedScopeOpener
+    | SCOPE_WORD (PLUS? literal)? # wordScopeOpener
+    ;
 
 replacement: IDENTIFIER;
 
@@ -20,7 +23,7 @@ swap
     | SCOPE_CLOSE                            # closerSwap
     ;
 
-swapArguments: (IDENTIFIER | QUOTED)+;
+swapArguments: literal+;
 
 condition
     : SUGAR_IF? conditionExpression scopeOpener?                                                                                    # openerCondition
@@ -68,6 +71,7 @@ preRelease: metadata (DOT metadata)*;
 buildMetadata: metadata (DOT metadata)*;
 
 metadata: NUMERIC | IDENTIFIER;
+literal: IDENTIFIER | QUOTED;
 
 /* LEXER */
 fragment NUMBER: '0'|[1-9][0-9]*;

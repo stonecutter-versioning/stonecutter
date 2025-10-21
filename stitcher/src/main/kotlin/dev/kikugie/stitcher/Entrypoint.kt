@@ -1,6 +1,7 @@
 package dev.kikugie.stitcher
 
 import dev.kikugie.stitcher.antlr.InlineErrorListener
+import dev.kikugie.stitcher.data.eval.BlockToStringVisitor.Companion.join
 import dev.kikugie.stitcher.issue.ProblemReporter
 import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.parser.StitcherTokenFactory
@@ -8,7 +9,6 @@ import dev.kikugie.stitcher.parser.layout.LayoutParser
 import dev.kikugie.stitcher.transform.BlockTransformer
 import dev.kikugie.stitcher.transform.RuntimeState
 import dev.kikugie.stitcher.transform.TransformParameters
-import dev.kikugie.stitcher.transform.visitor.BlockAssembler.Companion.join
 import dev.kikugie.stitcher.util.FileLineIndex
 import dev.kikugie.stitcher.util.buildString
 import dev.kikugie.stitcher.util.errorListener
