@@ -86,6 +86,7 @@ class SyntaxTest : GradleTest, FreeSpec({
     /**
      * Default `$ swap >>` scopes should first skip the empty region,
      * and then capture everything until the first whitespace.
+     * @see <a href="https://codeberg.org/stonecutter/stonecutter/issues/17">#17</a>
      */
     "word scope default" - { _, build ->
         build.run(":2:run").output shouldContain "Bye Lace!"
@@ -94,6 +95,7 @@ class SyntaxTest : GradleTest, FreeSpec({
     /**
      * Custom matchers `$ swap >> 'str'` should match the string,
      * without including it in the scope.
+     * @see <a href="https://codeberg.org/stonecutter/stonecutter/issues/17">#17</a>
      */
     "word scope custom" - { _, build ->
         build.run(":2:run").output shouldContain "Bye Tim!"
@@ -102,6 +104,7 @@ class SyntaxTest : GradleTest, FreeSpec({
     /**
      * Custom matchers `$ swap >>+ 'str'` should match the string,
      * **including** it in the scope.
+     * @see <a href="https://codeberg.org/stonecutter/stonecutter/issues/17">#17</a>
      */
     "word scope capturing" - { _, build ->
         build.run(":2:run").output shouldContain "Bye Tim!"
@@ -110,6 +113,7 @@ class SyntaxTest : GradleTest, FreeSpec({
     /**
      * Custom matchers that couldn't be satisfied until
      * the scope was closed should report an error.
+     * @see <a href="https://codeberg.org/stonecutter/stonecutter/issues/17">#17</a>
      */
     "word scope unmatched" - { _, build ->
         build.fail(":2:run").buildResult.output shouldContain "Failed to find the matching string"
