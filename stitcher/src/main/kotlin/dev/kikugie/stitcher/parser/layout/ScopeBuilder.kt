@@ -5,8 +5,13 @@ import dev.kikugie.commons.text.countWhile
 import dev.kikugie.commons.then
 import dev.kikugie.stitcher.data.composite.*
 import dev.kikugie.stitcher.data.composite.DefinitionToken.Type.*
+import dev.kikugie.stitcher.data.custom.ClosedScope
 import dev.kikugie.stitcher.data.custom.WordScope
 import dev.kikugie.stitcher.data.leaf.LeafType
+import dev.kikugie.stitcher.issue.ProblemSink
+import dev.kikugie.stitcher.issue.at
+import dev.kikugie.stitcher.issue.problem
+import dev.kikugie.stitcher.issue.report
 import dev.kikugie.stitcher.parser.StitcherTokenFactory
 import dev.kikugie.stitcher.util.AntlrToken
 import dev.kikugie.stitcher.util.WHITESPACES
@@ -53,6 +58,14 @@ internal sealed interface ScopeBuilder {
             else -> AcceptResult.Rejected
         }
 
+        internal fun checkUnfinished(problems: ProblemSink, closed: Boolean): Unit = when (val opener = definition.opener) {
+            is ClosedScope -> if (closed) Unit else problems
+                .at(definition.opener!!) report problem { "Unclosed scope" }
+            is WordScope -> if (opener.literal == null || satisfied) Unit else problems
+                .at(opener.literal) report problem { "Failed to find the matching string" }
+            null -> Unit
+        }
+
         private fun acceptLine(block: ScopeBuilder, source: TokenSource): AcceptResult =
             if (block !is Content) consumeFinal(block)
             else handleSplit(block, source, block.builder.consumeLine())
@@ -83,6 +96,7 @@ internal sealed interface ScopeBuilder {
             if (split == block.builder.length)
                 return consumeFinal(block)
 
+            satisfied = true
             entries merge source.createContent(block.start, block.start + split - 1, block.builder.take(split))
                 .let(::Content)
             return source.createContent(block.start + split, block.stop, block.builder.substring(split))
@@ -92,6 +106,7 @@ internal sealed interface ScopeBuilder {
 
     class Content(val start: Int, var stop: Int, val builder: StringBuilder) : ScopeBuilder {
         constructor(token: AntlrToken) : this(token.startIndex, token.stopIndex, StringBuilder(token.text))
+
         var isBlank: Boolean = builder.isBlank()
             private set
 
@@ -118,6 +133,7 @@ internal sealed interface ScopeBuilder {
             intArrayOf(opener.startIndex, opener.stopIndex, body.startIndex, body.stopIndex, closer.startIndex, closer.stopIndex),
             arrayOf(opener.text, body.text, closer.text)
         )
+
         override fun build(factory: StitcherTokenFactory): CommentBlock = CommentBlock(
             factory.create(LeafType(LayoutParser.COMMENT_OPEN), ranges[0]..ranges[1], strings[0]),
             factory.create(LeafType(LayoutParser.COMMENT_BODY), ranges[2]..ranges[3], strings[1]),
@@ -136,6 +152,7 @@ internal sealed interface AcceptResult {
 private fun CharSequence.consumeLine(): Int {
     // Ignore all whitespaces and line breaks preceding the content
     var index = countMatching(*WHITESPACES)
+    if (index == length) return -1
 
     // Cancerous way to consume the line with the line break
     var state = 0
@@ -143,7 +160,7 @@ private fun CharSequence.consumeLine(): Int {
         when (it) {
             '\n' if state == 0 -> true.also { state = 1 }
             '\r' if state in 0..1 -> true.also { state = 2 }
-            else -> false
+            else -> state == 0
         }
     }
 
@@ -167,7 +184,7 @@ private fun CharSequence.consumeWordCustom(match: String, capturing: Boolean): I
 }
 
 private fun TokenSource.createContent(start: Int, stop: Int, text: CharSequence) = tokenFactory
-    .create(Pair(this, inputStream), LayoutParser.CONTENT, text.toString(), AntlrToken.DEFAULT_CHANNEL,start, stop, -1, -1)
+    .create(Pair(this, inputStream), LayoutParser.CONTENT, text.toString(), AntlrToken.DEFAULT_CHANNEL, start, stop, -1, -1)
 
 private infix fun MutableList<ScopeBuilder>.merge(entry: ScopeBuilder) = when (val it = lastOrNull()) {
     is ScopeBuilder.Content if (entry is ScopeBuilder.Content) -> it += entry

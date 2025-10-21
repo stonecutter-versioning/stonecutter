@@ -1,5 +1,6 @@
 package dev.kikugie.stitcher.parser.layout
 
+import dev.kikugie.commons.takeAsOrNull
 import dev.kikugie.stitcher.antlr.*
 import dev.kikugie.stitcher.data.composite.DefinitionToken
 import dev.kikugie.stitcher.data.composite.DefinitionToken.Type.CLOSER
@@ -36,32 +37,27 @@ internal class LayoutParser private constructor(val stream: TokenStream, val pro
 
         while (stack.isNotEmpty()) when (val it = stack.removeLast()) {
             is ScopeBuilder.Root -> return it.build(factory)
-            is ScopeBuilder.Code -> {
-                val closer = it.definition.closer
-                if (closer != null) problems.at(closer) report problem { "Unclosed scope" }
-            }
+            is ScopeBuilder.Code -> it.checkUnfinished(problems, false)
         }
         error("Root scope was consumed")
     }
 
+    private fun closeBlock() {
+        stack.removeLast().takeAsOrNull<ScopeBuilder.Code>()
+            ?.checkUnfinished(problems, true)
+    }
+
     private fun acceptBlock(block: ScopeBuilder): Unit = when (val result = builder.tryAccept(block, antlrSource)) {
+        AcceptResult.ConsumedOpen -> Unit
+        AcceptResult.ConsumedFinal -> closeBlock()
         AcceptResult.Rejected -> {
             check(stack.size > 1) { "Failed to accept content block" }
-            stack.removeLast()
+            closeBlock()
             acceptBlock(block)
         }
 
-        AcceptResult.ConsumedOpen -> {
-            // no-op
-        }
-
-        AcceptResult.ConsumedFinal -> {
-            stack.removeLast()
-            Unit
-        }
-
         is AcceptResult.ConsumedPartial -> {
-            stack.removeLast()
+            closeBlock()
             acceptBlock(result.remaining)
         }
     }
@@ -104,7 +100,7 @@ internal class LayoutParser private constructor(val stream: TokenStream, val pro
             if (code.type.isExtension && parent.type.isOpen)
                 problems.at(code.marker) report problem { "Extension closes an open scope" }
 
-            if (code.type.isExtension) stack.removeLast()
+            if (code.type.isExtension) closeBlock()
             acceptBlock(code)
             if (!code.type.isEmpty) stack.addLast(code)
             Unit

@@ -9,29 +9,29 @@ import io.kotest.matchers.string.*
 import kotlin.io.path.useLines
 
 class SyntaxTest : GradleTest, FreeSpec({
-    "simple version" - { directory, build ->
+    "simple version" - { _, build ->
         build.run(":1:run").output shouldContain "Hello world!"
         build.run(":2:run").output shouldNotContain "Hello world!"
     }
 
-    "unclosed scope" - { directory, build ->
+    "unclosed scope" - { _, build ->
         val err = build.fail("run")
         // Check the correct position for the error
         err.buildResult.output shouldContain "Example.java:3:19"
     }
 
-    "nested line scope" - { directory, build ->
+    "nested line scope" - { _, build ->
         build.run(":1:run").output shouldNotContain "Hello world!"
         build.run(":2:run").output shouldNotContain "Hello world!"
         build.run(":3:run").output shouldContain "Hello world!"
     }
 
-    "simple swap" - { directory, build ->
+    "simple swap" - { _, build ->
         build.run(":1:run").output shouldContain "Hello Tim!"
         build.run(":2:run").output shouldContain "Hello Lace!"
     }
 
-    "swap arguments" - { directory, build ->
+    "swap arguments" - { _, build ->
         build.run(":1:run").output shouldContain "Hello Lace!"
         build.run(":2:run").output shouldContain "Bye Lace!"
     }
@@ -43,21 +43,21 @@ class SyntaxTest : GradleTest, FreeSpec({
             .shouldStartWith(" ".repeat(8))
     }
 
-    "simple constant" - { directory, build ->
+    "simple constant" - { _, build ->
         build.run(":1:run").output shouldContain "Hello world!"
         build.run(":2:run").output shouldNotContain "Hello world!"
     }
 
-    "simple dependency" - { directory, build ->
+    "simple dependency" - { _, build ->
         build.run(":1:run").output shouldContain "Hello world!"
         build.run(":2:run").output shouldNotContain "Hello world!"
     }
 
-    "if-else chain" - { directory, build ->
+    "if-else chain" - { _, build ->
         for (i in 1..4) build.run(":$i:run").output shouldContain "$i!"
     }
 
-    "duplicate else" - { directory, build ->
+    "duplicate else" - { _, build ->
         val err = build.fail("run")
         // Check the correct position for the error
         err.buildResult.output shouldContain "Example.java:7:16"
@@ -78,8 +78,42 @@ class SyntaxTest : GradleTest, FreeSpec({
         directory read "src/main/java/Example.java" shouldContain "/^nested^/"
     }
 
-    "nested conditions" - { directory, build ->
+    "nested conditions" - { _, build ->
         build.run("stonecutterSwitchTo1.20.1")
         build.run(":1.20.1:run").output shouldContain "CASE B"
     }
+
+    /**
+     * Default `$ swap >>` scopes should first skip the empty region,
+     * and then capture everything until the first whitespace.
+     */
+    "word scope default" - { _, build ->
+        build.run(":2:run").output shouldContain "Bye Lace!"
+    }
+
+    /**
+     * Custom matchers `$ swap >> 'str'` should match the string,
+     * without including it in the scope.
+     */
+    "word scope custom" - { _, build ->
+        build.run(":2:run").output shouldContain "Bye Tim!"
+    }
+
+    /**
+     * Custom matchers `$ swap >>+ 'str'` should match the string,
+     * **including** it in the scope.
+     */
+    "word scope capturing" - { _, build ->
+        build.run(":2:run").output shouldContain "Bye Tim!"
+    }
+
+    /**
+     * Custom matchers that couldn't be satisfied until
+     * the scope was closed should report an error.
+     */
+    "word scope unmatched" - { _, build ->
+        build.fail(":2:run").buildResult.output shouldContain "Failed to find the matching string"
+    }
+
+    // TODO: Check fragmented content merging
 })
