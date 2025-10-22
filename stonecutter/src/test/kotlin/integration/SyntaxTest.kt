@@ -96,6 +96,18 @@ class SyntaxTest : GradleTest, FreeSpec({
     }
 
     /**
+     * Checks against a weird issue of nested comments copying characters from the comment.
+     * @see <a href="https://codeberg.org/stonecutter/stonecutter/issues/19">#19</a>
+     */
+    "nested conditions err" - { directory, build ->
+        build.run("stonecutterSwitchTo1.20.1")
+        build.run("stonecutterSwitchTo1.21.6")
+        val file = directory read "src/main/java/WaterFogEnvironmentMixin.java"
+        val line = file.lines()[33]
+        line shouldBe "    /*@SuppressWarnings(\"rawtypes\")*/"
+    }
+
+    /**
      * Default `$ swap >>` scopes should first skip the empty region,
      * and then capture everything until the first whitespace.
      * @see <a href="https://codeberg.org/stonecutter/stonecutter/issues/17">#17</a>
