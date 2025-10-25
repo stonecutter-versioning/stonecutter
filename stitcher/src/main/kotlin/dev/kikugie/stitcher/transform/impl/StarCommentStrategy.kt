@@ -2,10 +2,12 @@ package dev.kikugie.stitcher.transform.impl
 
 import dev.kikugie.commons.text.countMatching
 import dev.kikugie.commons.text.getOrDefault
+import dev.kikugie.commons.text.reverseView
 import dev.kikugie.commons.then
 import dev.kikugie.stitcher.transform.strategy.CommentingStrategy
 import dev.kikugie.stitcher.transform.strategy.UncommentingStrategy
 import dev.kikugie.stitcher.util.LINE_BREAKS
+import dev.kikugie.stitcher.util.WHITESPACES
 import dev.kikugie.stitcher.util.WORD_BREAKS
 import dev.kikugie.stitcher.util.buildString
 
@@ -93,9 +95,13 @@ private fun StringBuilder.removeCommentDepth(from: Char, to: Char, surrounder: C
 
 // TODO: Make it more generic
 public class StarCommentStrategy(private val flattenComments: Boolean) : CommentingStrategy, UncommentingStrategy {
-    override fun comment(scope: String): String = buildString(scope) {
+    override fun comment(scope: String, full: Boolean): String = buildString(scope) {
         if (flattenComments) applyCommentDepth(from = '*', to = '^', surrounder = '/')
-        insert(countMatching(*WORD_BREAKS), "/*").append("*/")
+        insert(countMatching(*WORD_BREAKS), "/*")
+        if (full) append("*/") else {
+            val offset = reverseView().countMatching(*WHITESPACES)
+            if (offset == 0) append("*/") else insert(length - offset, "*/")
+        }
     }
 
     override fun uncomment(scope: String, opener: String, closer: String): String = buildString(scope) {

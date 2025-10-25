@@ -153,7 +153,7 @@ class SyntaxTest : GradleTest, FreeSpec({
      * @see <a href="https://codeberg.org/stonecutter/stonecutter/issues/21">#21</a>
      */
     "line handling" - { directory, build ->
-        build.run("stonecutterSwitchTo2")
+        build.run("stonecutterSwitchTo1")
         val file = directory read "src/main/java/Example.java"
         val line = file.lines()[3]
         line shouldBe "        /*System.out.println(\"Hello world!\");*/"

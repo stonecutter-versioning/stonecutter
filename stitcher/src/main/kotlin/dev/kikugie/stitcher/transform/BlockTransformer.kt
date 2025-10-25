@@ -13,6 +13,8 @@ import dev.kikugie.stitcher.data.composite.DefinitionToken
 import dev.kikugie.stitcher.data.composite.ReplacementDefinition
 import dev.kikugie.stitcher.data.composite.RootBlock
 import dev.kikugie.stitcher.data.composite.SwapDefinition
+import dev.kikugie.stitcher.data.custom.ClosedScope
+import dev.kikugie.stitcher.data.custom.ScopeToken
 import dev.kikugie.stitcher.data.eval.BlockRangeVisitor.range
 import dev.kikugie.stitcher.data.eval.BlockStartVisitor.start
 import dev.kikugie.stitcher.data.eval.BlockStopVisitor.stop
@@ -85,7 +87,7 @@ internal data class BlockTransformer(
 
             return when {
                 shouldEnable -> if (host.scope.isCommented()) uncommentScope() else host.scope.reprocess()
-                else -> if (!host.scope.isCommented()) commentScope() else host.scope
+                else -> if (!host.scope.isCommented()) commentScope(cond.opener) else host.scope
             }
         }
 
@@ -97,10 +99,10 @@ internal data class BlockTransformer(
                 .scope.reprocess()
         }
 
-        private fun commentScope(): List<BlockToken> {
+        private fun commentScope(opener: ScopeToken?): List<BlockToken> {
             val start = host.scope.ifEmpty { return emptyList() }.start()
             val blocks = host.scope.reprocess()
-            val text = params.commenter.comment(blocks.join())
+            val text = params.commenter.comment(blocks.join(), opener is ClosedScope)
             val source = params.adapter.create(text.toStream(), runtime.sink)
             return LayoutParser
                 .parse(CommonTokenStream(source), runtime.sink, StitcherTokenFactory.Inline(start))
