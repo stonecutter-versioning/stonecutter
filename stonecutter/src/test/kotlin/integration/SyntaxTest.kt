@@ -22,7 +22,7 @@ class SyntaxTest : GradleTest, FreeSpec({
     }
 
     /**
-     * Checks whatever the fuck the issue is..
+     * Checks `^/ * /` (without spaces) being incorrectly matched.
      * @see <a href="https://codeberg.org/stonecutter/stonecutter/issues/22">#22</a>
      */
     "nested line scope" - { _, build ->
