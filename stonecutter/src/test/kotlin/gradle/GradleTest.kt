@@ -1,7 +1,6 @@
 package gradle
 
 import dev.kikugie.commons.takeAs
-import gradle.build
 import io.kotest.core.TestConfiguration
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.core.spec.style.scopes.FreeSpecContainerScope

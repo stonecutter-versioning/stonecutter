@@ -132,6 +132,7 @@ internal data class BlockTransformer(
     }
 }
 
+// TODO: Merge `ContentBlock`s at this stage
 private class UncommentingTokenSource(val runtime: RuntimeState, val params: TransformParameters, val blocks: List<BlockToken>) : TokenSource {
     private var factory: TokenFactory<*> = CommonTokenFactory()
     private val source: Pair<TokenSource?, CharStream?> = Pair(this, runtime.input)

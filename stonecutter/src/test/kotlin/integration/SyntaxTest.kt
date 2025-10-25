@@ -22,6 +22,7 @@ class SyntaxTest : GradleTest, FreeSpec({
     }
 
     "nested line scope" - { _, build ->
+        build.run("stonecutterSwitchTo1")
         build.run(":1:run").output shouldNotContain "Hello world!"
         build.run(":2:run").output shouldNotContain "Hello world!"
         build.run(":3:run").output shouldContain "Hello world!"
@@ -103,7 +104,7 @@ class SyntaxTest : GradleTest, FreeSpec({
         build.run("stonecutterSwitchTo1.20.1")
         build.run("stonecutterSwitchTo1.21.6")
         val file = directory read "src/main/java/WaterFogEnvironmentMixin.java"
-        val line = file.lines()[33]
+        val line = file.lines()[28]
         line shouldBe "    /*@SuppressWarnings(\"rawtypes\")*/"
     }
 

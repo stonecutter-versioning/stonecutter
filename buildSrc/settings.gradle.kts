@@ -1,9 +1,9 @@
 dependencyResolutionManagement {
     repositories {
-        maven("https://central.sonatype.com/repository/maven-snapshots/")
+        maven("https://maven.kikugie.dev/releases")
     }
 
     versionCatalogs {
-        create("common") { from("dev.kikugie:stonecutter-versions:1-SNAPSHOT") }
+        create("common") { from("dev.kikugie:stonecutter-versions:1.4.1") }
     }
 }
