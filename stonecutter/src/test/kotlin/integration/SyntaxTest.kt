@@ -21,6 +21,10 @@ class SyntaxTest : GradleTest, FreeSpec({
         err.buildResult.output shouldContain "Example.java:3:19"
     }
 
+    /**
+     * Checks whatever the fuck the issue is..
+     * @see <a href="https://codeberg.org/stonecutter/stonecutter/issues/22">#22</a>
+     */
     "nested line scope" - { _, build ->
         build.run("stonecutterSwitchTo1")
         build.run(":1:run").output shouldNotContain "Hello world!"
@@ -142,6 +146,17 @@ class SyntaxTest : GradleTest, FreeSpec({
      */
     "word scope unmatched" - { _, build ->
         build.fail(":2:run").buildResult.output shouldContain "Failed to find the matching string"
+    }
+
+    /**
+     * Single-line scopes should exclude the newline.
+     * @see <a href="https://codeberg.org/stonecutter/stonecutter/issues/21">#21</a>
+     */
+    "line handling" - { directory, build ->
+        build.run("stonecutterSwitchTo2")
+        val file = directory read "src/main/java/Example.java"
+        val line = file.lines()[3]
+        line shouldBe "        /*System.out.println(\"Hello world!\");*/"
     }
 
     // TODO: Check fragmented content merging
