@@ -18,7 +18,6 @@ repositories {
 
 dependencies {
     antlr(libs.antlr)
-    compileOnly(common.misc.mordant)
     implementation(libs.ahocorasick)
     implementation(common.misc.semver)
     implementation(common.misc.commons)
