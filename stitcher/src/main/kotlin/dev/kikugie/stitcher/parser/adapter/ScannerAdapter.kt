@@ -5,9 +5,7 @@ import dev.kikugie.commons.collections.first
 import dev.kikugie.commons.collections.plusAssign
 import dev.kikugie.commons.then
 import dev.kikugie.stitcher.issue.ProblemSink
-import dev.kikugie.stitcher.issue.at
-import dev.kikugie.stitcher.issue.problem
-import dev.kikugie.stitcher.issue.report
+import dev.kikugie.stitcher.issue.ProblemSource
 import dev.kikugie.stitcher.parser.layout.LayoutParser
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.Lexer
@@ -45,12 +43,11 @@ import java.io.Serializable
  * Registered scanners should provide the respective adapter with a [Factory] implementation.
  */
 public class ScannerAdapter(
-    // TODO: Return to private when the API is done
-    internal val scanner: Lexer,
+    private val scanner: Lexer,
     private val openers: IntArray,
     private val closers: IntArray,
     private val sink: ProblemSink
-) : TokenSource by scanner {
+) : TokenSource by scanner, ProblemSource by sink {
 
     /**
      * Encapsulates the creation of a [ScannerAdapter] configured with
@@ -89,8 +86,7 @@ public class ScannerAdapter(
                 in closers -> handleCommentEnd(next)
                 else -> reportUnknown(next)
             }
-        }
-        while (!consumed)
+        } while (!consumed)
     }
 
     private fun handleEOF(token: Token): Boolean {
@@ -103,11 +99,11 @@ public class ScannerAdapter(
     }
 
     private fun handleCommentStart(token: Token): Boolean {
-        if (checkpoint.comment) (sink.at(token) report problem {
+        if (checkpoint.comment) {
             val cls = scanner.grammarFileName ?: "unknown scanner"
-            "Invalid comment opener in $cls; a closer must only follow openers"
-        })
-            .also { return false }
+            at(token) report "Invalid comment opener in $cls; a closer must only follow openers"
+            return false
+        }
         if (checkpoint.cursor < token.startIndex)
             push(LayoutParser.CONTENT, token.startIndex)
         push(LayoutParser.COMMENT_OPEN, token)
@@ -116,24 +112,23 @@ public class ScannerAdapter(
     }
 
     private fun handleCommentEnd(token: Token): Boolean {
-        if (!checkpoint.comment) (sink.at(token) report problem {
+        if (!checkpoint.comment) {
             val cls = scanner.grammarFileName ?: "unknown scanner"
-            "Unmatched comment closer in $cls; closers outside a comment mode must be skipped"
-        })
-            .also { return false }
+            at(token) report "Unmatched comment closer in $cls; closers outside a comment mode must be skipped"
+            return false
+        }
         push(LayoutParser.COMMENT_BODY, token.startIndex)
         push(LayoutParser.COMMENT_CLOSE, token)
         checkpoint = Checkpoint(token, false)
         return true
     }
 
-    private fun reportUnknown(token: Token): Boolean =
-        (sink.at(token) report problem {
-            val cls = scanner.grammarFileName ?: "unknown scanner"
-            val name = scanner.vocabulary.getDisplayName(token.type)
-            "Unknown token type $name in $cls; emitted token types must be registered as openers or closers"
-        })
-            .let { false }
+    private fun reportUnknown(token: Token): Boolean {
+        val cls = scanner.grammarFileName ?: "unknown scanner"
+        val name = scanner.vocabulary.getDisplayName(token.type)
+        at(token) report "Unknown token type $name in $cls; emitted token types must be registered as openers or closers"
+        return false
+    }
 
     private fun push(type: Int, endExclusive: Int): Unit =
         push(type, checkpoint.cursor, endExclusive)

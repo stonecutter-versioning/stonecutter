@@ -1,75 +1,71 @@
-@file:Suppress("NOTHING_TO_INLINE")
-
 package dev.kikugie.stitcher.issue
 
 import dev.kikugie.stitcher.data.StitcherToken
 import dev.kikugie.stitcher.util.AntlrToken
 import dev.kikugie.stitcher.util.FileLineIndex
 import java.nio.file.Path
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.InvocationKind
-import kotlin.contracts.contract
 
-@DslMarker @Retention(AnnotationRetention.BINARY)
-internal annotation class ProblemsDsl
+@DslMarker @Retention(AnnotationRetention.SOURCE)
+private annotation class ProblemsDsl
+
+@ProblemsDsl
+public data class ProblemTemplate(val message: String, val cause: Throwable?)
+
+@ProblemsDsl @JvmInline
+public value class ProblemLocation private constructor(private val packed: Long) {
+    public constructor(line: Int, column: Int) : this((line.toLong() and 0xFFFFFFFFL) or (column.toLong() shl 32))
+
+    public val line: Int get() = (packed and 0xFFFFFFFFL).toInt()
+    public val column: Int get() = (packed ushr 32 and 0xFFFFFFFFL).toInt()
+
+    public val isUndefined: Boolean get() = packed == -1L
+}
 
 @ProblemsDsl
 internal class BailException : RuntimeException()
 
 @ProblemsDsl
-public data class ProblemTemplate(val message: String, val cause: Throwable?)
+internal interface ProblemSource {
+    val index: FileLineIndex
 
-@ProblemsDsl
-public data class ProblemLocation(val line: Int, val column: Int, val sink: ProblemSink)
+    fun at(index: Int): ProblemLocation = this.index.locate(index)
+    fun at(token: StitcherToken): ProblemLocation = at(token.range.first)
+    fun at(token: AntlrToken): ProblemLocation = ProblemLocation(token.line, token.charPositionInLine + 1)
+    fun at(line: Int, column: Int): ProblemLocation = ProblemLocation(line, column)
 
-public fun interface ProblemReporter {
-    public operator fun invoke(file: Path, location: ProblemLocation, template: ProblemTemplate)
+    fun problem(message: String, cause: Throwable? = null): ProblemTemplate = ProblemTemplate(message, cause)
+    fun accept(location: ProblemLocation, template: ProblemTemplate)
+
+    infix fun ProblemLocation.report(message: String): Unit = this@ProblemSource.accept(this, ProblemTemplate(message, null))
+    infix fun ProblemLocation.bail(message: String): Nothing = this@ProblemSource.accept(this, ProblemTemplate(message, null)).let { throw BailException() }
+
+    infix fun ProblemLocation.report(template: ProblemTemplate): Unit = this@ProblemSource.accept(this, template)
+    infix fun ProblemLocation.bail(template: ProblemTemplate): Nothing = this@ProblemSource.accept(this, template).let { throw BailException() }
+
+    companion object {
+        inline fun problem(cause: Throwable? = null, message: () -> String): ProblemTemplate = ProblemTemplate(message(), cause)
+    }
 }
 
 @ProblemsDsl
-public class ProblemSink internal constructor(internal val file: Path, internal val index: FileLineIndex, private val reporter: ProblemReporter) {
-    public var isSuccess: Boolean = true
+public class ProblemSink internal constructor(
+    internal val file: Path,
+    override val index: FileLineIndex,
+    internal val consumer: ProblemConsumer
+) : ProblemSource, IProblemSink {
+    internal var hasFailed: Boolean = false
         private set
 
-    internal fun report(location: ProblemLocation, template: ProblemTemplate) {
-        isSuccess = false; reporter.invoke(file, location, template)
+    override fun accept(location: ProblemLocation, template: ProblemTemplate) {
+        hasFailed = true
+        consumer.accept(file, location.line, location.column, template.message, template.cause)
     }
 }
 
 @ProblemsDsl
-internal inline fun problem(cause: Throwable? = null, message: () -> String): ProblemTemplate =
-    ProblemTemplate(message(), cause)
+public sealed interface IProblemSink
 
 @ProblemsDsl
-internal inline fun ProblemSink.at(pos: Int): ProblemLocation =
-    index.locate(pos, this)
-
-@ProblemsDsl
-internal inline fun ProblemSink.at(line: Int, column: Int): ProblemLocation =
-    ProblemLocation(line, column, this)
-
-@ProblemsDsl
-internal inline fun ProblemSink.at(token: AntlrToken): ProblemLocation =
-    at(token.line, token.charPositionInLine + 1)
-
-@ProblemsDsl
-internal inline fun ProblemSink.at(token: StitcherToken): ProblemLocation =
-    index.locate(token.range.first, this)
-
-@ProblemsDsl
-internal inline infix fun ProblemLocation.report(template: ProblemTemplate): Unit =
-    sink.report(this, template)
-
-@ProblemsDsl
-internal inline infix fun ProblemLocation.bail(template: ProblemTemplate): Nothing =
-    report(template).let { throw BailException() }
-
-@OptIn(ExperimentalContracts::class)
-@ProblemsDsl
-internal inline fun <T : Any> ProblemSink.verifyNotNull(value: T?, builder: ProblemSink.() -> Nothing): T {
-    contract {
-        returns() implies (value != null)
-        callsInPlace(builder, InvocationKind.AT_MOST_ONCE)
-    }
-    return value ?: builder()
+public fun interface ProblemConsumer {
+    public fun accept(file: Path, line: Int, column: Int, message: String, cause: Throwable?)
 }

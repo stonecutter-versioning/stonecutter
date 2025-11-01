@@ -2,7 +2,6 @@ package dev.kikugie.stitcher.util
 
 import dev.kikugie.stitcher.antlr.Lines
 import dev.kikugie.stitcher.issue.ProblemLocation
-import dev.kikugie.stitcher.issue.ProblemSink
 import org.antlr.v4.runtime.CharStream
 
 private fun buildLineIndexes(stream: CharStream): IntArray = try {
@@ -15,18 +14,18 @@ private fun buildLineIndexes(stream: CharStream): IntArray = try {
     stream.seek(0)
 }
 
-internal class FileLineIndex private constructor(private val lines: IntArray) {
-    constructor(stream: CharStream) : this (buildLineIndexes(stream))
+public class FileLineIndex private constructor(private val lines: IntArray) {
+    public constructor(stream: CharStream) : this (buildLineIndexes(stream))
     private val max: Int = lines.lastIndex
 
-    fun locate(index: Int, sink: ProblemSink): ProblemLocation {
+    public fun locate(index: Int): ProblemLocation {
         val lineIndex = findLineIndex(index)
         val charOffset = index - lines[lineIndex]
-        return ProblemLocation(lineIndex + 1, charOffset + 1, sink)
+        return ProblemLocation(lineIndex + 1, charOffset + 1)
     }
 
     @Throws(IndexOutOfBoundsException::class)
-    fun indexOf(line: Int, offset: Int): Int =
+    public fun indexOf(line: Int, offset: Int): Int =
         lines[line - 1] + offset
 
     private tailrec fun findLineIndex(index: Int, min: Int = 0, max: Int = this.max): Int {

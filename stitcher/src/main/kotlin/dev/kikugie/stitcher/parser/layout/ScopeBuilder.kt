@@ -9,9 +9,6 @@ import dev.kikugie.stitcher.data.custom.ClosedScope
 import dev.kikugie.stitcher.data.custom.WordScope
 import dev.kikugie.stitcher.data.leaf.LeafType
 import dev.kikugie.stitcher.issue.ProblemSink
-import dev.kikugie.stitcher.issue.at
-import dev.kikugie.stitcher.issue.problem
-import dev.kikugie.stitcher.issue.report
 import dev.kikugie.stitcher.parser.StitcherTokenFactory
 import dev.kikugie.stitcher.util.AntlrToken
 import dev.kikugie.stitcher.util.WHITESPACES
@@ -58,11 +55,13 @@ internal sealed interface ScopeBuilder {
             else -> AcceptResult.Rejected
         }
 
-        internal fun checkUnfinished(problems: ProblemSink, closed: Boolean): Unit = when (val opener = definition.opener) {
-            is ClosedScope -> if (closed) Unit else problems
-                .at(definition.opener!!) report problem { "Unclosed scope" }
-            is WordScope -> if (opener.literal == null || satisfied) Unit else problems
-                .at(opener.literal) report problem { "Failed to find the matching string" }
+        internal fun checkUnfinished(sink: ProblemSink, closed: Boolean): Unit = when (val opener = definition.opener) {
+            is ClosedScope -> if (closed) Unit else with(sink) {
+                at(definition.opener!!) report problem("Unclosed scope")
+            }
+            is WordScope -> if (opener.literal == null || satisfied) Unit else with(sink) {
+                at(opener.literal) report problem("Failed to find the matching string")
+            }
             null -> Unit
         }
 

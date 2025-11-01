@@ -6,8 +6,8 @@ import dev.kikugie.stitcher.data.composite.*
 import dev.kikugie.stitcher.issue.*
 import dev.kikugie.stitcher.parser.StitcherTokenFactory
 
-internal class ExpressionBuilder(val problems: ProblemSink, val factory: StitcherTokenFactory) : StitcherBaseVisitor<ExpressionToken>() {
-    private val predicateBuilder: PredicateBuilder by lazy { PredicateBuilder(problems, factory) }
+internal class ExpressionBuilder(sink: ProblemSink, val factory: StitcherTokenFactory) : StitcherBaseVisitor<ExpressionToken>(), ProblemSource by sink {
+    private val predicateBuilder: PredicateBuilder by lazy { PredicateBuilder(sink, factory) }
 
     override fun visitBinaryExpression(ctx: StitcherParser.BinaryExpressionContext): BinaryExpression {
         val operator = factory.fromAntlrToken(ctx.op)
@@ -47,7 +47,7 @@ internal class ExpressionBuilder(val problems: ProblemSink, val factory: Stitche
     } catch (_: BailException) {
         null
     } catch (e: Throwable) {
-        problems.at(ctx.start) report problem(e) { "Failed to parse version predicate" }
+        at(ctx.start) report problem("Failed to parse version predicate", e)
         null
     }
 }

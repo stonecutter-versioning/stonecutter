@@ -7,9 +7,7 @@ import dev.kikugie.stitcher.data.composite.DefinitionToken.Type.CLOSER
 import dev.kikugie.stitcher.data.composite.DefinitionToken.Type.INDEPENDENT
 import dev.kikugie.stitcher.data.composite.RootBlock
 import dev.kikugie.stitcher.issue.ProblemSink
-import dev.kikugie.stitcher.issue.at
-import dev.kikugie.stitcher.issue.problem
-import dev.kikugie.stitcher.issue.report
+import dev.kikugie.stitcher.issue.ProblemSource
 import dev.kikugie.stitcher.parser.StitcherTokenFactory
 import dev.kikugie.stitcher.parser.component.DefinitionBuilder
 import dev.kikugie.stitcher.parser.layout.ScopeBuilder.ContainerScopeBuilder
@@ -21,9 +19,10 @@ import org.antlr.v4.runtime.Vocabulary
 import org.antlr.v4.runtime.VocabularyImpl
 import java.util.*
 
-internal class LayoutParser private constructor(val stream: TokenStream, val problems: ProblemSink, val factory: StitcherTokenFactory) {
+// TODO: Check scopes in comments and add a split.
+internal class LayoutParser private constructor(val stream: TokenStream, val sink: ProblemSink, val factory: StitcherTokenFactory) : ProblemSource by sink {
     private val stack: Deque<ContainerScopeBuilder> = ArrayDeque<ContainerScopeBuilder>(4).apply { push(ScopeBuilder.Root()) }
-    private val visitor: StitcherVisitor<Pair<AntlrToken, DefinitionToken>> = DefinitionBuilder.paired(problems, factory)
+    private val visitor: StitcherVisitor<Pair<AntlrToken, DefinitionToken>> = DefinitionBuilder.paired(sink, factory)
 
     private val builder: ContainerScopeBuilder get() = stack.peekLast()
     private val antlrSource: TokenSource get() = stream.tokenSource
@@ -32,19 +31,19 @@ internal class LayoutParser private constructor(val stream: TokenStream, val pro
         while (stream.LA(1) != EOF) when (stream.LA(1)) {
             CONTENT -> handleContent(stream.advance())
             COMMENT_OPEN -> handleComment(stream.advance(), stream.advance(), stream.advance())
-            else -> problems.at(stream.advance()) report problem { "Unexpected token" }
+            else -> at(stream.advance()) report "Unexpected token"
         }
 
         while (stack.isNotEmpty()) when (val it = stack.removeLast()) {
             is ScopeBuilder.Root -> return it.build(factory)
-            is ScopeBuilder.Code -> it.checkUnfinished(problems, false)
+            is ScopeBuilder.Code -> it.checkUnfinished(sink, false)
         }
         error("Root scope was consumed")
     }
 
     private fun closeBlock() {
         stack.removeLast().takeAsOrNull<ScopeBuilder.Code>()
-            ?.checkUnfinished(problems, true)
+            ?.checkUnfinished(sink, true)
     }
 
     private fun acceptBlock(block: ScopeBuilder): Unit = when (val result = builder.tryAccept(block, antlrSource)) {
@@ -82,7 +81,7 @@ internal class LayoutParser private constructor(val stream: TokenStream, val pro
             acceptBlock(code)
             // '}' shouldn't be possible in the root scope
             if (code.definition.closer != null)
-                problems.at(code.definition.closer!!) report problem { "Unmatched scope closer" }
+                at(code.definition.closer!!) report "Unmatched scope closer"
 
             // Add invalid extensions to the scope stack anyway
             if (code.type != CLOSER)
@@ -94,11 +93,11 @@ internal class LayoutParser private constructor(val stream: TokenStream, val pro
             val parent = builder as ScopeBuilder.Code
             // Check for situations like `? if condition { ... $}`, in which case we close it anyway
             if (code.type.isExtension && parent.kind != code.kind)
-                problems.at(code.marker) report problem { "Extension closes unmatched ${parent.kind.scopeType()} scope" }
+                at(code.marker) report "Extension closes unmatched ${parent.kind.scopeType()} scope"
 
             // Occurs if we have an unfinished open scope, in which case we close it prematurely
             if (code.type.isExtension && parent.type.isOpen)
-                problems.at(code.marker) report problem { "Extension closes an open scope" }
+                at(code.marker) report "Extension closes an open scope"
 
             if (code.type.isExtension) closeBlock()
             acceptBlock(code)
@@ -117,7 +116,7 @@ internal class LayoutParser private constructor(val stream: TokenStream, val pro
             else -> return null
         }
 
-        val listener = InlineErrorListener(problems, FileLineIndex(input), body.startIndex)
+        val listener = InlineErrorListener(sink, FileLineIndex(input), body.startIndex)
         val lexer = StitcherLexer(input).errorListener(listener)
         val parser = StitcherParser(InlineTokenStream(lexer, body.startIndex)).errorListener(listener)
         return parser.definition().accept(visitor)
