@@ -43,7 +43,7 @@ import java.io.Serializable
  * Registered scanners should provide the respective adapter with a [Factory] implementation.
  */
 public class ScannerAdapter(
-    private val scanner: Lexer,
+    internal val scanner: Lexer,
     private val openers: IntArray,
     private val closers: IntArray,
     private val sink: ProblemSink

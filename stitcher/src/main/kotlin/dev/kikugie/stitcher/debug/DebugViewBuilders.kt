@@ -37,9 +37,9 @@ private object BlockDebugViewBuilder : BlockToken.Visitor<DebugView> {
 
     override fun visitComment(comment: CommentBlock): DebugView = debugView("CommentBlock") {
         properties = buildMap {
-            this["opener"] = comment.opener.text
+            this["opener"] = comment.opener?.text ?: "null"
             this["body"] = comment.body.text.remap(Char::sanitizeMultiLine)
-            this["closer"] = comment.closer.text.remap(Char::sanitizeSingleLine)
+            this["closer"] = comment.closer?.text?.remap(Char::sanitizeSingleLine) ?: "null"
         }
     }
 

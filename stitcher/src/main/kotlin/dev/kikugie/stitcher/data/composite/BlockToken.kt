@@ -18,7 +18,7 @@ internal data class ContentBlock(val leaf: LeafToken, private val blank: Boolean
     fun isBlank(): Boolean = blank
 }
 
-internal data class CommentBlock(val opener: LeafToken, val body: LeafToken, val closer: LeafToken) : BlockToken {
+internal data class CommentBlock(val opener: LeafToken?, val body: LeafToken, val closer: LeafToken?) : BlockToken {
     override fun <T> accept(visitor: BlockToken.Visitor<T>): T = visitor.visitComment(this)
 }
 

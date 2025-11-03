@@ -1,6 +1,5 @@
 package dev.kikugie.stitcher.parser.layout
 
-import dev.kikugie.commons.takeAsOrNull
 import dev.kikugie.stitcher.antlr.*
 import dev.kikugie.stitcher.data.composite.DefinitionToken
 import dev.kikugie.stitcher.data.composite.DefinitionToken.Type.CLOSER
@@ -10,22 +9,20 @@ import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.issue.ProblemSource
 import dev.kikugie.stitcher.parser.StitcherTokenFactory
 import dev.kikugie.stitcher.parser.component.DefinitionBuilder
-import dev.kikugie.stitcher.parser.layout.ScopeBuilder.ContainerScopeBuilder
 import dev.kikugie.stitcher.util.*
 import org.antlr.v4.runtime.Token.EOF
-import org.antlr.v4.runtime.TokenSource
 import org.antlr.v4.runtime.TokenStream
 import org.antlr.v4.runtime.Vocabulary
 import org.antlr.v4.runtime.VocabularyImpl
 import java.util.*
 
-// TODO: Check scopes in comments and add a split.
 internal class LayoutParser private constructor(val stream: TokenStream, val sink: ProblemSink, val factory: StitcherTokenFactory) : ProblemSource by sink {
-    private val stack: Deque<ContainerScopeBuilder> = ArrayDeque<ContainerScopeBuilder>(4).apply { push(ScopeBuilder.Root()) }
+    private val stack: Deque<BlockBuilder.Scoped> = ArrayDeque(4)
     private val visitor: StitcherVisitor<Pair<AntlrToken, DefinitionToken>> = DefinitionBuilder.paired(sink, factory)
 
-    private val builder: ContainerScopeBuilder get() = stack.peekLast()
-    private val antlrSource: TokenSource get() = stream.tokenSource
+    init {
+        stack += RootBuilder(factory)
+    }
 
     private fun collect(): RootBlock {
         while (stream.LA(1) != EOF) when (stream.LA(1)) {
@@ -35,62 +32,52 @@ internal class LayoutParser private constructor(val stream: TokenStream, val sin
         }
 
         while (stack.isNotEmpty()) when (val it = stack.removeLast()) {
-            is ScopeBuilder.Root -> return it.build(factory)
-            is ScopeBuilder.Code -> it.checkUnfinished(sink, false)
+            is RootBuilder -> return it.build()
+            is CodeBuilder -> it.finalize(sink, true)
         }
         error("Root scope was consumed")
     }
 
-    private fun closeBlock() {
-        stack.removeLast().takeAsOrNull<ScopeBuilder.Code>()
-            ?.checkUnfinished(sink, true)
-    }
-
-    private fun acceptBlock(block: ScopeBuilder): Unit = when (val result = builder.tryAccept(block, antlrSource)) {
-        AcceptResult.ConsumedOpen -> Unit
-        AcceptResult.ConsumedFinal -> closeBlock()
-        AcceptResult.Rejected -> {
-            check(stack.size > 1) { "Failed to accept content block" }
-            closeBlock()
+    private fun acceptBlock(block: BlockBuilder): Unit = when (val result = stack.peekLast().accept(block)) {
+        BlockAcceptResult.ConsumedOpen -> Unit
+        BlockAcceptResult.ConsumedFinal ->
+            stack.removeLast().finalize(sink, false)
+        BlockAcceptResult.Rejected -> {
+            stack.removeLast().finalize(sink, false)
             acceptBlock(block)
         }
-
-        is AcceptResult.ConsumedPartial -> {
-            closeBlock()
-            acceptBlock(result.remaining)
+        is BlockAcceptResult.ConsumedPartial -> {
+            stack.removeLast().finalize(sink, false)
+            acceptBlock(result.remainder)
         }
     }
 
     private fun handleContent(token: AntlrToken) {
-        if (token.text.isNotEmpty()) acceptBlock(ScopeBuilder.Content(token))
+        if (token.text.isNotEmpty()) acceptBlock(ContentBuilder(factory, token))
     }
 
     private fun handleComment(opener: AntlrToken, body: AntlrToken, closer: AntlrToken) {
-        val comment = ScopeBuilder.Comment(opener, body, closer)
-        val (marker, definition) = tryParseComment(body)
+        val comment = CommentBuilder(factory, opener, body, closer)
+        val (marker, definition) = parseCommentBody(body)
             ?: return acceptBlock(comment)
 
-        val code = ScopeBuilder.Code(comment, marker, definition)
-        handleCode(code)
+        val code = CodeBuilder(factory, comment, marker, definition)
+        if (code.type == INDEPENDENT) acceptBlock(code)
+        else handleCode(code)
     }
 
-    private fun handleCode(code: ScopeBuilder.Code): Unit = when {
-        code.type == INDEPENDENT -> acceptBlock(code)
-
-        builder is ScopeBuilder.Root -> {
+    private fun handleCode(code: CodeBuilder) = when (val parent = stack.peekLast()) {
+        is RootBuilder -> {
             acceptBlock(code)
             // '}' shouldn't be possible in the root scope
             if (code.definition.closer != null)
                 at(code.definition.closer!!) report "Unmatched scope closer"
 
             // Add invalid extensions to the scope stack anyway
-            if (code.type != CLOSER)
-                stack.addLast(code)
-            Unit
+            if (code.type != CLOSER) stack.addLast(code) else Unit
         }
 
-        else -> {
-            val parent = builder as ScopeBuilder.Code
+        is CodeBuilder -> {
             // Check for situations like `? if condition { ... $}`, in which case we close it anyway
             if (code.type.isExtension && parent.kind != code.kind)
                 at(code.marker) report "Extension closes unmatched ${parent.kind.scopeType()} scope"
@@ -99,14 +86,14 @@ internal class LayoutParser private constructor(val stream: TokenStream, val sin
             if (code.type.isExtension && parent.type.isOpen)
                 at(code.marker) report "Extension closes an open scope"
 
-            if (code.type.isExtension) closeBlock()
+            if (code.type.isExtension)
+                stack.removeLast().finalize(sink, false)
             acceptBlock(code)
-            if (!code.type.isEmpty) stack.addLast(code)
-            Unit
+            if (!code.type.isEmpty) stack.addLast(code) else Unit
         }
     }
 
-    private fun tryParseComment(body: AntlrToken): Pair<AntlrToken, DefinitionToken>? {
+    private fun parseCommentBody(body: AntlrToken): Pair<AntlrToken, DefinitionToken>? {
         if (body.stopIndex < body.startIndex)
             return null // Empty comment body
 
@@ -116,7 +103,7 @@ internal class LayoutParser private constructor(val stream: TokenStream, val sin
             else -> return null
         }
 
-        val listener = InlineErrorListener(sink, FileLineIndex(input), body.startIndex)
+        val listener = InlineErrorListener(sink, body.startIndex, FileLineIndex(input))
         val lexer = StitcherLexer(input).errorListener(listener)
         val parser = StitcherParser(InlineTokenStream(lexer, body.startIndex)).errorListener(listener)
         return parser.definition().accept(visitor)

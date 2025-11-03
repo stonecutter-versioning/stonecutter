@@ -34,7 +34,7 @@ internal interface ProblemSource {
     fun at(line: Int, column: Int): ProblemLocation = ProblemLocation(line, column)
 
     fun problem(message: String, cause: Throwable? = null): ProblemTemplate = ProblemTemplate(message, cause)
-    fun accept(location: ProblemLocation, template: ProblemTemplate)
+    fun accept(location: ProblemLocation, problem: ProblemTemplate)
 
     infix fun ProblemLocation.report(message: String): Unit = this@ProblemSource.accept(this, ProblemTemplate(message, null))
     infix fun ProblemLocation.bail(message: String): Nothing = this@ProblemSource.accept(this, ProblemTemplate(message, null)).let { throw BailException() }
@@ -56,9 +56,9 @@ public class ProblemSink internal constructor(
     internal var hasFailed: Boolean = false
         private set
 
-    override fun accept(location: ProblemLocation, template: ProblemTemplate) {
+    override fun accept(location: ProblemLocation, problem: ProblemTemplate) {
         hasFailed = true
-        consumer.accept(file, location.line, location.column, template.message, template.cause)
+        consumer.accept(file, location, problem)
     }
 }
 
@@ -67,5 +67,5 @@ public sealed interface IProblemSink
 
 @ProblemsDsl
 public fun interface ProblemConsumer {
-    public fun accept(file: Path, line: Int, column: Int, message: String, cause: Throwable?)
+    public fun accept(file: Path, location: ProblemLocation, problem: ProblemTemplate)
 }

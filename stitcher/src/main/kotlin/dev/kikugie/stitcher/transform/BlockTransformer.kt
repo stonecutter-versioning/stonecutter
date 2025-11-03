@@ -21,10 +21,7 @@ import dev.kikugie.stitcher.data.eval.BlockStopVisitor.stop
 import dev.kikugie.stitcher.data.eval.BlockToStringVisitor.Companion.join
 import dev.kikugie.stitcher.data.leaf.LeafToken
 import dev.kikugie.stitcher.data.leaf.LeafType
-import dev.kikugie.stitcher.issue.at
-import dev.kikugie.stitcher.issue.problem
-import dev.kikugie.stitcher.issue.report
-import dev.kikugie.stitcher.issue.verifyNotNull
+import dev.kikugie.stitcher.issue.ProblemSource
 import dev.kikugie.stitcher.parser.StitcherTokenFactory
 import dev.kikugie.stitcher.parser.layout.LayoutParser
 import dev.kikugie.stitcher.transform.impl.ExpressionEvaluator
@@ -37,7 +34,7 @@ internal data class BlockTransformer(
     val runtime: RuntimeState,
     val params: TransformParameters,
     val factory: StitcherTokenFactory
-) : BlockToken.Visitor<BlockToken> {
+) : BlockToken.Visitor<BlockToken>, ProblemSource by runtime.sink {
     private var visitedEnabledBlock: Boolean = false
 
     override fun visitRoot(root: RootBlock) = root.copy(scope = root.scope.map { it.accept(this) })
@@ -55,7 +52,7 @@ internal data class BlockTransformer(
 
     private inner class ScopeTransformer(val host: CodeBlock) : DefinitionToken.Visitor<List<BlockToken>> {
         override fun visitReplacement(repl: ReplacementDefinition): List<BlockToken> {
-            if (runtime.replacer != null) runtime.sink.at(host.marker) report problem { "Late replacement token" }
+            if (runtime.replacer != null) at(host.marker) report "Late replacement token"
             else runtime.includeReplacement(repl.identifier.text)
             return emptyList()
         }
@@ -64,17 +61,19 @@ internal data class BlockTransformer(
             runtime.initializeReplacements(params.replacements)
             if (swap !is SwapDefinition.Opener) return emptyList()
 
-            val identifier = swap.identifier.text
-            val template = runtime.sink.verifyNotNull(params.swaps[identifier]?.processTemplate(swap.arguments)) {
-                at(swap.identifier) report problem { "Unregistered swap identifier '${identifier}'" }
+            val template = params.swaps[swap.identifier.text]
+            if (template == null) {
+                at(swap.identifier) report "Unregistered swap identifier '${swap.identifier.text}'"
                 return host.scope
             }
 
-            val text = params.replacer.replace(host.scope.join(), template)
-            val token = factory.create(LeafType(LayoutParser.CONTENT), host.scope.range(), text)
-            return ContentBlock(token, text.isBlank()).let(::listOf)
+            val replacement = processTemplate(template, swap.arguments)
+            val content = params.replacer.replace(host.scope.join(), replacement)
+            val token = factory.create(LeafType(LayoutParser.CONTENT), host.scope.range(), content)
+            return ContentBlock(token, content.isBlank()).let(::listOf)
         }
 
+        // TODO: Handle partial blocks
         override fun visitCondition(cond: ConditionDefinition): List<BlockToken> {
             runtime.initializeReplacements(params.replacements)
             if (cond !is ConditionDefinition.Extension) visitedEnabledBlock = false
@@ -108,29 +107,6 @@ internal data class BlockTransformer(
                 .parse(CommonTokenStream(source), runtime.sink, StitcherTokenFactory.Inline(start))
                 .scope
         }
-
-        private fun String.processTemplate(tokens: List<LeafToken>): String {
-            if (tokens.isEmpty()) return this
-
-            // Collect insertable values
-            val arguments = tokens.map {
-                if (it.type.value == StitcherLexer.QUOTED) it.text.substring(1, it.range.last) else it.text
-            }
-            // Collect insertable tokens
-            val places = SwapTemplate(this.toStream()).run {
-                generateSequence { nextToken().takeUnless(Token::isEOF) }.map(Token::range).toList()
-            }
-
-            // FIXME: Not specifying arguments leaves the string the same instead of erroring
-            val builder = StringBuilder(this)
-            for (range in places.asReversed()) {
-                // FIXME: Use checked conversion and list getter
-                val index = substring(range).substring(1).toInt()
-                val value = arguments[index - 1]
-                builder.replace(range.first, range.last + 1, value)
-            }
-            return builder.toString()
-        }
     }
 }
 
@@ -159,9 +135,9 @@ private class UncommentingTokenSource(val runtime: RuntimeState, val params: Tra
         }
         is CommentBlock -> {
             val start = block.body.range.first
-            val content = params.uncommenter.uncomment(block.body.text, block.opener.text, block.closer.text).toStream()
+            val content = params.uncommenter.uncomment(block.body.text, block.opener?.text.orEmpty(), block.closer?.text.orEmpty()).toStream()
             val lexer = params.adapter.create(content, runtime.sink).apply {
-                scanner.errorListener(InlineErrorListener(runtime.sink, FileLineIndex(content), start))
+                scanner.errorListener(InlineErrorListener(runtime.sink, start, FileLineIndex(content)))
             }
             yieldAll(InlineTokenStream(lexer, start).asSequence())
         }
@@ -171,3 +147,25 @@ private class UncommentingTokenSource(val runtime: RuntimeState, val params: Tra
 
 private fun List<BlockToken>.isCommented(): Boolean =
     all { it is CommentBlock || (it is ContentBlock && it.isBlank()) }
+
+private fun processTemplate(replacement: String, tokens: List<LeafToken>): String {
+    if (tokens.isEmpty()) return replacement
+
+    // Collect insertable values
+    val arguments = tokens.map {
+        if (it.type.value == StitcherLexer.QUOTED) it.text.substring(1, it.range.last) else it.text
+    }
+    // Collect insertable tokens
+    val places = SwapTemplate(replacement.toStream()).run {
+        generateSequence { nextToken().takeUnless(Token::isEOF) }.map(Token::range).toList()
+    }
+
+    return buildString(replacement) {
+        for (range in places.asReversed()) {
+            // FIXME: Use checked conversion and list getter
+            val index = substring(range).substring(1).toInt()
+            val value = arguments[index - 1]
+            replace(range.first, range.last + 1, value)
+        }
+    }
+}

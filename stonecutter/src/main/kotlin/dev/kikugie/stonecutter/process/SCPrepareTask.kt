@@ -1,8 +1,7 @@
 package dev.kikugie.stonecutter.process
 
-import dev.kikugie.commons.collections.present
+import dev.kikugie.stitcher.issue.ProblemConsumer
 import dev.kikugie.stitcher.issue.ProblemLocation
-import dev.kikugie.stitcher.issue.ProblemReporter
 import dev.kikugie.stitcher.issue.ProblemTemplate
 import dev.kikugie.stitcher.process
 import dev.kikugie.stonecutter.StonecutterInternalAPI
@@ -40,20 +39,20 @@ import kotlin.io.path.*
 private val REPORTED_PROBLEMS = Collections.synchronizedSet(mutableSetOf<String>())
 
 // TODO: eventually this should use Gradle problems API, but it's still incubating
-private val GRADLE_PROBLEM_REPORTER = ProblemReporter { file, location, template ->
-    val problem = format(file, location, template)
+private val GRADLE_PROBLEM_REPORTER = ProblemConsumer { file: Path, location: ProblemLocation, problem: ProblemTemplate ->
+    val problem = format(file, location, problem)
     if (REPORTED_PROBLEMS.add(problem)) System.err.println(problem)
 }
 
-private fun format(file: Path, location: ProblemLocation, template: ProblemTemplate): String = buildString {
+private fun format(file: Path, location: ProblemLocation, problem: ProblemTemplate): String = buildString {
     append("e: file://${file.absolutePathString()}")
     if (location.line >= 1) {
         append(":${location.line}")
         if (location.column >= 1)
             append(":${location.column}")
     }
-    append(" ${template.message}")
-    if (template.cause != null) append("\nCaused by: ${template.cause?.stackTraceToString()}")
+    append(" ${problem.message}")
+    if (problem.cause != null) append("\nCaused by: ${problem.cause?.stackTraceToString()}")
 }
 
 @OptIn(StonecutterInternalAPI::class, StonecutterExperimentalFilesAPI::class)

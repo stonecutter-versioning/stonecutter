@@ -1,14 +1,12 @@
 package dev.kikugie.stitcher.transform
 
 import dev.kikugie.stitcher.issue.ProblemSink
-import dev.kikugie.stitcher.issue.at
-import dev.kikugie.stitcher.issue.problem
-import dev.kikugie.stitcher.issue.report
+import dev.kikugie.stitcher.issue.ProblemSource
 import dev.kikugie.stitcher.transform.replacement.Replacement
 import dev.kikugie.stitcher.transform.replacement.ReplacementExecutor
 import org.antlr.v4.runtime.CharStream
 
-internal data class RuntimeState(val input: CharStream, val sink: ProblemSink) {
+internal data class RuntimeState(val input: CharStream, val sink: ProblemSink) : ProblemSource by sink {
     private var replacementExecutor: ReplacementExecutor<*>? = null
     private val enabledReplacementIds: MutableSet<String> = mutableSetOf()
 
@@ -31,8 +29,7 @@ internal data class RuntimeState(val input: CharStream, val sink: ProblemSink) {
             delegate.replace(builder)
         } catch (e: Exception) {
             failed = true
-            sink.at(-1, -1) report if (e.message != null) problem { e.message!! }
-            else problem(e) { "Failed to perform replacements" }
+            at(-1, -1) report problem("Failed to perform replacements", e)
         }
     }
 }

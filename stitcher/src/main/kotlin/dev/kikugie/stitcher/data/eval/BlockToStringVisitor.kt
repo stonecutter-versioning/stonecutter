@@ -14,9 +14,9 @@ internal class BlockToStringVisitor private constructor(private val builder: Str
     override fun visitContent(content: ContentBlock) = builder.accept(content.leaf)
 
     override fun visitComment(comment: CommentBlock) = with(builder) {
-        accept(comment.opener)
+        comment.opener?.let(::accept)
         accept(comment.body)
-        accept(comment.closer)
+        comment.closer?.let(::accept)
     }
 
     override fun visitCode(code: CodeBlock) {

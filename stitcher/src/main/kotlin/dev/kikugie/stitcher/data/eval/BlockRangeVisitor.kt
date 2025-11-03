@@ -8,8 +8,8 @@ import dev.kikugie.stitcher.data.composite.RootBlock
 
 internal object BlockStartVisitor : BlockToken.Visitor<Int> {
     override fun visitContent(content: ContentBlock): Int = content.leaf.range.first
-    override fun visitComment(comment: CommentBlock): Int = comment.opener.range.first
-    override fun visitCode(code: CodeBlock): Int = code.host.opener.range.first
+    override fun visitComment(comment: CommentBlock): Int = comment.opener?.range?.first ?: comment.body.range.first
+    override fun visitCode(code: CodeBlock): Int = code.host.opener?.range?.first ?: code.host.body.range.first
     override fun visitRoot(root: RootBlock): Int = root.scope.first().accept(this)
 
     fun BlockToken.start(): Int = accept(BlockStartVisitor)
@@ -18,8 +18,8 @@ internal object BlockStartVisitor : BlockToken.Visitor<Int> {
 
 internal object BlockStopVisitor : BlockToken.Visitor<Int> {
     override fun visitContent(content: ContentBlock): Int = content.leaf.range.last
-    override fun visitComment(comment: CommentBlock): Int = comment.closer.range.last
-    override fun visitCode(code: CodeBlock): Int = code.scope.lastOrNull()?.accept(this) ?: code.host.closer.range.last
+    override fun visitComment(comment: CommentBlock): Int = comment.closer?.range?.last ?: comment.body.range.last
+    override fun visitCode(code: CodeBlock): Int = code.scope.lastOrNull()?.accept(this) ?: code.host.closer?.range?.last ?: code.host.body.range.last
     override fun visitRoot(root: RootBlock): Int = root.scope.last().accept(this)
 
     fun BlockToken.stop(): Int = accept(BlockStopVisitor)
