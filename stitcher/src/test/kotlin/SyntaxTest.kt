@@ -1,0 +1,237 @@
+import io.kotest.assertions.shouldFail
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.style.FreeSpec
+import io.kotest.matchers.shouldBe
+import org.intellij.lang.annotations.Language
+import util.process
+
+class SyntaxTest : FreeSpec({
+    "basic scopes" - {
+        "disable closed" {
+            @Language("JAVA") val content = """
+                //? if false {
+                int one = 1;
+                int two = 2;
+                //?}
+            """.trimIndent()
+            @Language("JAVA") val expected = """
+                //? if false {
+                /*int one = 1;
+                int two = 2;
+                *///?}
+            """.trimIndent()
+            process(content) shouldBe expected
+        }
+
+        "enable closed" {
+            @Language("JAVA") val content = """
+                //? if true {
+                //int one = 1;
+                //int two = 2;
+                //?}
+            """.trimIndent()
+            @Language("JAVA") val expected = """
+                //? if true {
+                int one = 1;
+                int two = 2;
+                //?}
+            """.trimIndent()
+            process(content) shouldBe expected
+        }
+
+        "disable line" {
+            @Language("JAVA") val content = """
+                //? if false
+                int one = 1;
+                int two = 2;
+            """.trimIndent()
+            @Language("JAVA") val expected = """
+                //? if false
+                /*int one = 1;*/
+                int two = 2;
+            """.trimIndent()
+            process(content) shouldBe expected
+        }
+
+        "enable line" {
+            @Language("JAVA") val content = """
+                //? if true
+                //int one = 1;
+                int two = 2;
+            """.trimIndent()
+            @Language("JAVA") val expected = """
+                //? if true
+                int one = 1;
+                int two = 2;
+            """.trimIndent()
+            process(content) shouldBe expected
+        }
+
+        "disable word" {
+            @Language("JAVA") val content = """
+                //? if false >>
+                int one = 1;
+                int two = 2;
+            """.trimIndent()
+            @Language("JAVA") val expected = """
+                //? if false >>
+                /*int*/ one = 1;
+                int two = 2;
+            """.trimIndent()
+            process(content) shouldBe expected
+        }
+
+        "enable word" {
+            @Language("JAVA") val content = """
+                //? if true >>
+                /*int*/ one = 1;
+                int two = 2;
+            """.trimIndent()
+            @Language("JAVA") val expected = """
+                //? if true >>
+                int one = 1;
+                int two = 2;
+            """.trimIndent()
+            process(content) shouldBe expected
+        }
+    }
+
+    "extended word" - {
+        "disable non-capturing" {
+            @Language("JAVA") val content = """
+                //? if false >> '='
+                int one = 1;
+                int two = 2;
+            """.trimIndent()
+            @Language("JAVA") val expected = """
+                //? if false >> '='
+                /*int one*/ = 1;
+                int two = 2;
+            """.trimIndent()
+            process(content) shouldBe expected
+        }
+
+        "enable non-capturing" {
+            @Language("JAVA") val content = """
+                //? if true >> '='
+                /*int one */= 1;
+                int two = 2;
+            """.trimIndent()
+            @Language("JAVA") val expected = """
+                //? if true >> '='
+                int one = 1;
+                int two = 2;
+            """.trimIndent()
+            process(content) shouldBe expected
+        }
+
+        "disable capturing" {
+            @Language("JAVA") val content = """
+                //? if false >>+ '='
+                int one = 1;
+                int two = 2;
+            """.trimIndent()
+            @Language("JAVA") val expected = """
+                //? if false >>+ '='
+                /*int one =*/ 1;
+                int two = 2;
+            """.trimIndent()
+            process(content) shouldBe expected
+        }
+
+        "enable capturing" {
+            @Language("JAVA") val content = """
+                //? if true >>+ '='
+                /*int one =*/ 1;
+                int two = 2;
+            """.trimIndent()
+            @Language("JAVA") val expected = """
+                //? if true >>+ '='
+                int one = 1;
+                int two = 2;
+            """.trimIndent()
+            process(content) shouldBe expected
+        }
+
+        "fail for not found" {
+            @Language("JAVA") val content = """
+                //? if false >> '+'
+                int one = 1;
+                int two = 2;
+            """.trimIndent()
+            shouldThrow<IllegalStateException> { process(content) }
+        }
+
+        "search comments" {
+            @Language("JAVA") val content = """
+                //? if true >>+ '2;'
+                //int one = 1;
+                //int two = 2;
+                // unused
+            """.trimIndent()
+            @Language("JAVA") val expected = """
+                //? if true >>+ '2;'
+                int one = 1;
+                int two = 2;
+                // unused
+            """.trimIndent()
+            process(content) shouldBe expected
+        }
+
+        "split comment" {
+            @Language("JAVA") val content = """
+                //? if true >>+ 'two ='
+                //int one = 1;
+                //int two = 2;
+                // unused
+            """.trimIndent()
+            @Language("JAVA") val expected = """
+                //? if true >>+ 'two ='
+                int one = 1;
+                int two =/* 2;*/
+                // unused
+            """.trimIndent()
+            process(content) shouldBe expected
+        }
+    }
+
+    "extended line" - {
+        "search comments" {
+            @Language("JAVA") val content = """
+                //? if true
+                /*    */
+                //
+                //int one = 1;
+                //int two = 2;
+            """.trimIndent()
+            @Language("JAVA") val expected = """
+                //? if true
+                    
+                
+                int one = 1;
+                //int two = 2;
+            """.trimIndent()
+            process(content) shouldBe expected
+        }
+
+        "split comment" {
+            @Language("JAVA") val content = """
+                //? if true
+                /*
+                
+                int one = 1;
+                int two = 2;
+                *///unused
+            """.trimIndent()
+            @Language("JAVA") val expected = """
+                //? if true
+                
+                
+                int one = 1;
+                /*int two = 2;
+                *///unused
+            """.trimIndent()
+            process(content) shouldBe expected
+        }
+    }
+})

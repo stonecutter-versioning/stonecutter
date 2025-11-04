@@ -23,8 +23,8 @@ import java.util.*
  * - Blocks: content, comments, and code comments;
  * - Scopes: collections of blocks.
  *
- * The parser with a scope stack, pushing incoming blocks to it.
- *
+ * The parser works with a scope stack, pushing incoming blocks to it.
+ * The scope may accept the block or reject it, which means it should be closed.
  */
 internal class LayoutParser private constructor(val stream: TokenStream, val problems: ProblemSource, val factory: StitcherTokenFactory) : ProblemSource by problems {
     private val stack: Deque<BlockBuilder.Scoped> = ArrayDeque(4)
@@ -83,7 +83,7 @@ internal class LayoutParser private constructor(val stream: TokenStream, val pro
         else handleCode(code)
     }
 
-    private fun handleCode(code: CodeBuilder) = when (val parent = stack.peekLast()) {
+    private fun handleCode(code: CodeBuilder): Unit = when (val parent = stack.peekLast()) {
         is RootBuilder -> {
             acceptBlock(code)
             // '}' shouldn't be possible in the root scope

@@ -25,6 +25,9 @@ dependencies {
     implementation(common.kotlin.reflect)
     implementation(common.kotlin.serialization)
 
+    testImplementation(common.kotest.runner)
+    testImplementation(common.kotest.assertions)
+
     dokkaHtmlPlugin(libs.dokka.versioning)
 }
 
@@ -84,6 +87,12 @@ tasks {
 
     compileTestKotlin {
         dependsOn(generateTestGrammarSource)
+
+        compilerOptions {
+            languageVersion = KotlinVersion.KOTLIN_2_2
+            apiVersion = KotlinVersion.KOTLIN_2_2
+            freeCompilerArgs.add("-Xcontext-parameters")
+        }
     }
 }
 
