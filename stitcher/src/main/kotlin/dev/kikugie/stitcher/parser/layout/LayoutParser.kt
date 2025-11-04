@@ -5,8 +5,8 @@ import dev.kikugie.stitcher.data.composite.DefinitionToken
 import dev.kikugie.stitcher.data.composite.DefinitionToken.Type.CLOSER
 import dev.kikugie.stitcher.data.composite.DefinitionToken.Type.INDEPENDENT
 import dev.kikugie.stitcher.data.composite.RootBlock
-import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.issue.ProblemSource
+import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.parser.StitcherTokenFactory
 import dev.kikugie.stitcher.parser.component.DefinitionBuilder
 import dev.kikugie.stitcher.util.*
@@ -16,9 +16,19 @@ import org.antlr.v4.runtime.Vocabulary
 import org.antlr.v4.runtime.VocabularyImpl
 import java.util.*
 
-internal class LayoutParser private constructor(val stream: TokenStream, val sink: ProblemSink, val factory: StitcherTokenFactory) : ProblemSource by sink {
+/**
+ * Parses a [stream] of comment tokens into an AST.
+ *
+ * The tree consists of two component types:
+ * - Blocks: content, comments, and code comments;
+ * - Scopes: collections of blocks.
+ *
+ * The parser with a scope stack, pushing incoming blocks to it.
+ *
+ */
+internal class LayoutParser private constructor(val stream: TokenStream, val problems: ProblemSource, val factory: StitcherTokenFactory) : ProblemSource by problems {
     private val stack: Deque<BlockBuilder.Scoped> = ArrayDeque(4)
-    private val visitor: StitcherVisitor<Pair<AntlrToken, DefinitionToken>> = DefinitionBuilder.paired(sink, factory)
+    private val visitor: StitcherVisitor<Pair<AntlrToken, DefinitionToken>> = DefinitionBuilder.paired(problems, factory)
 
     init {
         stack += RootBuilder(factory)
@@ -33,21 +43,28 @@ internal class LayoutParser private constructor(val stream: TokenStream, val sin
 
         while (stack.isNotEmpty()) when (val it = stack.removeLast()) {
             is RootBuilder -> return it.build()
-            is CodeBuilder -> it.finalize(sink, true)
+            is CodeBuilder -> it.finalize(problems, true)
         }
         error("Root scope was consumed")
     }
 
     private fun acceptBlock(block: BlockBuilder): Unit = when (val result = stack.peekLast().accept(block)) {
+        // Can accept more - do nothing
         BlockAcceptResult.ConsumedOpen -> Unit
+
+        // Pop the current scope
         BlockAcceptResult.ConsumedFinal ->
-            stack.removeLast().finalize(sink, false)
+            stack.removeLast().finalize(problems, false)
+
+        // Pop the current scope and push to the next
         BlockAcceptResult.Rejected -> {
-            stack.removeLast().finalize(sink, false)
+            stack.removeLast().finalize(problems, false)
             acceptBlock(block)
         }
+
+        // Pop the current scope and push remainder to the next
         is BlockAcceptResult.ConsumedPartial -> {
-            stack.removeLast().finalize(sink, false)
+            stack.removeLast().finalize(problems, false)
             acceptBlock(result.remainder)
         }
     }
@@ -87,7 +104,7 @@ internal class LayoutParser private constructor(val stream: TokenStream, val sin
                 at(code.marker) report "Extension closes an open scope"
 
             if (code.type.isExtension)
-                stack.removeLast().finalize(sink, false)
+                stack.removeLast().finalize(problems, false)
             acceptBlock(code)
             if (!code.type.isEmpty) stack.addLast(code) else Unit
         }
@@ -103,7 +120,7 @@ internal class LayoutParser private constructor(val stream: TokenStream, val sin
             else -> return null
         }
 
-        val listener = InlineErrorListener(sink, body.startIndex, FileLineIndex(input))
+        val listener = InlineErrorListener(problems, FileLineIndex(input), body.startIndex)
         val lexer = StitcherLexer(input).errorListener(listener)
         val parser = StitcherParser(InlineTokenStream(lexer, body.startIndex)).errorListener(listener)
         return parser.definition().accept(visitor)
@@ -118,7 +135,7 @@ internal class LayoutParser private constructor(val stream: TokenStream, val sin
         @JvmField val TOKEN_NAMES: Array<String?> = arrayOf(null, "CONTENT", "COMMENT_OPEN", "COMMENT_BODY", "COMMENT_CLOSE")
         @JvmField val VOCABULARY: Vocabulary = VocabularyImpl(emptyArray(), TOKEN_NAMES)
 
-        fun parse(stream: TokenStream, problems: ProblemSink, factory: StitcherTokenFactory): RootBlock =
+        fun parse(stream: TokenStream, problems: ProblemSource, factory: StitcherTokenFactory): RootBlock =
             LayoutParser(stream, problems, factory).collect()
     }
 }

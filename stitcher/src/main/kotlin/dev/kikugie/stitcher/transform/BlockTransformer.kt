@@ -22,6 +22,7 @@ import dev.kikugie.stitcher.data.eval.BlockToStringVisitor.Companion.join
 import dev.kikugie.stitcher.data.leaf.LeafToken
 import dev.kikugie.stitcher.data.leaf.LeafType
 import dev.kikugie.stitcher.issue.ProblemSource
+import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.parser.StitcherTokenFactory
 import dev.kikugie.stitcher.parser.layout.LayoutParser
 import dev.kikugie.stitcher.transform.impl.ExpressionEvaluator
@@ -34,7 +35,7 @@ internal data class BlockTransformer(
     val runtime: RuntimeState,
     val params: TransformParameters,
     val factory: StitcherTokenFactory
-) : BlockToken.Visitor<BlockToken>, ProblemSource by runtime.sink {
+) : BlockToken.Visitor<BlockToken>, ProblemSource by runtime.problems {
     private var visitedEnabledBlock: Boolean = false
 
     override fun visitRoot(root: RootBlock) = root.copy(scope = root.scope.map { it.accept(this) })
@@ -94,7 +95,7 @@ internal data class BlockTransformer(
             val start = host.scope.ifEmpty { return emptyList() }.start()
             val source = UncommentingTokenSource(runtime, params, host.scope)
             return LayoutParser
-                .parse(CommonTokenStream(source), runtime.sink, StitcherTokenFactory.Inline(start))
+                .parse(CommonTokenStream(source), runtime.problems, StitcherTokenFactory.Inline(start))
                 .scope.reprocess()
         }
 
@@ -102,9 +103,9 @@ internal data class BlockTransformer(
             val start = host.scope.ifEmpty { return emptyList() }.start()
             val blocks = host.scope.reprocess()
             val text = params.commenter.comment(blocks.join(), opener is ClosedScope)
-            val source = params.adapter.create(text.toStream(), runtime.sink)
+            val source = params.adapter.create(text.toStream(), runtime.problems)
             return LayoutParser
-                .parse(CommonTokenStream(source), runtime.sink, StitcherTokenFactory.Inline(start))
+                .parse(CommonTokenStream(source), runtime.problems, StitcherTokenFactory.Inline(start))
                 .scope
         }
     }
@@ -136,8 +137,8 @@ private class UncommentingTokenSource(val runtime: RuntimeState, val params: Tra
         is CommentBlock -> {
             val start = block.body.range.first
             val content = params.uncommenter.uncomment(block.body.text, block.opener?.text.orEmpty(), block.closer?.text.orEmpty()).toStream()
-            val lexer = params.adapter.create(content, runtime.sink).apply {
-                scanner.errorListener(InlineErrorListener(runtime.sink, start, FileLineIndex(content)))
+            val lexer = params.adapter.create(content, runtime.problems).apply {
+                scanner.errorListener(InlineErrorListener(runtime.problems, FileLineIndex(content), start))
             }
             yieldAll(InlineTokenStream(lexer, start).asSequence())
         }

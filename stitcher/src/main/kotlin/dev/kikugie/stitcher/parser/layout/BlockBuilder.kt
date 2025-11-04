@@ -6,9 +6,11 @@ import dev.kikugie.commons.text.countWhile
 import dev.kikugie.commons.then
 import dev.kikugie.stitcher.data.composite.*
 import dev.kikugie.stitcher.data.composite.DefinitionToken.Type.*
+import dev.kikugie.stitcher.data.custom.ClosedScope
 import dev.kikugie.stitcher.data.custom.WordScope
 import dev.kikugie.stitcher.data.leaf.LeafType
 import dev.kikugie.stitcher.issue.ProblemSource
+import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.parser.StitcherTokenFactory
 import dev.kikugie.stitcher.util.AntlrToken
 import dev.kikugie.stitcher.util.WHITESPACES
@@ -16,6 +18,9 @@ import dev.kikugie.stitcher.util.hasLineBreak
 import dev.kikugie.stitcher.util.merge
 import dev.kikugie.stitcher.util.range
 
+/**
+ * Mutable version of [BlockToken] used in [LayoutParser].
+ */
 internal sealed interface BlockBuilder {
     val factory: StitcherTokenFactory
 
@@ -23,7 +28,7 @@ internal sealed interface BlockBuilder {
 
     sealed interface Scoped : BlockBuilder {
         fun accept(block: BlockBuilder): BlockAcceptResult
-        fun finalize(source: ProblemSource, isEOF: Boolean): Unit = Unit
+        fun finalize(problems: ProblemSource, isEOF: Boolean): Unit = Unit
     }
 }
 
@@ -90,6 +95,18 @@ internal class CodeBuilder(
         else -> BlockAcceptResult.Rejected
     }
 
+    override fun finalize(problems: ProblemSource, isEOF: Boolean) = when (val opener = definition.opener) {
+        is ClosedScope if isEOF -> with(problems) {
+            at(opener) report "Unclosed scope"
+        }
+
+        is WordScope if opener.literal != null && !satisfied -> with(problems) {
+            at(opener.literal) report "Failed to find the matching string"
+        }
+
+        else -> Unit
+    }
+
     private fun acceptLine(block: BlockBuilder): BlockAcceptResult = when (block) {
         is ContentBuilder -> consumeContentSplit(block, consumeLine(block.value))
         is CommentBuilder -> consumeCommentSplit(block, consumeLine(block.value)).let {
@@ -97,6 +114,7 @@ internal class CodeBuilder(
             else if (!block.value.isNotBlank() || !block.closer?.text.orEmpty().hasLineBreak()) it
             else BlockAcceptResult.ConsumedFinal
         }
+
         else -> consumeFinal(block)
     }
 
@@ -105,13 +123,15 @@ internal class CodeBuilder(
         else acceptWord(block, definition.opener as WordScope)
 
     private fun acceptWord(block: BlockBuilder, scope: WordScope): BlockAcceptResult = when (block) {
-        is ContentBuilder -> consumeContentSplit(block,
-            if (scope.literal == null) consumeWordDefault(block.value) 
+        is ContentBuilder -> consumeContentSplit(
+            block,
+            if (scope.literal == null) consumeWordDefault(block.value)
             else consumeWordCustom(block.value, scope.expectedStr, scope.isCapturing)
         )
 
-        is CommentBuilder -> consumeCommentSplit(block,
-            if (scope.literal == null) consumeWordDefault(block.value) 
+        is CommentBuilder -> consumeCommentSplit(
+            block,
+            if (scope.literal == null) consumeWordDefault(block.value)
             else consumeWordCustom(block.value, scope.expectedStr, scope.isCapturing)
         )
 

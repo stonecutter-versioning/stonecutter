@@ -1,12 +1,11 @@
 package dev.kikugie.stitcher.transform
 
-import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.issue.ProblemSource
 import dev.kikugie.stitcher.transform.replacement.Replacement
 import dev.kikugie.stitcher.transform.replacement.ReplacementExecutor
 import org.antlr.v4.runtime.CharStream
 
-internal data class RuntimeState(val input: CharStream, val sink: ProblemSink) : ProblemSource by sink {
+internal data class RuntimeState(val input: CharStream, val problems: ProblemSource) : ProblemSource by problems {
     private var replacementExecutor: ReplacementExecutor<*>? = null
     private val enabledReplacementIds: MutableSet<String> = mutableSetOf()
 

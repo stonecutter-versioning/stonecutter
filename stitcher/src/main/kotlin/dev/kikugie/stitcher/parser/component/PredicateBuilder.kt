@@ -1,17 +1,13 @@
 package dev.kikugie.stitcher.parser.component
 
 import dev.kikugie.commons.takeAsOrNull
-import dev.kikugie.semver.data.SemanticVersion
-import dev.kikugie.semver.data.StringVersion
-import dev.kikugie.semver.data.Version
-import dev.kikugie.semver.data.VersionOperator
-import dev.kikugie.semver.data.VersionPredicate
+import dev.kikugie.semver.data.*
 import dev.kikugie.stitcher.antlr.StitcherBaseVisitor
 import dev.kikugie.stitcher.antlr.StitcherLexer
 import dev.kikugie.stitcher.antlr.StitcherParser
 import dev.kikugie.stitcher.data.custom.PredicateToken
-import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.issue.ProblemSource
+import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.parser.StitcherTokenFactory
 import dev.kikugie.stitcher.util.range
 import org.antlr.v4.runtime.ParserRuleContext
@@ -21,7 +17,8 @@ import org.antlr.v4.runtime.tree.TerminalNode
 private val ParseTree?.type: Int
     get() = this?.takeAsOrNull<TerminalNode>()?.symbol?.type ?: -1
 
-internal class PredicateBuilder(sink: ProblemSink, val factory: StitcherTokenFactory) : StitcherBaseVisitor<PredicateToken>(), ProblemSource by sink {
+internal class PredicateBuilder(problems: ProblemSource, val factory: StitcherTokenFactory)
+    : StitcherBaseVisitor<PredicateToken>(), ProblemSource by problems {
     override fun visitSemanticPredicate(ctx: StitcherParser.SemanticPredicateContext): PredicateToken {
         val comparator = ctx.semanticComparator()?.resolve()
             ?: ctx.stringComparator()?.resolve()

@@ -3,11 +3,13 @@ package dev.kikugie.stitcher.parser.component
 import dev.kikugie.stitcher.antlr.StitcherBaseVisitor
 import dev.kikugie.stitcher.antlr.StitcherParser
 import dev.kikugie.stitcher.data.composite.*
+import dev.kikugie.stitcher.data.custom.PredicateToken
 import dev.kikugie.stitcher.issue.*
 import dev.kikugie.stitcher.parser.StitcherTokenFactory
 
-internal class ExpressionBuilder(sink: ProblemSink, val factory: StitcherTokenFactory) : StitcherBaseVisitor<ExpressionToken>(), ProblemSource by sink {
-    private val predicateBuilder: PredicateBuilder by lazy { PredicateBuilder(sink, factory) }
+internal class ExpressionBuilder(problems: ProblemSource, val factory: StitcherTokenFactory)
+    : StitcherBaseVisitor<ExpressionToken>(), ProblemSource by problems {
+    private val predicateBuilder: PredicateBuilder by lazy { PredicateBuilder(problems, factory) }
 
     override fun visitBinaryExpression(ctx: StitcherParser.BinaryExpressionContext): BinaryExpression {
         val operator = factory.fromAntlrToken(ctx.op)
@@ -32,7 +34,7 @@ internal class ExpressionBuilder(sink: ProblemSink, val factory: StitcherTokenFa
     override fun visitAssignmentExpression(ctx: StitcherParser.AssignmentExpressionContext): AssignmentExpression {
         val identifier = ctx.IDENTIFIER()?.let(factory::fromAntlrNode)
         val operator = ctx.OP_ASSIGN()?.let(factory::fromAntlrNode)
-        val predicates = ctx.versionPredicate().mapNotNull(::resolve)
+        val predicates = ctx.versionPredicate().mapNotNull(::parsePredicate)
         return if (identifier == null || operator == null) AssignmentExpression(predicates)
         else AssignmentExpression(identifier, operator, predicates)
     }
@@ -42,12 +44,8 @@ internal class ExpressionBuilder(sink: ProblemSink, val factory: StitcherTokenFa
         return ConstantExpression(identifier)
     }
 
-    private fun resolve(ctx: StitcherParser.VersionPredicateContext) = try {
-        ctx.accept(predicateBuilder)
-    } catch (_: BailException) {
-        null
-    } catch (e: Throwable) {
-        at(ctx.start) report problem("Failed to parse version predicate", e)
-        null
-    }
+    private fun parsePredicate(ctx: StitcherParser.VersionPredicateContext): PredicateToken? = tryRun(
+        { ctx.accept(predicateBuilder) },
+        { at(ctx.start) report problem("Failed to parse version predicate", it) }
+    )
 }

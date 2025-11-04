@@ -3,20 +3,19 @@ package dev.kikugie.stitcher.parser.component
 import dev.kikugie.stitcher.antlr.StitcherBaseVisitor
 import dev.kikugie.stitcher.antlr.StitcherParser
 import dev.kikugie.stitcher.antlr.StitcherVisitor
-import dev.kikugie.stitcher.data.composite.ConditionDefinition
-import dev.kikugie.stitcher.data.composite.DefinitionToken
-import dev.kikugie.stitcher.data.composite.ReplacementDefinition
-import dev.kikugie.stitcher.data.composite.SwapDefinition
+import dev.kikugie.stitcher.data.composite.*
 import dev.kikugie.stitcher.data.custom.ClosedScope
 import dev.kikugie.stitcher.data.custom.ScopeToken
 import dev.kikugie.stitcher.data.custom.WordScope
-import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.issue.ProblemSource
+import dev.kikugie.stitcher.issue.at
+import dev.kikugie.stitcher.issue.throwRun
 import dev.kikugie.stitcher.parser.StitcherTokenFactory
 import dev.kikugie.stitcher.util.AntlrToken
 
-internal class DefinitionBuilder(sink: ProblemSink, val factory: StitcherTokenFactory) : StitcherBaseVisitor<DefinitionToken>(), ProblemSource by sink {
-    private val expressionBuilder: ExpressionBuilder by lazy { ExpressionBuilder(sink, factory) }
+internal class DefinitionBuilder(problems: ProblemSource, val factory: StitcherTokenFactory)
+    : StitcherBaseVisitor<DefinitionToken>(), ProblemSource by problems {
+    private val expressionBuilder: ExpressionBuilder by lazy { ExpressionBuilder(problems, factory) }
     private val scopeTokenBuilder: ScopeTokenBuilder by lazy { ScopeTokenBuilder(factory) }
 
     override fun visitReplacement(ctx: StitcherParser.ReplacementContext): DefinitionToken =
@@ -37,9 +36,7 @@ internal class DefinitionBuilder(sink: ProblemSink, val factory: StitcherTokenFa
 
     override fun visitOpenerCondition(ctx: StitcherParser.OpenerConditionContext): DefinitionToken {
         val sugar = listOfNotNull(ctx.SUGAR_IF()?.let(factory::fromAntlrNode))
-        val expression = ctx.conditionExpression().runCatching { accept(expressionBuilder) }.getOrElse {
-            at(ctx.start) bail problem("Failed to parse expression", it)
-        }
+        val expression = ctx.conditionExpression().let(::parseExpression)
         val opener = ctx.scopeOpener()?.accept(scopeTokenBuilder)
         return ConditionDefinition.Opener(sugar, expression, opener)
     }
@@ -48,9 +45,7 @@ internal class DefinitionBuilder(sink: ProblemSink, val factory: StitcherTokenFa
         val closer = ctx.SCOPE_CLOSE().let(factory::fromAntlrNode)
         val sugar = listOfNotNull(ctx.SUGAR_ELIF(), ctx.SUGAR_ELSE(), ctx.SUGAR_IF())
             .map(factory::fromAntlrNode)
-        val expression = ctx.conditionExpression()?.runCatching { accept(expressionBuilder) }?.getOrElse {
-            at(ctx.start) bail problem("Failed to parse expression", it)
-        }
+        val expression = ctx.conditionExpression()?.let(::parseExpression)
         val opener = ctx.scopeOpener()?.accept(scopeTokenBuilder)
         return ConditionDefinition.Extension(closer, sugar, expression, opener)
     }
@@ -60,8 +55,13 @@ internal class DefinitionBuilder(sink: ProblemSink, val factory: StitcherTokenFa
         return ConditionDefinition.Closer(closer)
     }
 
-    private class PairDefinitionBuilder(sink: ProblemSink, factory: StitcherTokenFactory) : StitcherBaseVisitor<Pair<AntlrToken, DefinitionToken>>() {
-        private val definitionBuilder = DefinitionBuilder(sink, factory)
+    private fun parseExpression(ctx: StitcherParser.ConditionExpressionContext): ExpressionToken = throwRun(
+        { ctx.accept(expressionBuilder) },
+        { at(ctx.start) bail problem("Failed to parse expression", it) }
+    )
+
+    private class PairDefinitionBuilder(problems: ProblemSource, factory: StitcherTokenFactory) : StitcherBaseVisitor<Pair<AntlrToken, DefinitionToken>>() {
+        private val definitionBuilder = DefinitionBuilder(problems, factory)
 
         override fun visitConditionDefinition(ctx: StitcherParser.ConditionDefinitionContext): Pair<AntlrToken, DefinitionToken> =
             ctx.COND_MARK().symbol to ctx.condition().accept(definitionBuilder)
@@ -86,7 +86,7 @@ internal class DefinitionBuilder(sink: ProblemSink, val factory: StitcherTokenFa
     }
 
     companion object {
-        fun paired(sink: ProblemSink, factory: StitcherTokenFactory): StitcherVisitor<Pair<AntlrToken, DefinitionToken>> =
-            PairDefinitionBuilder(sink, factory)
+        fun paired(problems: ProblemSource, factory: StitcherTokenFactory): StitcherVisitor<Pair<AntlrToken, DefinitionToken>> =
+            PairDefinitionBuilder(problems, factory)
     }
 }

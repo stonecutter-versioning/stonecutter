@@ -4,8 +4,8 @@ import dev.kikugie.commons.collections.FixedQueue
 import dev.kikugie.commons.collections.first
 import dev.kikugie.commons.collections.plusAssign
 import dev.kikugie.commons.then
-import dev.kikugie.stitcher.issue.ProblemSink
 import dev.kikugie.stitcher.issue.ProblemSource
+import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.parser.layout.LayoutParser
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.Lexer
@@ -46,15 +46,15 @@ public class ScannerAdapter(
     internal val scanner: Lexer,
     private val openers: IntArray,
     private val closers: IntArray,
-    private val sink: ProblemSink
-) : TokenSource by scanner, ProblemSource by sink {
+    private val problems: ProblemSource
+) : TokenSource by scanner, ProblemSource by problems {
 
     /**
      * Encapsulates the creation of a [ScannerAdapter] configured with
      * a specific [Lexer], [openers][ScannerAdapter.openers] and [closers][ScannerAdapter.closers].
      */
     public fun interface Factory : Serializable {
-        public fun create(input: CharStream, sink: ProblemSink): ScannerAdapter
+        public fun create(input: CharStream, problems: ProblemSource): ScannerAdapter
     }
 
     private data class Checkpoint(val cursor: Int, val line: Int, val offset: Int, val comment: Boolean)
