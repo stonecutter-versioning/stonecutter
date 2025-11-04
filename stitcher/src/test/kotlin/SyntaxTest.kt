@@ -1,4 +1,3 @@
-import io.kotest.assertions.shouldFail
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
@@ -230,6 +229,81 @@ class SyntaxTest : FreeSpec({
                 int one = 1;
                 /*int two = 2;
                 *///unused
+            """.trimIndent()
+            process(content) shouldBe expected
+        }
+    }
+
+    // TODO: https://codeberg.org/stonecutter/stonecutter/issues/23
+    "read-only comments".config(enabled = false) - {
+        "html javadoc" {
+            @Language("JAVA") val content = """
+                //? if false {
+                /**
+                 * Example documentation.
+                 */
+                public void example();
+                //?}
+            """.trimIndent()
+            @Language("JAVA") val expected = """
+                //? if false {
+                /**
+                 * Example documentation.
+                 */
+                /*public void example();
+                *///?}
+            """.trimIndent()
+            process(content) shouldBe expected
+        }
+
+        "markdown javadoc" {
+            @Language("JAVA") val content = """
+                //? if false {
+                /// Example documentation.
+                public void example();
+                //?}
+            """.trimIndent()
+            @Language("JAVA") val expected = """
+                //? if false {
+                /// Example documentation.
+                /*public void example();
+                *///?}
+            """.trimIndent()
+            process(content) shouldBe expected
+        }
+
+        "scope extension" {
+            @Language("JAVA") val content = """
+                //? if false
+                /// Example documentation.
+                public void example();
+            """.trimIndent()
+            @Language("JAVA") val expected = """
+                //? if false
+                /// Example documentation.
+                /*public void example();*/
+            """.trimIndent()
+            process(content) shouldBe expected
+        }
+
+        "long scopes" {
+            @Language("JAVA") val content = """
+                //? if false {
+                /// Example documentation #1.
+                public void example1();
+                
+                /// Example documentation #2.
+                public void example2();
+                //?}
+            """.trimIndent()
+            @Language("JAVA") val expected = """
+                //? if false {
+                /// Example documentation #1.
+                /*public void example1();
+                
+                *//// Example documentation #2.
+                /*public void example2();
+                *///?}
             """.trimIndent()
             process(content) shouldBe expected
         }
