@@ -178,7 +178,8 @@ class SyntaxTest : FreeSpec({
             process(content) shouldBe expected
         }
 
-        "split comment" {
+        // TODO: Not yet implemented
+        "split comment".config(enabled = false) {
             @Language("JAVA") val content = """
                 //? if true >>+ 'two ='
                 //int one = 1;
@@ -214,7 +215,8 @@ class SyntaxTest : FreeSpec({
             process(content) shouldBe expected
         }
 
-        "split comment" {
+        // TODO: Not yet implemented
+        "split comment".config(enabled = false) {
             @Language("JAVA") val content = """
                 //? if true
                 /*

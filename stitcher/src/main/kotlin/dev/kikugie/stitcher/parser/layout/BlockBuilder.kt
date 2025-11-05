@@ -13,7 +13,9 @@ import dev.kikugie.stitcher.issue.ProblemSource
 import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.parser.StitcherTokenFactory
 import dev.kikugie.stitcher.util.AntlrToken
+import dev.kikugie.stitcher.util.LINE_BREAKS
 import dev.kikugie.stitcher.util.WHITESPACES
+import dev.kikugie.stitcher.util.WORD_BREAKS
 import dev.kikugie.stitcher.util.hasLineBreak
 import dev.kikugie.stitcher.util.merge
 import dev.kikugie.stitcher.util.range
@@ -108,17 +110,10 @@ internal class CodeBuilder(
     }
 
     private fun acceptLine(block: BlockBuilder): BlockAcceptResult = when (block) {
-        is ContentBuilder -> {
-            var split = consumeLine(block.value)
-            if (split < 0 && entries.lastOrNull().let { it is CommentBuilder && it.value.isNotBlank() })
-                split = 0
-            consumeContentSplit(block, split)
-        }
-
-        is CommentBuilder -> {
-            val result = consumeCommentSplit(block, consumeLine(block.value))
-            if (result !is BlockAcceptResult.ConsumedOpen) result
-            else if (!block.value.isNotBlank() || !block.closer?.text.orEmpty().hasLineBreak()) result
+        is ContentBuilder -> consumeContentSplit(block, consumeLine(block.value, entries.lastOrNull().isNotBlank()))
+        is CommentBuilder -> consumeCommentSplit(block, consumeLine(block.value, entries.lastOrNull().isNotBlank())).let {
+            if (it !is BlockAcceptResult.ConsumedOpen) it
+            else if (!block.value.isNotBlank() || !block.closer?.text.orEmpty().hasLineBreak()) it
             else BlockAcceptResult.ConsumedFinal
         }
 
@@ -200,9 +195,11 @@ private fun MutableList<BlockBuilder>.addMerging(block: BlockBuilder) = when (va
     else -> this += block
 }
 
-private fun consumeLine(str: String): Int {
+private fun consumeLine(str: String, immediate: Boolean): Int {
     // Ignore all whitespaces and line breaks preceding the content
-    var index = str.countMatching(*WHITESPACES)
+    var index = str.countWhile {
+        it in WORD_BREAKS || it in LINE_BREAKS && !immediate
+    }
     if (index == str.length) return -1
 
     // Cancerous way to consume the line with the line break
@@ -232,4 +229,11 @@ private fun consumeWordCustom(str: String, match: String, capturing: Boolean): I
         capturing -> index + match.length
         else -> index
     }
+}
+
+private fun BlockBuilder?.isNotBlank() = when (this) {
+    is ContentBuilder -> value.isNotBlank()
+    is CommentBuilder -> value.isNotBlank()
+    null -> false
+    else -> true
 }
