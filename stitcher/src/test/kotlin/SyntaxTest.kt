@@ -1,3 +1,4 @@
+import io.kotest.assertions.shouldFail
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
@@ -158,7 +159,7 @@ class SyntaxTest : FreeSpec({
                 int one = 1;
                 int two = 2;
             """.trimIndent()
-            shouldThrow<IllegalStateException> { process(content) }
+            shouldFail { process(content) }
         }
 
         "search comments" {
@@ -229,6 +230,20 @@ class SyntaxTest : FreeSpec({
                 int one = 1;
                 /*int two = 2;
                 *///unused
+            """.trimIndent()
+            process(content) shouldBe expected
+        }
+
+        "excluded line break" {
+            @Language("JAVA") val content = """
+                //? if true
+                /*int one = 1;*/
+                //unused
+            """.trimIndent()
+            @Language("JAVA") val expected = """
+                //? if true
+                int one = 1;
+                //unused
             """.trimIndent()
             process(content) shouldBe expected
         }

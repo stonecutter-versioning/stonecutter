@@ -8,6 +8,14 @@ import dev.kikugie.stitcher.util.range
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 
+/**
+ * Factory interface for creating [LeafToken] instances.
+ *
+ * The factory **must** be used in favour of direct instantiation,
+ * as during the [BlockTransformer][dev.kikugie.stitcher.transform.BlockTransformer]
+ * pass regions are evaluated as isolated files, with the factory carrying the
+ * necessary token location modifiers.
+ */
 internal interface StitcherTokenFactory {
     fun create(type: LeafType, range: IntRange, text: String) : LeafToken
 

@@ -27,17 +27,25 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.writeText
 
 val PROBLEM_REPORTER = ProblemConsumer { file: Path, location: ProblemLocation, problem: ProblemCause ->
-    val problem = buildString {
-        append("e: file://${file.absolutePathString()}")
-        if (location.line >= 1) {
-            append(":${location.line}")
-            if (location.column >= 1)
-                append(":${location.column}")
-        }
-        append(" ${problem.message}")
+    println(buildString {
+        append("e: ${formatLocation(file, location)} ${problem.message}")
         if (problem.exception != null) append("\nCaused by: ${problem.exception.stackTraceToString()}")
+    })
+}
+
+val IMMEDIATE_THROW = ProblemConsumer { file: Path, location: ProblemLocation, problem: ProblemCause ->
+    throw AssertionError(problem.message).apply {
+        if (problem.exception != null) initCause(problem.exception)
     }
-    println(problem)
+}
+
+private fun formatLocation(file: Path, location: ProblemLocation): String = buildString {
+    append("file://${file.absolutePathString()}")
+    if (location.line >= 1) {
+        append(":${location.line}")
+        if (location.column >= 1)
+            append(":${location.column}")
+    }
 }
 
 inline fun TestConfiguration.process(contents: String, parameters: TransformParametersBuilder.() -> Unit = {}): String {
@@ -45,7 +53,7 @@ inline fun TestConfiguration.process(contents: String, parameters: TransformPara
     file.writeText(contents, Charsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
 
     val parameters = TransformParametersBuilder().apply(parameters).build()
-    return process(file, contents, parameters, PROBLEM_REPORTER)
+    return process(file, contents, parameters, IMMEDIATE_THROW)
 }
 
 class TransformParametersBuilder {

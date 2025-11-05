@@ -108,10 +108,17 @@ internal class CodeBuilder(
     }
 
     private fun acceptLine(block: BlockBuilder): BlockAcceptResult = when (block) {
-        is ContentBuilder -> consumeContentSplit(block, consumeLine(block.value))
-        is CommentBuilder -> consumeCommentSplit(block, consumeLine(block.value)).let {
-            if (it !is BlockAcceptResult.ConsumedOpen) it
-            else if (!block.value.isNotBlank() || !block.closer?.text.orEmpty().hasLineBreak()) it
+        is ContentBuilder -> {
+            var split = consumeLine(block.value)
+            if (split < 0 && entries.lastOrNull().let { it is CommentBuilder && it.value.isNotBlank() })
+                split = 0
+            consumeContentSplit(block, split)
+        }
+
+        is CommentBuilder -> {
+            val result = consumeCommentSplit(block, consumeLine(block.value))
+            if (result !is BlockAcceptResult.ConsumedOpen) result
+            else if (!block.value.isNotBlank() || !block.closer?.text.orEmpty().hasLineBreak()) result
             else BlockAcceptResult.ConsumedFinal
         }
 
@@ -146,6 +153,12 @@ internal class CodeBuilder(
     private fun consumeContentSplit(block: ContentBuilder, split: Int): BlockAcceptResult = when {
         // No end sequence was found
         split < 0 -> entries.addMerging(block) then BlockAcceptResult.ConsumedOpen
+
+        // The matching sequence is right at the start of the block, but we don't want it
+        split == 0 -> {
+            satisfied = true
+            BlockAcceptResult.Rejected
+        }
 
         // The entire content was consumed
         split == block.value.length -> consumeFinal(block)

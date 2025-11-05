@@ -41,7 +41,7 @@ conditionExpression
 
 versionPredicate
     : (stringComparator | semanticComparator)? semanticVersion # semanticPredicate
-    | stringComparator stringVersion?                         # stringPredicate
+    | stringComparator stringVersion?                          # stringPredicate
     ;
 
 semanticVersion
@@ -116,6 +116,6 @@ OP_OR: '||';
 
 NUMERIC: NUMBER;
 IDENTIFIER: IDENTIFIER_START IDENTIFIER_PART*;
-QUOTED: '\'' (ESC_SLASH | ESC_TICK | ~[\\'] )* '\'';
+QUOTED: '\'' (ESC_SLASH | ESC_TICK | ~[\\'])* '\'';
 COMMENT: '*' (ESC_SLASH | ESC_STAR | ~[\\*])* '*' -> channel(HIDDEN);
 WHITESPACE: [ \t]+ -> channel(HIDDEN);
