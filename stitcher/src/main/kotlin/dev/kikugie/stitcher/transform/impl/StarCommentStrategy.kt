@@ -1,6 +1,7 @@
 package dev.kikugie.stitcher.transform.impl
 
 import dev.kikugie.commons.text.countMatching
+import dev.kikugie.commons.text.countWhile
 import dev.kikugie.commons.text.getOrDefault
 import dev.kikugie.commons.text.reverseView
 import dev.kikugie.commons.then
@@ -10,6 +11,7 @@ import dev.kikugie.stitcher.util.LINE_BREAKS
 import dev.kikugie.stitcher.util.WHITESPACES
 import dev.kikugie.stitcher.util.WORD_BREAKS
 import dev.kikugie.stitcher.util.buildString
+import dev.kikugie.stitcher.util.hasLineBreak
 
 private const val SUPERSCRIPT_OOB = "Unable to nest at level %d - max is 9. Maybe consider refactoring your code?"
 private val SUPERSCRIPT_NUMBERS: CharArray = charArrayOf('⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹')
@@ -95,17 +97,21 @@ private fun StringBuilder.removeCommentDepth(from: Char, to: Char, surrounder: C
 
 // TODO: Make it more generic
 public class StarCommentStrategy(private val flattenComments: Boolean) : CommentingStrategy, UncommentingStrategy {
-    override fun comment(scope: String, full: Boolean): String = buildString(scope) {
-        if (flattenComments) applyCommentDepth(from = '*', to = '^', surrounder = '/')
-        insert(countMatching(*WORD_BREAKS), "/*")
-        if (full) append("*/") else {
-            val offset = reverseView().countMatching(*WHITESPACES)
-            if (offset == 0) append("*/") else insert(length - offset, "*/")
-        }
-    }
+    override fun comment(scope: String, open: Boolean): String =
+        if (open) commentLine(scope) else commentBlock(scope)
 
     override fun uncomment(scope: String, opener: String, closer: String): String = buildString(scope) {
         removeCommentDepth(from = '^', to = '*', surrounder = '/')
-        if (LINE_BREAKS.any(closer::contains)) append(closer)
+        if (closer.hasLineBreak()) append(closer)
+    }
+
+    private fun commentBlock(scope: String): String = buildString(scope) {
+        if (flattenComments) applyCommentDepth(from = '*', to = '^', surrounder = '/')
+        insert(countMatching(*WORD_BREAKS), "/*").append("*/")
+    }
+
+    private fun commentLine(scope: String): String = buildString(scope) {
+        val offset = length - reverseView().countWhile { it !in LINE_BREAKS }
+        insert(offset + countMatching(*WORD_BREAKS), "//")
     }
 }

@@ -196,24 +196,13 @@ private fun MutableList<BlockBuilder>.addMerging(block: BlockBuilder) = when (va
 }
 
 private fun consumeLine(str: String, immediate: Boolean): Int {
-    // Ignore all whitespaces and line breaks preceding the content
-    var index = str.countWhile {
-        it in WORD_BREAKS || it in LINE_BREAKS && !immediate
+    var isBlank = true
+    val index = str.countWhile {
+        isBlank = isBlank && (it in WORD_BREAKS || it in LINE_BREAKS && !immediate)
+        isBlank || it !in LINE_BREAKS
     }
-    if (index == str.length) return -1
-
-    // Cancerous way to consume the line with the line break
-    var state = 0
-    index += str.countWhile(index) {
-        when (it) {
-            '\n' if state == 0 -> true.also { state = 1 }
-            '\r' if state in 0..1 -> true.also { state = 2 }
-            else -> state == 0
-        }
-    }
-
     // -1 indicates we didn't reach a newline
-    return if (state != 0) index else -1
+    return if (index == str.length) -1 else index
 }
 
 private fun consumeWordDefault(str: String): Int {

@@ -102,7 +102,7 @@ internal data class BlockTransformer(
         private fun commentScope(opener: ScopeToken?): List<BlockToken> {
             val start = host.scope.ifEmpty { return emptyList() }.start()
             val blocks = host.scope.reprocess()
-            val text = params.commenter.comment(blocks.join(), opener is ClosedScope)
+            val text = params.commenter.comment(blocks.join(), opener == null)
             val source = params.adapter.create(text.toStream(), runtime.problems)
             return LayoutParser
                 .parse(CommonTokenStream(source), runtime.problems, StitcherTokenFactory.Inline(start))

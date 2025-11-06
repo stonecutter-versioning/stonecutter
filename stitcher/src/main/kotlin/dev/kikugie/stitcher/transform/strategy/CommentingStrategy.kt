@@ -11,5 +11,5 @@ public fun interface CommentingStrategy : java.io.Serializable {
      * of the scope into consideration. The [full] parameter indicates
      * if the entire block needs to be commented, or the end can be trimmed.
      */
-    public fun comment(scope: String, full: Boolean): String
+    public fun comment(scope: String, open: Boolean): String
 }
