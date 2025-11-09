@@ -5,6 +5,8 @@ package dev.kikugie.stitcher.issue
  * supporting categorization by specific locations and causes.
  */
 public interface ProblemSource {
+    public val hasFailed: Boolean
+
     public fun at(index: Int): ProblemLocation
     public fun at(line: Int, column: Int): ProblemLocation
 

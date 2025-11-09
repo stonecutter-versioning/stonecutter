@@ -20,6 +20,7 @@ import dev.kikugie.stitcher.data.eval.BlockStopVisitor.stop
 import dev.kikugie.stitcher.data.eval.BlockToStringVisitor.Companion.join
 import dev.kikugie.stitcher.data.leaf.LeafToken
 import dev.kikugie.stitcher.data.leaf.LeafType
+import dev.kikugie.stitcher.issue.BailException
 import dev.kikugie.stitcher.issue.ProblemSource
 import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.parser.StitcherTokenFactory
@@ -95,7 +96,7 @@ internal data class BlockTransformer(
             val source = UncommentingTokenSource(runtime, params, host.scope)
             return LayoutParser
                 .parse(CommonTokenStream(source), runtime.problems, StitcherTokenFactory.Inline(start))
-                .scope.reprocess()
+                .let { if (hasFailed) emptyList() else it.scope.reprocess() }
         }
 
         private fun commentScope(opener: ScopeToken?): List<BlockToken> {

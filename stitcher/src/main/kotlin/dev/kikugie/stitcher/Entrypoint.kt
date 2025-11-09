@@ -28,6 +28,8 @@ public fun process(file: Path, contents: String, parameters: TransformParameters
         scanner.errorListener(InlineErrorListener(runtime.problems, index))
     }
     val layout = LayoutParser.parse(CommonTokenStream(source), runtime.problems, StitcherTokenFactory)
+    if (problems.hasFailed) throw BailException()
+
     val transformer = BlockTransformer(runtime, parameters, StitcherTokenFactory)
     val modified = layout.accept(transformer)
     if (problems.hasFailed) throw BailException()
@@ -42,7 +44,7 @@ private class ProblemStorage(
     val index: FileLineIndex,
     val consumer: ProblemConsumer
 ) : ProblemSource {
-    var hasFailed: Boolean = false
+    override var hasFailed: Boolean = false
         private set
 
     override fun at(index: Int): ProblemLocation = this.index.locate(index)
