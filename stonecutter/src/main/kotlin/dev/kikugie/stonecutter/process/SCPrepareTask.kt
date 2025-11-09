@@ -1,9 +1,11 @@
 package dev.kikugie.stonecutter.process
 
+import dev.kikugie.stitcher.issue.BailException
+import dev.kikugie.stitcher.issue.ProblemCause
 import dev.kikugie.stitcher.issue.ProblemConsumer
 import dev.kikugie.stitcher.issue.ProblemLocation
-import dev.kikugie.stitcher.issue.ProblemCause
 import dev.kikugie.stitcher.process
+import dev.kikugie.stitcher.transform.TransformParameters
 import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.build.param.StonecutterBuildData
 import dev.kikugie.stonecutter.build.param.StonecutterBuildParameters
@@ -13,10 +15,13 @@ import dev.kikugie.stonecutter.util.clearIfNotIncremental
 import dev.kikugie.stonecutter.util.execute
 import dev.kikugie.stonecutter.util.invoke
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileType
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.logging.Logger
+import org.gradle.api.logging.Logging
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.services.ServiceReference
@@ -29,31 +34,13 @@ import org.gradle.workers.WorkAction
 import org.gradle.workers.WorkParameters
 import org.gradle.workers.WorkQueue
 import org.gradle.workers.WorkerExecutor
+import org.slf4j.Marker
+import org.slf4j.MarkerFactory
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.*
 import javax.inject.Inject
 import kotlin.io.path.*
-
-private val REPORTED_PROBLEMS = Collections.synchronizedSet(mutableSetOf<String>())
-
-// TODO: eventually this should use Gradle problems API, but it's still incubating
-private val GRADLE_PROBLEM_REPORTER = ProblemConsumer { file: Path, location: ProblemLocation, problem: ProblemCause ->
-    val problem = format(file, location, problem)
-    if (REPORTED_PROBLEMS.add(problem)) System.err.println(problem)
-}
-
-private fun format(file: Path, location: ProblemLocation, problem: ProblemCause): String = buildString {
-    append("e: file://${file.absolutePathString()}")
-    if (location.line >= 1) {
-        append(":${location.line}")
-        if (location.column >= 1)
-            append(":${location.column}")
-    }
-    append(" ${problem.message}")
-    if (problem.exception != null) append("\nCaused by: ${problem.exception?.stackTraceToString()}")
-}
 
 @OptIn(StonecutterInternalAPI::class, StonecutterExperimentalFilesAPI::class)
 public abstract class SCPrepareTask : DefaultTask() {
@@ -101,24 +88,60 @@ public abstract class SCPrepareTask : DefaultTask() {
 
 @OptIn(StonecutterInternalAPI::class, StonecutterExperimentalFilesAPI::class)
 private interface SCPrepareAction : WorkAction<SCPrepareAction.Parameters> {
+    private val source: Path get() = parameters.source.asFile().toPath()
+    private val output: Path get() = parameters.output.asFile().toPath()
+    private val reporter: GradleProblemReporter
+        get() = GradleProblemReporter(Logging.getLogger(SCPrepareTask::class.simpleName), parameters.cache())
+    private val transform: TransformParameters?
+        get() = parameters.data().forFile(source, parameters.cache().handlers)
+
+    override fun execute() {
+        val transform = this.transform
+        val reporter = this.reporter
+
+        if (!source.exists() || transform == null) { output.deleteIfExists(); return }
+        val contents = source.readText()
+        val modified = reporter.handle { process(source, contents, transform, reporter) }
+        if (contents == modified) output.deleteIfExists() else with(output) {
+            parent.createDirectories()
+            writeText(modified, Charsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
+        }
+    }
+
     interface Parameters : WorkParameters {
         val cache: Property<TaskCacheContainer>
         val data: Property<StonecutterBuildData>
         val source: RegularFileProperty
         val output: RegularFileProperty
     }
+}
 
-    override fun execute() {
-        val source: Path = parameters.source.asFile().toPath()
-        val output: Path = parameters.output.asFile().toPath()
+@OptIn(StonecutterExperimentalFilesAPI::class)
+private class GradleProblemReporter(val logger: Logger, val collector: TaskCacheContainer) : ProblemConsumer {
+    val errors: MutableList<String> = mutableListOf()
 
-        val parameters = parameters.data().forFile(source, parameters.cache().handlers)
-        if (!source.exists() || parameters == null) { output.deleteIfExists(); return }
-        val contents = source.readText()
-        val modified = process(source, contents, parameters, GRADLE_PROBLEM_REPORTER)
-        if (contents == modified) output.deleteIfExists() else with(output) {
-            parent.createDirectories()
-            writeText(modified, Charsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
-        }
+    inline fun <T> handle(action: () -> T) = try {
+        action()
+    } catch (_: BailException) {
+        val formatted = errors.joinToString("\n").prependIndent("  ")
+        throw GradleException("File processing failed; see errors below.\n$formatted")
+    }
+
+    override fun accept(file: Path, location: ProblemLocation, cause: ProblemCause) {
+        val message = file.format(location, cause).also { errors += it }
+        if (!collector.hasSeen(message)) logger.error(SC_ERROR, "e: $message", cause.exception)
+    }
+
+    private fun Path.format(location: ProblemLocation, cause: ProblemCause): String = buildString {
+        append("file://${absolutePathString()}")
+        if (location.line >= 1)
+            append(":${location.line}")
+        if (location.column >= 1)
+            append(":${location.column}")
+        append(": ${cause.message}")
+    }
+
+    companion object {
+        val SC_ERROR: Marker = MarkerFactory.getMarker("Stonecutter")
     }
 }

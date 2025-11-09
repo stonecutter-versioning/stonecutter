@@ -13,7 +13,6 @@ import dev.kikugie.stitcher.data.composite.DefinitionToken
 import dev.kikugie.stitcher.data.composite.ReplacementDefinition
 import dev.kikugie.stitcher.data.composite.RootBlock
 import dev.kikugie.stitcher.data.composite.SwapDefinition
-import dev.kikugie.stitcher.data.custom.ClosedScope
 import dev.kikugie.stitcher.data.custom.ScopeToken
 import dev.kikugie.stitcher.data.eval.BlockRangeVisitor.range
 import dev.kikugie.stitcher.data.eval.BlockStartVisitor.start

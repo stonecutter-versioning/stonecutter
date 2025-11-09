@@ -2,6 +2,7 @@ package dev.kikugie.stitcher
 
 import dev.kikugie.stitcher.antlr.InlineErrorListener
 import dev.kikugie.stitcher.data.eval.BlockToStringVisitor.Companion.join
+import dev.kikugie.stitcher.issue.BailException
 import dev.kikugie.stitcher.issue.ProblemCause
 import dev.kikugie.stitcher.issue.ProblemConsumer
 import dev.kikugie.stitcher.issue.ProblemLocation
@@ -27,11 +28,11 @@ public fun process(file: Path, contents: String, parameters: TransformParameters
         scanner.errorListener(InlineErrorListener(runtime.problems, index))
     }
     val layout = LayoutParser.parse(CommonTokenStream(source), runtime.problems, StitcherTokenFactory)
-    check(!problems.hasFailed) { "Parsing error. See log for more details" }
+    if (problems.hasFailed) throw BailException()
 
     val transformer = BlockTransformer(runtime, parameters, StitcherTokenFactory)
     val modified = layout.accept(transformer)
-    check(!problems.hasFailed) { "Transformation error. See log for more details" }
+    if (problems.hasFailed) throw BailException()
 
     val content = modified.join()
     return if (runtime.replacer == null || parameters.replacements.isEmpty()) content

@@ -16,6 +16,9 @@ internal abstract class TaskCacheContainer @Inject constructor(objects: ObjectFa
         val handlers: Property<FileHandlerContainer>
     }
     val handlers get() = parameters.handlers.get()
+    private val errors = mutableSetOf<String>()
+
+    fun hasSeen(message: String) = synchronized(errors) { !errors.add(message) }
 
     /**
      * This method is needed to make the build service persist with configuration cache.
