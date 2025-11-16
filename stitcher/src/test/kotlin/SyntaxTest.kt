@@ -47,7 +47,7 @@ class SyntaxTest : FreeSpec({
             """.trimIndent()
             @Language("JAVA") val expected = """
                 //? if false
-                /*int one = 1;*/
+                //int one = 1;
                 int two = 2;
             """.trimIndent()
             process(content) shouldBe expected
@@ -105,7 +105,7 @@ class SyntaxTest : FreeSpec({
             """.trimIndent()
             @Language("JAVA") val expected = """
                 //? if false >> '='
-                /*int one*/ = 1;
+                /*int one */= 1;
                 int two = 2;
             """.trimIndent()
             process(content) shouldBe expected
@@ -178,8 +178,7 @@ class SyntaxTest : FreeSpec({
             process(content) shouldBe expected
         }
 
-        // TODO: Not yet implemented
-        "split comment".config(enabled = false) {
+        "split comment" {
             @Language("JAVA") val content = """
                 //? if true >>+ 'two ='
                 //int one = 1;
@@ -189,7 +188,7 @@ class SyntaxTest : FreeSpec({
             @Language("JAVA") val expected = """
                 //? if true >>+ 'two ='
                 int one = 1;
-                int two =/* 2;*/
+                int two = /*2;*/
                 // unused
             """.trimIndent()
             process(content) shouldBe expected
@@ -215,8 +214,7 @@ class SyntaxTest : FreeSpec({
             process(content) shouldBe expected
         }
 
-        // TODO: Not yet implemented
-        "split comment".config(enabled = false) {
+        "split comment" {
             @Language("JAVA") val content = """
                 //? if true
                 /*

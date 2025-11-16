@@ -157,7 +157,7 @@ class SyntaxTest : GradleTest, FreeSpec({
         build.run("stonecutterSwitchTo1")
         val file = directory read "src/main/java/Example.java"
         val line = file.lines()[3]
-        line shouldBe "        /*System.out.println(\"Hello world!\");*/"
+        line shouldBe "        //System.out.println(\"Hello world!\");"
     }
 
     // TODO: Check fragmented content merging

@@ -32,7 +32,9 @@ internal data class BlockTransformer(
         if (comment.opener != null && comment.closer != null) return comment
 
         val start = comment.start()
-        val content = params.commenter.comment(comment.body.text, false)
+        val closer = comment.closer?.text.orEmpty()
+        var content = params.commenter.comment(comment.body.text, false)
+        if (closer.hasLineBreak()) content += closer
 
         // TODO: Check if reparsing the comment is needed
         return factory.create(LeafType(LayoutParser.CONTENT), comment.range(), content).let(::ContentBlock)
@@ -102,7 +104,7 @@ internal data class BlockTransformer(
 
             val start: Int = host.start()
             val reprocessed: List<BlockToken> = visitScope(host.scope, false)
-            val content: String = params.commenter.comment(reprocessed.join(), false)
+            val content: String = params.commenter.comment(reprocessed.join(), host.definition.opener == null)
             return factory.create(LeafType(LayoutParser.CONTENT), host.range(), content).let { listOf(ContentBlock(it)) }
 
             // TODO: Check if reparsing the comment is needed
@@ -118,6 +120,7 @@ private class BlockUncommenter(val blocks: List<BlockToken>, val parameters: Tra
 
     override fun advance() {
         if (index < blocks.size) match(blocks[index++])
+        else if (index == blocks.size) push(tokenFactory.create(AntlrToken.EOF, ""))
     }
 
     private fun match(block: BlockToken) = when (block) {

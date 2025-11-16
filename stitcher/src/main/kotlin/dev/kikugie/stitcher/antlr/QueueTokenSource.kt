@@ -1,16 +1,10 @@
 package dev.kikugie.stitcher.antlr
 
-import dev.kikugie.commons.collections.FixedQueue
 import dev.kikugie.commons.then
 import dev.kikugie.stitcher.util.AntlrToken
-import org.antlr.v4.runtime.CharStream
-import org.antlr.v4.runtime.CommonTokenFactory
-import org.antlr.v4.runtime.Token
-import org.antlr.v4.runtime.TokenFactory
-import org.antlr.v4.runtime.TokenSource
+import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Pair
-import java.util.LinkedList
-import java.util.Queue
+import java.util.*
 
 internal abstract class QueueTokenSource(private val source: CharStream) : TokenSource {
     private val tokenQueue: Queue<AntlrToken> = LinkedList()
@@ -26,12 +20,17 @@ internal abstract class QueueTokenSource(private val source: CharStream) : Token
         else -> tokenQueue.remove() then tokenQueue.element()
     }
 
-    override fun getLine(): Int = tokenQueue.element().line
-    override fun getCharPositionInLine(): Int = tokenQueue.element().line
+    override fun getLine(): Int = initElement().line
+    override fun getCharPositionInLine(): Int = initElement().line
     override fun getInputStream(): CharStream = source
     override fun getSourceName(): String = source.sourceName
     override fun getTokenFactory(): TokenFactory<*> = tokenFactory
     override fun setTokenFactory(factory: TokenFactory<*>) {
         tokenFactory = factory
+    }
+
+    private fun initElement(): AntlrToken {
+        if (tokenQueue.isEmpty()) advance()
+        return tokenQueue.element()
     }
 }

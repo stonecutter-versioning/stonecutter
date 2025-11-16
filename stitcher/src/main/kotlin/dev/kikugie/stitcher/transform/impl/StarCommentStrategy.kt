@@ -111,7 +111,6 @@ public class StarCommentStrategy(private val flattenComments: Boolean) : Comment
     }
 
     private fun commentLine(scope: String): String = buildString(scope) {
-        val offset = length - reverseView().countWhile { it !in LINE_BREAKS }
-        insert(offset + countMatching(*WORD_BREAKS), "//")
+        insert(scope.countMatching(*WHITESPACES), "//")
     }
 }

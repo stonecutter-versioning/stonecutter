@@ -200,13 +200,30 @@ private fun MutableList<BlockBuilder>.addMerging(block: BlockBuilder) = when (va
 }
 
 private fun consumeLine(str: String, immediate: Boolean): Int {
-    var isBlank = true
-    val index = str.countWhile {
-        isBlank = isBlank && (it in WORD_BREAKS || it in LINE_BREAKS && !immediate)
-        isBlank || it !in LINE_BREAKS
+    var state = 0
+    val index = str.countWhile { ch ->
+        matchLineChar(ch, state, immediate).also { if (it >= 0) state = it } >= 0
     }
     // -1 indicates we didn't reach a newline
-    return if (index == str.length) -1 else index
+    return if (index == str.length && state == 0) -1 else index
+}
+
+private fun matchLineChar(ch: Char, state: Int, immediate: Boolean): Int = when (state) {
+    0 -> when (ch) {
+        in WORD_BREAKS -> 0
+        in LINE_BREAKS -> if (immediate) 1 else 0
+        else -> 1
+    }
+    1 -> when (ch) {
+        '\n' -> 2
+        '\r' -> 3
+        else -> 1
+    }
+    2 -> when (ch) {
+        '\r' -> 3
+        else -> -1
+    }
+    else -> -1
 }
 
 private fun consumeWordDefault(str: String): Int {

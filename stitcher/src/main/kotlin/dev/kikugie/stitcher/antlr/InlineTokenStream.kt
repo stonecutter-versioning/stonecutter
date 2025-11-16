@@ -2,23 +2,16 @@ package dev.kikugie.stitcher.antlr
 
 import dev.kikugie.stitcher.issue.ProblemLocation
 import dev.kikugie.stitcher.util.AntlrToken
-import org.antlr.v4.runtime.CharStream
-import org.antlr.v4.runtime.CommonTokenStream
-import org.antlr.v4.runtime.Token
-import org.antlr.v4.runtime.TokenFactory
-import org.antlr.v4.runtime.TokenSource
-import org.antlr.v4.runtime.TokenStream
+import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Interval
 import org.antlr.v4.runtime.misc.Pair
-import java.util.Deque
-import java.util.LinkedList
 
 internal class InlineTokenStream(val source: Pair<TokenSource, CharStream>, val stream: TokenStream, val offset: Int, val location: ProblemLocation) : TokenStream by stream {
     constructor(source: TokenSource, input: CharStream, offset: Int, location: ProblemLocation) : this(Pair(source, input), CommonTokenStream(source), offset, location)
     private val factory: TokenFactory<*> get() = stream.tokenSource.tokenFactory
     private var cache: Array<AntlrToken?> = arrayOfNulls(4)
 
-    override fun LT(k: Int): Token = getCached(index() + k - 1, stream.LT(k))
+    override fun LT(k: Int): Token = getCached(index().coerceAtLeast(0) + k - 1, stream.LT(k))
     override fun get(index: Int): Token = getCached(index, stream.get(index))
     override fun getText(interval: Interval): String = stream.getText(Interval.of(interval.a + offset, interval.b + offset))
 
