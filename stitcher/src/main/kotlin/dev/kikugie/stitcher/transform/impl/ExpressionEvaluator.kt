@@ -12,7 +12,7 @@ import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.transform.RuntimeState
 import dev.kikugie.stitcher.transform.TransformParameters
 
-internal class ExpressionEvaluator(val runtime: RuntimeState, val parameters: TransformParameters) : ExpressionToken.Visitor<Boolean>, ProblemSource by runtime {
+internal class ExpressionEvaluator(val parameters: TransformParameters, problems: ProblemSource) : ExpressionToken.Visitor<Boolean>, ProblemSource by problems {
     override fun visitGroup(group: GroupExpression): Boolean = group.body.accept(this)
     override fun visitUnary(unary: UnaryExpression): Boolean = when (unary.operator.type.value) {
         StitcherLexer.OP_NOT -> !unary.target.accept(this)
@@ -22,7 +22,7 @@ internal class ExpressionEvaluator(val runtime: RuntimeState, val parameters: Tr
     override fun visitBinary(binary: BinaryExpression): Boolean = when (binary.operator.type.value) {
         StitcherLexer.OP_AND -> binary.left.accept(this) && binary.right.accept(this)
         StitcherLexer.OP_OR -> binary.left.accept(this) || binary.right.accept(this)
-        else -> at(binary.operator) bail "Unsupported unary operator ${binary.operator.type.name}"
+        else -> at(binary.operator) bail "Unsupported binary operator ${binary.operator.type.name}"
     }
 
     override fun visitConstant(constant: ConstantExpression): Boolean {

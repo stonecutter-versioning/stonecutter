@@ -12,6 +12,7 @@ import dev.kikugie.stitcher.parser.layout.LayoutParser
 import dev.kikugie.stitcher.transform.BlockTransformer
 import dev.kikugie.stitcher.transform.RuntimeState
 import dev.kikugie.stitcher.transform.TransformParameters
+import dev.kikugie.stitcher.transform.impl.InvalidArgChecker
 import dev.kikugie.stitcher.util.FileLineIndex
 import dev.kikugie.stitcher.util.buildString
 import dev.kikugie.stitcher.util.errorListener
@@ -29,7 +30,10 @@ public fun process(file: Path, contents: String, parameters: TransformParameters
         scanner.errorListener(InlineErrorListener(runtime.problems, index))
     }
     val layout = LayoutParser.parse(CommonTokenStream(source), input, runtime.problems, StitcherTokenFactory)
-    if (problems.hasFailed) throw BailException()
+    if (problems.hasFailed) {
+        layout.accept(InvalidArgChecker(parameters, runtime))
+        throw BailException()
+    }
 
     val transformer = BlockTransformer(runtime, parameters, StitcherTokenFactory)
     val modified = layout.accept(transformer)

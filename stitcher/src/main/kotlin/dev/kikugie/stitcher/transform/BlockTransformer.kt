@@ -24,6 +24,7 @@ internal data class BlockTransformer(
     val params: TransformParameters,
     val factory: StitcherTokenFactory
 ) : BlockToken.Visitor<BlockToken>, ProblemSource by runtime.problems {
+    private val evaluator: ExpressionEvaluator by lazy { ExpressionEvaluator(params, runtime) }
     private var visitedEnabledBlock: Boolean = false
 
     override fun visitRoot(root: RootBlock) = root.copy(scope = root.scope.map { it.accept(this) })
@@ -63,7 +64,7 @@ internal data class BlockTransformer(
 
             val template = params.swaps[swap.identifier.text]
             if (template == null) {
-                at(swap.identifier) report "Unregistered swap identifier '${swap.identifier.text}'"
+                at(swap.identifier) report "Unresolved swap identifier '${swap.identifier.text}'"
                 return host.scope
             }
 
@@ -73,14 +74,13 @@ internal data class BlockTransformer(
             return ContentBlock(token).let(::listOf)
         }
 
-        // TODO: Handle partial blocks
         override fun visitCondition(cond: ConditionDefinition): List<BlockToken> {
             runtime.initializeReplacements(params.replacements)
             if (cond !is ConditionDefinition.Extension) visitedEnabledBlock = false
             if (cond is ConditionDefinition.Closer) return emptyList()
 
             // In an if-else chain makes the rest of the blocks disabled
-            val shouldEnable = cond.expression?.accept(ExpressionEvaluator(runtime, params)) ?: true
+            val shouldEnable = cond.expression?.accept(evaluator) ?: true
                 && !visitedEnabledBlock
             visitedEnabledBlock = shouldEnable || visitedEnabledBlock
 
