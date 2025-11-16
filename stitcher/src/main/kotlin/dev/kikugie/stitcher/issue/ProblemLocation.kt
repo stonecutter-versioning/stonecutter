@@ -13,4 +13,8 @@ public value class ProblemLocation private constructor(private val packed: Long)
     public val line: Int get() = (packed and 0xFFFFFFFFL).toInt()
     public val column: Int get() = (packed ushr 32 and 0xFFFFFFFFL).toInt()
     public val isUndefined: Boolean get() = packed == -1L
+
+    public companion object {
+        public val UNDEFINED: ProblemLocation = ProblemLocation(-1L)
+    }
 }

@@ -1,35 +1,23 @@
 package dev.kikugie.stitcher.transform
 
-import dev.kikugie.stitcher.antlr.InlineErrorListener
-import dev.kikugie.stitcher.antlr.InlineTokenStream
-import dev.kikugie.stitcher.antlr.StitcherLexer
-import dev.kikugie.stitcher.antlr.SwapTemplate
-import dev.kikugie.stitcher.data.composite.BlockToken
-import dev.kikugie.stitcher.data.composite.CodeBlock
-import dev.kikugie.stitcher.data.composite.CommentBlock
-import dev.kikugie.stitcher.data.composite.ConditionDefinition
-import dev.kikugie.stitcher.data.composite.ContentBlock
-import dev.kikugie.stitcher.data.composite.DefinitionToken
-import dev.kikugie.stitcher.data.composite.ReplacementDefinition
-import dev.kikugie.stitcher.data.composite.RootBlock
-import dev.kikugie.stitcher.data.composite.SwapDefinition
-import dev.kikugie.stitcher.data.custom.ScopeToken
+import dev.kikugie.commons.applyIf
+import dev.kikugie.stitcher.antlr.*
+import dev.kikugie.stitcher.data.composite.*
+import dev.kikugie.stitcher.data.eval.BlockIsBlankVisitor.isBlank
+import dev.kikugie.stitcher.data.eval.BlockIsBlankVisitor.isNotBlank
 import dev.kikugie.stitcher.data.eval.BlockRangeVisitor.range
 import dev.kikugie.stitcher.data.eval.BlockStartVisitor.start
-import dev.kikugie.stitcher.data.eval.BlockStopVisitor.stop
 import dev.kikugie.stitcher.data.eval.BlockToStringVisitor.Companion.join
 import dev.kikugie.stitcher.data.leaf.LeafToken
 import dev.kikugie.stitcher.data.leaf.LeafType
-import dev.kikugie.stitcher.issue.BailException
 import dev.kikugie.stitcher.issue.ProblemSource
 import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.parser.StitcherTokenFactory
+import dev.kikugie.stitcher.parser.adapter.ScannerAdapter
 import dev.kikugie.stitcher.parser.layout.LayoutParser
 import dev.kikugie.stitcher.transform.impl.ExpressionEvaluator
 import dev.kikugie.stitcher.util.*
-import dev.kikugie.stitcher.util.range
 import org.antlr.v4.runtime.*
-import org.antlr.v4.runtime.misc.Pair
 
 internal data class BlockTransformer(
     val runtime: RuntimeState,
@@ -40,15 +28,24 @@ internal data class BlockTransformer(
 
     override fun visitRoot(root: RootBlock) = root.copy(scope = root.scope.map { it.accept(this) })
     override fun visitCode(code: CodeBlock) = code.copy(scope = code.definition.accept(ScopeTransformer(code)))
-    override fun visitComment(comment: CommentBlock) = comment
+    override fun visitComment(comment: CommentBlock): BlockToken {
+        if (comment.opener != null && comment.closer != null) return comment
+
+        val start = comment.start()
+        val content = params.commenter.comment(comment.body.text, false)
+
+        // TODO: Check if reparsing the comment is needed
+        return factory.create(LeafType(LayoutParser.CONTENT), comment.range(), content).let(::ContentBlock)
+    }
+
     override fun visitContent(content: ContentBlock): BlockToken {
-        if (content.leaf.text.isNotBlank()) runtime.initializeReplacements(params.replacements)
+        if (content.isNotBlank()) runtime.initializeReplacements(params.replacements)
         return content
     }
 
-    private fun List<BlockToken>.reprocess(): List<BlockToken> = buildList {
+    private fun visitScope(tokens: Iterable<BlockToken>, link: Boolean): List<BlockToken> {
         val copy = this@BlockTransformer.copy()
-        for (it in this@reprocess) this += it.accept(copy)
+        return tokens.map { it.accept(copy) }.applyIf(link, BlockToken::link)
     }
 
     private inner class ScopeTransformer(val host: CodeBlock) : DefinitionToken.Visitor<List<BlockToken>> {
@@ -71,7 +68,7 @@ internal data class BlockTransformer(
             val replacement = processTemplate(template, swap.arguments)
             val content = params.replacer.replace(host.scope.join(), replacement)
             val token = factory.create(LeafType(LayoutParser.CONTENT), host.scope.range(), content)
-            return ContentBlock(token, content.isBlank()).let(::listOf)
+            return ContentBlock(token).let(::listOf)
         }
 
         // TODO: Handle partial blocks
@@ -86,62 +83,62 @@ internal data class BlockTransformer(
             visitedEnabledBlock = shouldEnable || visitedEnabledBlock
 
             return when {
-                shouldEnable -> if (host.scope.isCommented()) uncommentScope() else host.scope.reprocess()
-                else -> if (!host.scope.isCommented()) commentScope(cond.opener) else host.scope
+                shouldEnable -> if (host.scope.isCommented()) uncommentScope() else visitScope(host.scope, true)
+                else -> if (!host.scope.isCommented()) commentScope() else host.scope
             }
         }
 
         private fun uncommentScope(): List<BlockToken> {
-            val start = host.scope.ifEmpty { return emptyList() }.start()
-            val source = UncommentingTokenSource(runtime, params, host.scope)
-            return LayoutParser
-                .parse(CommonTokenStream(source), runtime.problems, StitcherTokenFactory.Inline(start))
-                .let { if (hasFailed) emptyList() else it.scope.reprocess() }
+            if (host.scope.isEmpty()) return emptyList()
+
+            val stream: TokenStream = BlockUncommenter(host.scope, params, runtime).let(::CommonTokenStream)
+            val factory: StitcherTokenFactory = StitcherTokenFactory.Inline(host.start())
+            val tokens: List<BlockToken> = LayoutParser.parse(stream, runtime.input, runtime.problems, factory).scope
+            return if (tokens.isEmpty()) emptyList() else visitScope(tokens, true)
         }
 
-        private fun commentScope(opener: ScopeToken?): List<BlockToken> {
-            val start = host.scope.ifEmpty { return emptyList() }.start()
-            val blocks = host.scope.reprocess()
-            val text = params.commenter.comment(blocks.join(), opener == null)
-            val source = params.adapter.create(text.toStream(), runtime.problems)
-            return LayoutParser
-                .parse(CommonTokenStream(source), runtime.problems, StitcherTokenFactory.Inline(start))
-                .scope
+        private fun commentScope(): List<BlockToken> {
+            if (host.scope.isEmpty()) return emptyList()
+
+            val start: Int = host.start()
+            val reprocessed: List<BlockToken> = visitScope(host.scope, false)
+            val content: String = params.commenter.comment(reprocessed.join(), false)
+            return factory.create(LeafType(LayoutParser.CONTENT), host.range(), content).let { listOf(ContentBlock(it)) }
+
+            // TODO: Check if reparsing the comment is needed
+            // val content: CharStream = params.commenter.comment(reprocessed.join(), false).toStream(runtime.input.sourceName)
+            // val stream: TokenStream = params.adapter.create(content, runtime).let { InlineTokenStream(it, runtime.input, start, at(start)) }
+            // return LayoutParser.parse(stream, runtime.input, runtime, factory).scope
         }
     }
 }
 
-private class UncommentingTokenSource(val runtime: RuntimeState, val params: TransformParameters, val blocks: List<BlockToken>) : TokenSource {
-    private var factory: TokenFactory<*> = CommonTokenFactory()
-    private val source: Pair<TokenSource?, CharStream?> = Pair(this, runtime.input)
-    private val sequence: Iterator<Token> = sequence {
-        for (it in blocks) expand(it)
-        yield(factory.create(Token.EOF, ""))
-    }.iterator()
+private class BlockUncommenter(val blocks: List<BlockToken>, val parameters: TransformParameters, val runtime: RuntimeState) : QueueTokenSource(runtime.input) {
+    var index = 0
 
-    private lateinit var token: Token
+    override fun advance() {
+        if (index < blocks.size) match(blocks[index++])
+    }
 
-    override fun nextToken(): Token = sequence.next().also { token = it }
-    override fun getLine(): Int = if (::token.isInitialized) token.line else 1
-    override fun getCharPositionInLine(): Int = if (::token.isInitialized) token.charPositionInLine else 0
-    override fun getInputStream(): CharStream = runtime.input
-    override fun getSourceName(): String = runtime.input.sourceName
-    override fun getTokenFactory(): TokenFactory<*> = factory
-    override fun setTokenFactory(factory: TokenFactory<*>) { this.factory = factory }
-
-    private suspend fun SequenceScope<AntlrToken>.expand(block: BlockToken): Unit = when (block) {
+    private fun match(block: BlockToken) = when (block) {
         is ContentBlock -> {
-            yield(factory.create(source, LayoutParser.CONTENT, block.leaf.text, Token.DEFAULT_CHANNEL, block.start(), block.stop(), -1, -1))
+            push(tokenFactory.create(tokenSource, LayoutParser.CONTENT, block.leaf.range, block.leaf.text))
         }
+
         is CommentBlock -> {
-            val start = block.body.range.first
-            val content = params.uncommenter.uncomment(block.body.text, block.opener?.text.orEmpty(), block.closer?.text.orEmpty()).toStream()
-            val lexer = params.adapter.create(content, runtime.problems).apply {
-                scanner.errorListener(InlineErrorListener(runtime.problems, FileLineIndex(content), start))
+            val start: Int = block.body.range.first
+            val content: CharStream = parameters.uncommenter.uncomment(block.body.text, block.opener?.text.orEmpty(), block.closer?.text.orEmpty())
+                .toStream(runtime.input.sourceName)
+            val scanner: ScannerAdapter = parameters.adapter.create(content, runtime).apply {
+                scanner.errorListener(InlineErrorListener(runtime, FileLineIndex(content), start))
             }
-            yieldAll(InlineTokenStream(lexer, start).asSequence())
+
+            InlineTokenStream(scanner, runtime.input, start, runtime.at(start))
+                .asSequence()
+                .forEach(::push)
         }
-        else -> error("Unexpected block type: ${block::class.simpleName}")
+
+        else -> error("Illegal block type ${block::class.simpleName}")
     }
 }
 

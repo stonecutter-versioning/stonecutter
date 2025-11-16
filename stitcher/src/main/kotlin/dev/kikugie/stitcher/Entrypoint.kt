@@ -18,16 +18,17 @@ import dev.kikugie.stitcher.util.errorListener
 import dev.kikugie.stitcher.util.toStream
 import org.antlr.v4.runtime.CommonTokenStream
 import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 
 public fun process(file: Path, contents: String, parameters: TransformParameters, reporter: ProblemConsumer): String {
-    val input = contents.toStream()
+    val input = contents.toStream(file.absolutePathString())
     val index = FileLineIndex(input)
     val problems = ProblemStorage(file, index, reporter)
     val runtime = RuntimeState(input, problems)
     val source = parameters.adapter.create(input, runtime.problems).apply {
         scanner.errorListener(InlineErrorListener(runtime.problems, index))
     }
-    val layout = LayoutParser.parse(CommonTokenStream(source), runtime.problems, StitcherTokenFactory)
+    val layout = LayoutParser.parse(CommonTokenStream(source), input, runtime.problems, StitcherTokenFactory)
     if (problems.hasFailed) throw BailException()
 
     val transformer = BlockTransformer(runtime, parameters, StitcherTokenFactory)

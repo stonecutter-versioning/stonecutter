@@ -10,6 +10,7 @@ import dev.kikugie.stitcher.issue.at
 import dev.kikugie.stitcher.parser.StitcherTokenFactory
 import dev.kikugie.stitcher.parser.component.DefinitionBuilder
 import dev.kikugie.stitcher.util.*
+import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.Token.EOF
 import org.antlr.v4.runtime.TokenStream
 import org.antlr.v4.runtime.Vocabulary
@@ -26,7 +27,12 @@ import java.util.*
  * The parser works with a scope stack, pushing incoming blocks to it.
  * The scope may accept the block or reject it, which means it should be closed.
  */
-internal class LayoutParser private constructor(val stream: TokenStream, val problems: ProblemSource, val factory: StitcherTokenFactory) : ProblemSource by problems {
+internal class LayoutParser private constructor(
+    val stream: TokenStream,
+    val source: CharStream,
+    val problems: ProblemSource,
+    val factory: StitcherTokenFactory
+) : ProblemSource by problems {
     private val stack: Deque<BlockBuilder.Scoped> = ArrayDeque(4)
     private val visitor: StitcherVisitor<Pair<AntlrToken, DefinitionToken>> = DefinitionBuilder.paired(problems, factory)
 
@@ -121,8 +127,9 @@ internal class LayoutParser private constructor(val stream: TokenStream, val pro
         }
 
         val listener = InlineErrorListener(problems, FileLineIndex(input), body.startIndex)
-        val lexer = StitcherLexer(input).errorListener(listener)
-        val parser = StitcherParser(InlineTokenStream(lexer, body.startIndex)).errorListener(listener)
+        val scanner = StitcherLexer(input).errorListener(listener)
+        val stream = InlineTokenStream(scanner, source, body.startIndex, at(body.startIndex))
+        val parser = StitcherParser(stream).errorListener(listener)
         return parser.definition().accept(visitor)
     }
 
@@ -135,8 +142,8 @@ internal class LayoutParser private constructor(val stream: TokenStream, val pro
         @JvmField val TOKEN_NAMES: Array<String?> = arrayOf(null, "CONTENT", "COMMENT_OPEN", "COMMENT_BODY", "COMMENT_CLOSE")
         @JvmField val VOCABULARY: Vocabulary = VocabularyImpl(emptyArray(), TOKEN_NAMES)
 
-        fun parse(stream: TokenStream, problems: ProblemSource, factory: StitcherTokenFactory): RootBlock =
-            LayoutParser(stream, problems, factory).collect()
+        fun parse(stream: TokenStream, source: CharStream, problems: ProblemSource, factory: StitcherTokenFactory): RootBlock =
+            LayoutParser(stream, source, problems, factory).collect()
     }
 }
 

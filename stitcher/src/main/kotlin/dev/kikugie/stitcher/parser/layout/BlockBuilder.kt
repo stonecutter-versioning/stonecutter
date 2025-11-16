@@ -43,7 +43,7 @@ internal class ContentBuilder(
         : this(factory, content.range, content.text)
 
     override fun build(): ContentBlock = ContentBlock(
-        factory.create(LeafType(LayoutParser.CONTENT), range, value), value.isBlank()
+        factory.create(LeafType(LayoutParser.CONTENT), range, value)
     )
 }
 
@@ -67,7 +67,7 @@ internal class RootBuilder(
     private val entries: MutableList<BlockBuilder> = mutableListOf()
 ) : BlockBuilder.Scoped {
     override fun build(): RootBlock = RootBlock(
-        entries.map(BlockBuilder::build)
+        entries.map(BlockBuilder::build).apply(BlockToken::link)
     )
 
     override fun accept(block: BlockBuilder): BlockAcceptResult =
@@ -86,9 +86,13 @@ internal class CodeBuilder(
     var satisfied: Boolean = definition.type.isScoped
         private set
 
-    override fun build(): CodeBlock = CodeBlock(
-        source.build(), factory.fromAntlrToken(marker), definition, entries.map(BlockBuilder::build)
-    )
+    override fun build(): CodeBlock {
+        val host = source.build()
+        val blocks = entries.map(BlockBuilder::build)
+        BlockToken.link(sequenceOf(host) + blocks)
+
+        return CodeBlock(host, factory.fromAntlrToken(marker), definition, blocks)
+    }
 
     override fun accept(block: BlockBuilder): BlockAcceptResult = when (definition.type) {
         SCOPED_OPENER, SCOPED_EXTENSION -> entries.addMerging(block) then BlockAcceptResult.ConsumedOpen
