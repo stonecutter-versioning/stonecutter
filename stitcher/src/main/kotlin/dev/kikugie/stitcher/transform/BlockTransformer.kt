@@ -17,7 +17,14 @@ import dev.kikugie.stitcher.parser.adapter.ScannerAdapter
 import dev.kikugie.stitcher.parser.layout.LayoutParser
 import dev.kikugie.stitcher.transform.impl.ExpressionEvaluator
 import dev.kikugie.stitcher.util.*
-import org.antlr.v4.runtime.*
+import org.antlr.v4.runtime.CharStream
+import org.antlr.v4.runtime.CommonTokenStream
+import org.antlr.v4.runtime.ListTokenSource
+import org.antlr.v4.runtime.Token
+import org.antlr.v4.runtime.TokenSource
+import org.antlr.v4.runtime.TokenStream
+import org.antlr.v4.runtime.misc.Pair
+import java.util.*
 
 internal data class BlockTransformer(
     val runtime: RuntimeState,
@@ -115,17 +122,20 @@ internal data class BlockTransformer(
     }
 }
 
-private class BlockUncommenter(val blocks: List<BlockToken>, val parameters: TransformParameters, val runtime: RuntimeState) : QueueTokenSource(runtime.input) {
-    var index = 0
-
-    override fun advance() {
-        if (index < blocks.size) match(blocks[index++])
-        else if (index == blocks.size) push(tokenFactory.create(AntlrToken.EOF, ""))
+private class BlockUncommenter(
+    blocks: List<BlockToken>,
+    val parameters: TransformParameters,
+    val runtime: RuntimeState,
+    list: MutableList<AntlrToken> = mutableListOf()
+) : ListTokenSource(list) {
+    init {
+        val source: Pair<TokenSource, CharStream> = Pair(this, runtime.input)
+        for (it: BlockToken in blocks) match(list, source, it)
     }
 
-    private fun match(block: BlockToken) = when (block) {
+    private fun match(tokens: MutableList<AntlrToken>, source: Pair<TokenSource, CharStream>, block: BlockToken): Unit = when (block) {
         is ContentBlock -> {
-            push(tokenFactory.create(tokenSource, LayoutParser.CONTENT, block.leaf.range, block.leaf.text))
+            tokens += tokenFactory.create(source, LayoutParser.CONTENT, block.leaf.text, block.leaf.range, runtime.at(block.leaf))
         }
 
         is CommentBlock -> {
@@ -136,9 +146,11 @@ private class BlockUncommenter(val blocks: List<BlockToken>, val parameters: Tra
                 scanner.errorListener(InlineErrorListener(runtime, FileLineIndex(content), start))
             }
 
-            InlineTokenStream(scanner, runtime.input, start, runtime.at(start))
-                .asSequence()
-                .forEach(::push)
+            var next: AntlrToken
+            val stream = InlineTokenStream(scanner, runtime.input, start, runtime.at(start))
+            while (stream.LT(1).also { next = it }.type != AntlrToken.EOF) {
+                tokens += next; stream.consume()
+            }
         }
 
         else -> error("Illegal block type ${block::class.simpleName}")

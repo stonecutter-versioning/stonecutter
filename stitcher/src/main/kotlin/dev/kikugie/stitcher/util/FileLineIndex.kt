@@ -25,6 +25,12 @@ public class FileLineIndex private constructor(private val lines: IntArray) {
     }
 
     @Throws(IndexOutOfBoundsException::class)
+    public fun indexOf(location: ProblemLocation): Int {
+        check(!location.isUndefined) { "Unable to index an undefined location" }
+        return indexOf(location.line, location.column - 1)
+    }
+
+    @Throws(IndexOutOfBoundsException::class)
     public fun indexOf(line: Int, offset: Int): Int =
         lines[line - 1] + offset
 

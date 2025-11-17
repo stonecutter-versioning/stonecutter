@@ -43,8 +43,8 @@ internal fun TokenStream.asSequence() = generateSequence { LT(1).takeIf { it.typ
 internal fun <T : AntlrToken> TokenFactory<T>.create(src: TokenSource, type: Int, start: Int, stop: Int, line: Int, offset: Int, input: CharStream? = null): T =
     create(Pair(src, input), type, null, Token.DEFAULT_CHANNEL, start, stop, line, offset)
 
-internal fun <T : AntlrToken> TokenFactory<T>.create(src: Pair<TokenSource, CharStream>, type: Int, range: IntRange, text: String? = null, line: Int = -1, offset: Int = -1): T =
-    create(src, type, text, Token.DEFAULT_CHANNEL, range.first, range.last, line, offset)
+internal fun <T : AntlrToken> TokenFactory<T>.create(src: Pair<TokenSource, CharStream>, type: Int, text: String?, range: IntRange, location: ProblemLocation = ProblemLocation.UNDEFINED): T =
+    create(src, type, text, Token.DEFAULT_CHANNEL, range.first, range.last, location.line, (location.column - 1).coerceAtLeast(-1))
 
 internal fun <T : Recognizer<*, *>> T.errorListener(listener: ANTLRErrorListener) = apply {
     errorListeners.clear()

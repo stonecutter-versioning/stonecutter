@@ -234,6 +234,24 @@ class SyntaxTest : FreeSpec({
             process(content) shouldBe expected
         }
 
+        "split comment indent" {
+            @Language("JAVA") val content = """
+                hello();
+                    //? if true
+                    /*int one = 1;
+                    int two = 2;
+                    */
+            """.trimIndent()
+            @Language("JAVA") val expected = """
+                hello();
+                    //? if true
+                    int one = 1;
+                    /*int two = 2;
+                    */
+            """.trimIndent()
+            process(content) shouldBe expected
+        }
+
         "excluded line break" {
             @Language("JAVA") val content = """
                 //? if true
