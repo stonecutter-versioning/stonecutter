@@ -68,8 +68,9 @@ internal class ProjectTreeImpl(
     internal lateinit var gradle: Gradle
     override var current: StonecutterProject? = null
         internal set(value) {
-            field?.overrideActiveState(false)
-            value?.overrideActiveState(true)
+            if (value == field) return
+            for (it in nodes)
+                it.metadata.overrideActiveState(it.metadata == value)
             field = value
         }
     override val branches: Collection<ProjectBranch>
