@@ -15,7 +15,7 @@ import org.gradle.api.plugins.ExtensionAware
 public open class StonecutterPlugin : Plugin<ExtensionAware> {
     public companion object {
         /**Current Stonecutter version.*/ // Updated by ':updateVersion' task during build
-        public const val VERSION: String = "0.7.11-beta.1"
+        public const val VERSION: String = "0.7.11"
     }
 
     /**
