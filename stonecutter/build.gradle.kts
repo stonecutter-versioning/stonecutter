@@ -52,7 +52,6 @@ dependencies {
 
     testImplementation(gradleTestKit())
     testImplementation(common.kotest.runner)
-    testImplementation(common.kotest.datatest)
     testImplementation(common.kotest.assertions)
 }
 

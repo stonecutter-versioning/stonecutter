@@ -28,13 +28,6 @@ dokka {
     }
 }
 
-configurations.configureEach {
-    if (isCanBeConsumed) attributes.attribute(
-        GradlePluginApiVersion.GRADLE_PLUGIN_API_VERSION_ATTRIBUTE,
-        objects.named(GradleVersion.current().version)
-    )
-}
-
 tasks {
     register<UpdateVersionTask>("updateVersion") {
         group = "documentation"

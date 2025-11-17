@@ -7,7 +7,7 @@ import org.gradle.api.provider.Provider
  * Dynamic values are not checked until the map is queried, which may have duplicates until the realised map is built.
  * Bulk additions don't support dynamic suppliers due to type erasure.
  */
-public interface DynamicMap<K, V> : MutableMap<K, V> {
+public interface DynamicMap<K : Any, V : Any> : MutableMap<K, V> {
     public operator fun set(key: K, value: V) {
         put(key, value)
     }
