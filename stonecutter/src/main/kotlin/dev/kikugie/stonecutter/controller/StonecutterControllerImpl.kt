@@ -136,7 +136,7 @@ internal abstract class StonecutterControllerImpl(val root: Project) :
     }
 
     private fun configureFileHandlers() {
-        handlers.configureIfAbsent("java", "scala", "json5") {
+        handlers.configureIfAbsent("java", "scala", "json5", "fsh", "vsh") {
             comment(Presets.Commenter.JavaStar)
             uncomment(Presets.Uncommenter.Java)
             scanner { from(Presets.Scanner.Java) }
