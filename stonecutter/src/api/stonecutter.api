@@ -54,6 +54,8 @@ public abstract interface class dev/kikugie/stonecutter/build/ext/ReplacementCon
 	public abstract fun getReverseValue ()Lorg/gradle/api/provider/Property;
 	public abstract fun getToValue ()Lorg/gradle/api/provider/Property;
 	public fun replace (Ljava/lang/String;Ljava/lang/String;)V
+	public fun replace (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun replace (Lkotlin/Pair;Lkotlin/Pair;)V
 	public fun reverse (Ljava/lang/String;Ljava/lang/String;)V
 }
 
@@ -62,7 +64,7 @@ public abstract interface class dev/kikugie/stonecutter/build/ext/ReplacementCon
 	public abstract fun getFrom ()Lorg/gradle/api/provider/Property;
 	public abstract fun getId ()Lorg/gradle/api/provider/Property;
 	public abstract fun getTo ()Lorg/gradle/api/provider/Property;
-	public fun replace (Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun replace (Ljava/lang/String;Ljava/lang/String;)V
 }
 
 public abstract interface class dev/kikugie/stonecutter/build/ext/SwapContainer : dev/kikugie/stonecutter/build/util/DynamicMap {
@@ -224,6 +226,7 @@ public final class dev/kikugie/stonecutter/data/StonecutterProject {
 	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Ldev/kikugie/stonecutter/data/StonecutterProject;
 	public static synthetic fun copy$default (Ldev/kikugie/stonecutter/data/StonecutterProject;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/kikugie/stonecutter/data/StonecutterProject;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getParsed ()Ldev/kikugie/stonecutter/data/StonecutterVersion;
 	public final fun getProject ()Ljava/lang/String;
 	public final fun getVersion ()Ljava/lang/String;
 	public fun hashCode ()I
