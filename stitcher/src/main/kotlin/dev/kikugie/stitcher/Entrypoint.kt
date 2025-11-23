@@ -14,7 +14,6 @@ import dev.kikugie.stitcher.transform.RuntimeState
 import dev.kikugie.stitcher.transform.TransformParameters
 import dev.kikugie.stitcher.transform.impl.InvalidArgChecker
 import dev.kikugie.stitcher.util.FileLineIndex
-import dev.kikugie.stitcher.util.buildString
 import dev.kikugie.stitcher.util.errorListener
 import dev.kikugie.stitcher.util.toStream
 import org.antlr.v4.runtime.CommonTokenStream
@@ -39,9 +38,7 @@ public fun process(file: Path, contents: String, parameters: TransformParameters
     val modified = layout.accept(transformer)
     if (problems.hasFailed) throw BailException()
 
-    val content = modified.join()
-    return if (runtime.replacer == null || parameters.replacements.isEmpty()) content
-    else buildString(content) { runtime.replacer!!.replace(this) }
+    return modified.join()
 }
 
 private class ProblemStorage(

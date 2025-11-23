@@ -13,7 +13,9 @@ import dev.kikugie.stitcher.transform.TransformParameters
 import dev.kikugie.stitcher.transform.impl.LineCommentStrategy
 import dev.kikugie.stitcher.transform.impl.StandardSwapStrategy
 import dev.kikugie.stitcher.transform.impl.StarCommentStrategy
+import dev.kikugie.stitcher.transform.replacement.Replacement
 import dev.kikugie.stitcher.transform.replacement.ReplacementBuilder
+import dev.kikugie.stitcher.transform.replacement.StringReplacement
 import dev.kikugie.stitcher.transform.strategy.CommentingStrategy
 import dev.kikugie.stitcher.transform.strategy.SwappingStrategy
 import dev.kikugie.stitcher.transform.strategy.UncommentingStrategy
@@ -65,7 +67,10 @@ class TransformParametersBuilder {
     val swaps: MutableMap<String, String> = mutableMapOf()
     val constants: MutableMap<String, Boolean> = mutableMapOf("true" to true, "false" to false)
     val dependencies: MutableMap<String, Version> = mutableMapOf()
-    val replacements: ReplacementBuilder<*> = ReplacementBuilder()
+    val replacements: ReplacementBuilder<Replacement> = ReplacementBuilder()
+
+    fun ReplacementBuilder<Replacement>.string(from: String, to: String, id: String? = null) =
+        add(StringReplacement(to, setOf(from), identifier = id)).getOrThrow()
 
     fun build() = TransformParameters(adapter, commenter, uncommenter, swapper, swaps, constants, dependencies, replacements.build())
 

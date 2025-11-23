@@ -33,6 +33,7 @@ internal data class BlockTransformer(
 ) : BlockToken.Visitor<BlockToken>, ProblemSource by runtime.problems {
     private val evaluator: ExpressionEvaluator by lazy { ExpressionEvaluator(params, runtime) }
     private var visitedEnabledBlock: Boolean = false
+    private var shouldApplyReplacements: Boolean = true
 
     override fun visitRoot(root: RootBlock) = root.copy(scope = root.scope.map { it.accept(this) })
     override fun visitCode(code: CodeBlock) = code.copy(scope = code.definition.accept(ScopeTransformer(code)))
@@ -49,12 +50,19 @@ internal data class BlockTransformer(
     }
 
     override fun visitContent(content: ContentBlock): BlockToken {
-        if (content.isNotBlank()) runtime.initializeReplacements(params.replacements)
-        return content
+        if (content.isBlank())
+            return content
+
+        runtime.initializeReplacements(params.replacements)
+        if (!shouldApplyReplacements || !params.replacements.isNotEmpty())
+            return content
+
+        val modified = buildString(content.join()) { runtime.replacer!!.replace(this) }
+        return ContentBlock(content.leaf.copy(text = modified)).inherit(content)
     }
 
     private fun visitScope(tokens: Iterable<BlockToken>, link: Boolean): List<BlockToken> {
-        val copy = this@BlockTransformer.copy()
+        val copy = this@BlockTransformer.copy().apply { shouldApplyReplacements = link }
         return tokens.map { it.accept(copy) }.applyIf(link, BlockToken::link)
     }
 

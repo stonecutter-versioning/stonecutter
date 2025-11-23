@@ -84,3 +84,9 @@ internal data class RootBlock(val scope: List<BlockToken>) : BlockToken {
 
     override fun <T> accept(visitor: BlockToken.Visitor<T>): T = visitor.visitRoot(this)
 }
+
+internal fun <T : BlockToken> T.inherit(prev: BlockToken): T = apply {
+    parent = prev.parent
+    nextBlock = prev.nextBlock
+    prevBlock = prev.prevBlock
+}
