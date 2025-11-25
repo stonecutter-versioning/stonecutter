@@ -10,7 +10,7 @@ import dev.kikugie.stitcher.util.buildString
 internal class ReplacementProcessor(val replacements: List<Replacement>, problems: ProblemSource) : ProblemSource by problems {
     private val builder: ReplacementBuilder<Replacement> by lazy { ReplacementBuilder(replacements.filter { it.identifier == null }) }
     private val entries: List<Replacement> by lazy { builder.build() }
-    private lateinit var executor: ReplacementExecutor<Replacement>
+    private lateinit var executor: ReplacementExecutor
 
     operator fun plusAssign(host: CodeBlock) {
         if (::executor.isInitialized)

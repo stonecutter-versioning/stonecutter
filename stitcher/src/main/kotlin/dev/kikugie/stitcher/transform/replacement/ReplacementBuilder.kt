@@ -2,8 +2,21 @@ package dev.kikugie.stitcher.transform.replacement
 
 import dev.kikugie.stitcher.util.isValidIdentifier
 
+/**
+ * A generic [Replacement] set builder that validates provided entries.
+ * - [StringReplacement]s are optimized using path compression to avoid order-dependent issues and ensure replacement reversibility.
+ * - [RegexReplacement]s are stored in a list, without any optimizations.
+ */
 public interface ReplacementBuilder<T : Replacement> {
-    public fun add(replacement: T): Result<Unit>
+    /**
+     * Validates and adds the [replacement] to the builder.
+     * @throws ReplacementException if the replacement is invalid or violates the reversibility rules.
+     */
+    public fun add(replacement: T)
+
+    /**
+     * Produces an immutable list of stored replacements.
+     */
     public fun build(): List<T>
 
     public companion object {
@@ -22,7 +35,7 @@ private class CompositeReplacementBuilder(entries: Iterable<Replacement>) : Repl
     private val regexBuilder: RegexReplacementBuilder = RegexReplacementBuilder(entries.filterIsInstance<RegexReplacement>())
     private val stringBuilder: StringReplacementBuilder = StringReplacementBuilder(entries.filterIsInstance<StringReplacement>())
 
-    override fun add(replacement: Replacement): Result<Unit> = when (replacement) {
+    override fun add(replacement: Replacement) = when (replacement) {
         is StringReplacement -> stringBuilder.add(replacement)
         is RegexReplacement -> regexBuilder.add(replacement)
     }
@@ -38,7 +51,7 @@ private class StringReplacementBuilder() : ReplacementBuilder<StringReplacement>
 
     override fun build(): List<StringReplacement> = stubs.map(StringReplacementStub::build)
 
-    override fun add(replacement: StringReplacement): Result<Unit> = replacement.runCatching {
+    override fun add(replacement: StringReplacement) = with(replacement) {
         if (target.isEmpty() || sources.any(String::isEmpty))
             throw ReplacementException("Empty replacement value", toDescriptorString())
         if (identifier != null && !identifier.isValidIdentifier())
@@ -98,7 +111,7 @@ private class RegexReplacementBuilder() : ReplacementBuilder<RegexReplacement> {
 
     override fun build(): List<RegexReplacement> = replacements.toList()
 
-    override fun add(replacement: RegexReplacement): Result<Unit> = replacement.runCatching {
+    override fun add(replacement: RegexReplacement) = with(replacement) {
         if (pattern.isEmpty() || target.isEmpty())
             throw ReplacementException("Empty replacement value", toDescriptorString())
         if (identifier != null && !identifier.isValidIdentifier())

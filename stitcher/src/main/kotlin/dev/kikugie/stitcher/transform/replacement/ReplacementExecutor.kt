@@ -3,20 +3,23 @@ package dev.kikugie.stitcher.transform.replacement
 import org.ahocorasick.interval.Interval
 import org.ahocorasick.trie.PayloadTrie
 
-internal interface ReplacementExecutor<T : Replacement> {
+/**
+ * Mutably applies replacements to [StringBuilder] contents.
+ */
+internal fun interface ReplacementExecutor {
     fun replace(builder: StringBuilder)
 
     companion object {
-        operator fun invoke(replacements: List<Replacement>): ReplacementExecutor<Replacement> =
+        operator fun invoke(replacements: List<Replacement>): ReplacementExecutor =
             if (replacements.isEmpty()) DummyReplacementExecutor else CompositeReplacementExecutor(replacements)
     }
 }
 
-private object DummyReplacementExecutor : ReplacementExecutor<Replacement> {
+private object DummyReplacementExecutor : ReplacementExecutor {
     override fun replace(builder: StringBuilder) = Unit
 }
 
-private class CompositeReplacementExecutor(replacements: List<Replacement>) : ReplacementExecutor<Replacement> {
+private class CompositeReplacementExecutor(replacements: List<Replacement>) : ReplacementExecutor {
     private val stringExecutor = StringReplacementExecutor(replacements.filterIsInstance<StringReplacement>())
     private val regexExecutor = RegexReplacementExecutor(replacements.filterIsInstance<RegexReplacement>())
 
@@ -27,7 +30,7 @@ private class CompositeReplacementExecutor(replacements: List<Replacement>) : Re
 }
 
 // TODO: Add case-insensitive and word matching options as Stonecutter flags
-private class StringReplacementExecutor(replacements: List<StringReplacement>) : ReplacementExecutor<StringReplacement> {
+private class StringReplacementExecutor(replacements: List<StringReplacement>) : ReplacementExecutor {
     private val trie: PayloadTrie<ReplacementAction> by lazy { buildActions(replacements).ignoreOverlaps().build() }
 
     override fun replace(builder: StringBuilder) {
@@ -50,7 +53,7 @@ private class StringReplacementExecutor(replacements: List<StringReplacement>) :
     }
 }
 
-private class RegexReplacementExecutor(val replacements: List<RegexReplacement>) : ReplacementExecutor<RegexReplacement> {
+private class RegexReplacementExecutor(val replacements: List<RegexReplacement>) : ReplacementExecutor {
     override fun replace(builder: StringBuilder) {
         for (repl in replacements) for (match in repl.regex.findAll(builder).toList().reversed())
             builder.replaceRange(match.range, repl.target)

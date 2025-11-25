@@ -17,10 +17,10 @@ private inline fun replacements(action: ReplacementBuilder<Replacement>.() -> Un
     ReplacementBuilder().apply(action).build()
 
 private inline fun ReplacementBuilder<Replacement>.string(from: String, to: String, id: String? = null) =
-    add(StringReplacement(to, from, identifier = id)).getOrThrow()
+    add(StringReplacement(to, from, identifier = id))
 
 private inline fun ReplacementBuilder<Replacement>.regex(@Language("RegExp") from: String, to: String, id: String? = null) =
-    add(RegexReplacement(to, from, identifier = id)).getOrThrow()
+    add(RegexReplacement(to, from, identifier = id))
 
 class ReplacementValidationTest : FunSpec({
     context("generic") {

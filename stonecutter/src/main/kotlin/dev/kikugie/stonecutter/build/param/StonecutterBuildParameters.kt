@@ -76,8 +76,8 @@ public abstract class StonecutterBuildParameters @Inject internal constructor(
         regexReplacements.set(factory.provider { regexReplacementBuilder.build().map(objects::regexSpec) })
     }
 
-    internal fun addString(repl: StringReplacement): Unit = stringReplacementBuilder.add(repl).getOrThrow()
-    internal fun addRegex(repl: RegexReplacement): Unit = regexReplacementBuilder.add(repl).getOrThrow()
+    internal fun addString(repl: StringReplacement): Unit = stringReplacementBuilder.add(repl)
+    internal fun addRegex(repl: RegexReplacement): Unit = regexReplacementBuilder.add(repl)
 
     internal fun toBuildData(): StonecutterBuildData {
         val constants = constants.get()
