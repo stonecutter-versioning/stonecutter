@@ -29,3 +29,8 @@ public data class RegexReplacement(
         : this(target, pattern, options.toSet(), identifier)
     val regex: Regex get() = Regex(pattern, flags)
 }
+
+internal fun Replacement.asAnonymous(): Replacement = when(this) {
+    is StringReplacement -> copy(identifier = null)
+    is RegexReplacement -> copy(identifier = null)
+}

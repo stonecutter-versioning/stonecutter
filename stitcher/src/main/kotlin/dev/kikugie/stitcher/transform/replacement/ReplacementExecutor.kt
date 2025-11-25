@@ -7,14 +7,18 @@ internal interface ReplacementExecutor<T : Replacement> {
     fun replace(builder: StringBuilder)
 
     companion object {
-        operator fun invoke(replacements: List<Replacement>, identifiers: Collection<String>): ReplacementExecutor<Replacement> =
-            CompositeReplacementExecutor(replacements, identifiers)
+        operator fun invoke(replacements: List<Replacement>): ReplacementExecutor<Replacement> =
+            if (replacements.isEmpty()) DummyReplacementExecutor else CompositeReplacementExecutor(replacements)
     }
 }
 
-private class CompositeReplacementExecutor(replacements: List<Replacement>, identifiers: Collection<String>) : ReplacementExecutor<Replacement> {
-    private val stringExecutor = StringReplacementExecutor(replacements, identifiers)
-    private val regexExecutor = RegexReplacementExecutor(replacements, identifiers)
+private object DummyReplacementExecutor : ReplacementExecutor<Replacement> {
+    override fun replace(builder: StringBuilder) = Unit
+}
+
+private class CompositeReplacementExecutor(replacements: List<Replacement>) : ReplacementExecutor<Replacement> {
+    private val stringExecutor = StringReplacementExecutor(replacements.filterIsInstance<StringReplacement>())
+    private val regexExecutor = RegexReplacementExecutor(replacements.filterIsInstance<RegexReplacement>())
 
     override fun replace(builder: StringBuilder) {
         stringExecutor.replace(builder)
@@ -23,29 +27,12 @@ private class CompositeReplacementExecutor(replacements: List<Replacement>, iden
 }
 
 // TODO: Add case-insensitive and word matching options as Stonecutter flags
-private class StringReplacementExecutor(replacements: List<Replacement>, identifiers: Collection<String>) : ReplacementExecutor<StringReplacement> {
-    private val trie: PayloadTrie<ReplacementAction> by lazy {
-        buildActions(buildReplacements(replacements, identifiers)).ignoreOverlaps().build()
-    }
+private class StringReplacementExecutor(replacements: List<StringReplacement>) : ReplacementExecutor<StringReplacement> {
+    private val trie: PayloadTrie<ReplacementAction> by lazy { buildActions(replacements).ignoreOverlaps().build() }
 
     override fun replace(builder: StringBuilder) {
         for (emit in trie.parseText(builder).reversed())
             emit.payload?.replace(builder, emit)
-    }
-
-    private fun buildReplacements(replacements: List<Replacement>, identifiers: Collection<String>): List<StringReplacement> {
-        val stringReplacements = replacements.asSequence().filterIsInstance<StringReplacement>()
-        val unnamedReplacements = stringReplacements.filter { it.identifier == null }.toList()
-        val namedReplacements = stringReplacements.filter { it.identifier in identifiers }.toList()
-        return when {
-            namedReplacements.isEmpty() && unnamedReplacements.isEmpty() -> emptyList()
-            namedReplacements.isEmpty() -> unnamedReplacements
-            unnamedReplacements.isEmpty() -> namedReplacements
-            else -> ReplacementBuilder.string(unnamedReplacements)
-                // TODO: Handle the exception
-                .apply { for (it in namedReplacements) add(it.copy(identifier = null)).getOrThrow() }
-                .build()
-        }
     }
 
     private fun buildActions(replacements: List<StringReplacement>) = PayloadTrie.builder<ReplacementAction>().apply {
@@ -63,12 +50,7 @@ private class StringReplacementExecutor(replacements: List<Replacement>, identif
     }
 }
 
-private class RegexReplacementExecutor(replacements: List<Replacement>, identifiers: Collection<String>) : ReplacementExecutor<RegexReplacement> {
-    private val replacements: List<RegexReplacement> by lazy {
-        @Suppress("UNCHECKED_CAST")
-        replacements.filter { it is RegexReplacement && (it.identifier == null || it.identifier in identifiers) } as List<RegexReplacement>
-    }
-
+private class RegexReplacementExecutor(val replacements: List<RegexReplacement>) : ReplacementExecutor<RegexReplacement> {
     override fun replace(builder: StringBuilder) {
         for (repl in replacements) for (match in repl.regex.findAll(builder).toList().reversed())
             builder.replaceRange(match.range, repl.target)

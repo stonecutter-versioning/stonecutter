@@ -24,13 +24,13 @@ public fun process(file: Path, contents: String, parameters: TransformParameters
     val input = contents.toStream(file.absolutePathString())
     val index = FileLineIndex(input)
     val problems = ProblemStorage(file, index, reporter)
-    val runtime = RuntimeState(input, problems)
+    val runtime = RuntimeState(input, problems, parameters)
     val source = parameters.adapter.create(input, runtime.problems).apply {
         scanner.errorListener(InlineErrorListener(runtime.problems, index))
     }
     val layout = LayoutParser.parse(CommonTokenStream(source), input, runtime.problems, StitcherTokenFactory)
     if (problems.hasFailed) {
-        layout.accept(InvalidArgChecker(parameters, runtime))
+        layout.accept(InvalidArgChecker(parameters, problems))
         throw BailException()
     }
 

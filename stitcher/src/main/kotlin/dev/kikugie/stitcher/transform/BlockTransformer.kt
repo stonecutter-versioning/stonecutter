@@ -1,5 +1,6 @@
 package dev.kikugie.stitcher.transform
 
+import dev.kikugie.commons.then
 import dev.kikugie.stitcher.antlr.InlineErrorListener
 import dev.kikugie.stitcher.antlr.InlineTokenStream
 import dev.kikugie.stitcher.antlr.StitcherLexer
@@ -26,7 +27,7 @@ internal data class BlockTransformer(
     val params: TransformParameters,
     val factory: StitcherTokenFactory
 ) : BlockToken.Visitor<BlockToken>, ProblemSource by runtime.problems {
-    private val evaluator: ExpressionEvaluator by lazy { ExpressionEvaluator(params, runtime) }
+    private val evaluator: ExpressionEvaluator by lazy { ExpressionEvaluator(params, runtime.problems) }
     private var visitedEnabledBlock: Boolean = false
     private var shouldApplyReplacements: Boolean = true
 
@@ -44,16 +45,10 @@ internal data class BlockTransformer(
         return factory.create(LeafType(LayoutParser.CONTENT), comment.range(), content).let(::ContentBlock)
     }
 
-    override fun visitContent(content: ContentBlock): BlockToken {
-        if (content.isBlank())
-            return content
-
-        runtime.initializeReplacements(params.replacements)
-        if (!shouldApplyReplacements || !params.replacements.isNotEmpty())
-            return content
-
-        val modified = buildString(content.join()) { runtime.replacer!!.replace(this) }
-        return ContentBlock(content.leaf.copy(text = modified))
+    override fun visitContent(content: ContentBlock): BlockToken = when {
+        content.isBlank() -> content
+        !shouldApplyReplacements -> runtime.replacer.finalize() then content
+        else -> runtime.replacer.replace(content.join())?.let { ContentBlock(content.leaf.copy(text = it)) } ?: content
     }
 
     private fun visitScope(tokens: Iterable<BlockToken>, runReplacements: Boolean): List<BlockToken> {
@@ -63,13 +58,12 @@ internal data class BlockTransformer(
 
     private inner class ScopeTransformer(val host: CodeBlock) : DefinitionToken.Visitor<List<BlockToken>> {
         override fun visitReplacement(repl: ReplacementDefinition): List<BlockToken> {
-            if (runtime.replacer != null) at(host.marker) report "Late replacement token"
-            else runtime.includeReplacement(repl.identifier.text)
+            runtime.replacer += host
             return emptyList()
         }
 
         override fun visitSwap(swap: SwapDefinition): List<BlockToken> {
-            runtime.initializeReplacements(params.replacements)
+            runtime.replacer.finalize()
             if (swap !is SwapDefinition.Opener) return emptyList()
 
             val template = params.swaps[swap.identifier.text]
@@ -85,7 +79,7 @@ internal data class BlockTransformer(
         }
 
         override fun visitCondition(cond: ConditionDefinition): List<BlockToken> {
-            runtime.initializeReplacements(params.replacements)
+            runtime.replacer.finalize()
             if (cond !is ConditionDefinition.Extension) visitedEnabledBlock = false
             if (cond is ConditionDefinition.Closer) return emptyList()
 
@@ -138,19 +132,19 @@ private class BlockUncommenter(
 
     private fun match(tokens: MutableList<AntlrToken>, source: Pair<TokenSource, CharStream>, block: BlockToken): Unit = when (block) {
         is ContentBlock -> {
-            tokens += tokenFactory.create(source, LayoutParser.CONTENT, block.leaf.text, block.leaf.range, runtime.at(block.leaf))
+            tokens += tokenFactory.create(source, LayoutParser.CONTENT, block.leaf.text, block.leaf.range, runtime.problems.at(block.leaf))
         }
 
         is CommentBlock -> {
             val start: Int = block.body.range.first
             val content: CharStream = parameters.uncommenter.uncomment(block.body.text, block.opener?.text.orEmpty(), block.closer?.text.orEmpty())
                 .toStream(runtime.input.sourceName)
-            val scanner: ScannerAdapter = parameters.adapter.create(content, runtime).apply {
-                scanner.errorListener(InlineErrorListener(runtime, FileLineIndex(content), start))
+            val scanner: ScannerAdapter = parameters.adapter.create(content, runtime.problems).apply {
+                scanner.errorListener(InlineErrorListener(runtime.problems, FileLineIndex(content), start))
             }
 
             var next: AntlrToken
-            val stream = InlineTokenStream(scanner, runtime.input, start, runtime.at(start))
+            val stream = InlineTokenStream(scanner, runtime.input, start, runtime.problems.at(start))
             while (stream.LT(1).also { next = it }.type != AntlrToken.EOF) {
                 tokens += next; stream.consume()
             }
