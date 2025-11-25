@@ -1,10 +1,11 @@
 package dev.kikugie.stitcher.transform
 
-import dev.kikugie.commons.applyIf
-import dev.kikugie.stitcher.antlr.*
+import dev.kikugie.stitcher.antlr.InlineErrorListener
+import dev.kikugie.stitcher.antlr.InlineTokenStream
+import dev.kikugie.stitcher.antlr.StitcherLexer
+import dev.kikugie.stitcher.antlr.SwapTemplate
 import dev.kikugie.stitcher.data.composite.*
 import dev.kikugie.stitcher.data.eval.BlockIsBlankVisitor.isBlank
-import dev.kikugie.stitcher.data.eval.BlockIsBlankVisitor.isNotBlank
 import dev.kikugie.stitcher.data.eval.BlockRangeVisitor.range
 import dev.kikugie.stitcher.data.eval.BlockStartVisitor.start
 import dev.kikugie.stitcher.data.eval.BlockToStringVisitor.Companion.join
@@ -17,14 +18,8 @@ import dev.kikugie.stitcher.parser.adapter.ScannerAdapter
 import dev.kikugie.stitcher.parser.layout.LayoutParser
 import dev.kikugie.stitcher.transform.impl.ExpressionEvaluator
 import dev.kikugie.stitcher.util.*
-import org.antlr.v4.runtime.CharStream
-import org.antlr.v4.runtime.CommonTokenStream
-import org.antlr.v4.runtime.ListTokenSource
-import org.antlr.v4.runtime.Token
-import org.antlr.v4.runtime.TokenSource
-import org.antlr.v4.runtime.TokenStream
+import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Pair
-import java.util.*
 
 internal data class BlockTransformer(
     val runtime: RuntimeState,
@@ -58,12 +53,12 @@ internal data class BlockTransformer(
             return content
 
         val modified = buildString(content.join()) { runtime.replacer!!.replace(this) }
-        return ContentBlock(content.leaf.copy(text = modified)).inherit(content)
+        return ContentBlock(content.leaf.copy(text = modified))
     }
 
-    private fun visitScope(tokens: Iterable<BlockToken>, link: Boolean): List<BlockToken> {
-        val copy = this@BlockTransformer.copy().apply { shouldApplyReplacements = link }
-        return tokens.map { it.accept(copy) }.applyIf(link, BlockToken::link)
+    private fun visitScope(tokens: Iterable<BlockToken>, runReplacements: Boolean): List<BlockToken> {
+        val copy = this@BlockTransformer.copy().apply { shouldApplyReplacements = runReplacements }
+        return tokens.map { it.accept(copy) }
     }
 
     private inner class ScopeTransformer(val host: CodeBlock) : DefinitionToken.Visitor<List<BlockToken>> {

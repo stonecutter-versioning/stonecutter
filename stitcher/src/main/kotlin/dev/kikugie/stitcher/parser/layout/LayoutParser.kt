@@ -41,12 +41,19 @@ internal class LayoutParser private constructor(
     }
 
     private fun collect(): RootBlock {
+        consumeTokenStream()
+        return finalizeUnfinishedScopes()
+    }
+
+    private fun consumeTokenStream() {
         while (stream.LA(1) != EOF) when (stream.LA(1)) {
             CONTENT -> handleContent(stream.advance())
             COMMENT_OPEN -> handleComment(stream.advance(), stream.advance(), stream.advance())
             else -> at(stream.advance()) report "Unexpected token"
         }
+    }
 
+    private fun finalizeUnfinishedScopes(): RootBlock {
         while (stack.isNotEmpty()) when (val it = stack.removeLast()) {
             is RootBuilder -> return it.build()
             is CodeBuilder -> it.finalize(problems, true)
@@ -90,30 +97,36 @@ internal class LayoutParser private constructor(
     }
 
     private fun handleCode(code: CodeBuilder): Unit = when (val parent = stack.peekLast()) {
-        is RootBuilder -> {
-            acceptBlock(code)
-            // '}' shouldn't be possible in the root scope
-            if (code.definition.closer != null)
-                at(code.definition.closer!!) report "Unmatched scope closer"
+        is RootBuilder -> handleRootCode(code)
+        is CodeBuilder -> handleNestedCode(code, parent)
+    }
 
-            // Add invalid extensions to the scope stack anyway
-            if (code.type != CLOSER) stack.addLast(code) else Unit
-        }
+    private fun LayoutParser.handleRootCode(code: CodeBuilder) {
+        acceptBlock(code)
+        // '}' shouldn't be possible in the root scope
+        if (code.definition.closer != null)
+            at(code.definition.closer!!) report "Unmatched scope closer"
 
-        is CodeBuilder -> {
-            // Check for situations like `? if condition { ... $}`, in which case we close it anyway
-            if (code.type.isExtension && parent.kind != code.kind)
-                at(code.marker) report "Extension closes unmatched ${parent.kind.scopeType()} scope"
+        // Add invalid extensions to the scope stack anyway
+        if (code.type != CLOSER) stack.addLast(code) else Unit
+    }
 
-            // Occurs if we have an unfinished open scope, in which case we close it prematurely
-            if (code.type.isExtension && parent.type.isOpen)
-                at(code.marker) report "Extension closes an open scope"
+    private fun LayoutParser.handleNestedCode(
+        code: CodeBuilder,
+        parent: CodeBuilder
+    ) {
+        // Check for situations like `? if condition { ... $}`, in which case we close it anyway
+        if (code.type.isExtension && parent.kind != code.kind)
+            at(code.marker) report "Extension closes unmatched ${parent.kind.scopeType()} scope"
 
-            if (code.type.isExtension)
-                stack.removeLast().finalize(problems, false)
-            acceptBlock(code)
-            if (!code.type.isEmpty) stack.addLast(code) else Unit
-        }
+        // Occurs if we have an unfinished open scope, in which case we close it prematurely
+        if (code.type.isExtension && parent.type.isOpen)
+            at(code.marker) report "Extension closes an open scope"
+
+        if (code.type.isExtension)
+            stack.removeLast().finalize(problems, false)
+        acceptBlock(code)
+        if (!code.type.isEmpty) stack.addLast(code) else Unit
     }
 
     private fun parseCommentBody(body: AntlrToken): Pair<AntlrToken, DefinitionToken>? {

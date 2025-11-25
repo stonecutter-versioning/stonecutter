@@ -67,7 +67,7 @@ internal class RootBuilder(
     private val entries: MutableList<BlockBuilder> = mutableListOf()
 ) : BlockBuilder.Scoped {
     override fun build(): RootBlock = RootBlock(
-        entries.map(BlockBuilder::build).apply(BlockToken::link)
+        entries.map(BlockBuilder::build)
     )
 
     override fun accept(block: BlockBuilder): BlockAcceptResult =
@@ -89,8 +89,6 @@ internal class CodeBuilder(
     override fun build(): CodeBlock {
         val host = source.build()
         val blocks = entries.map(BlockBuilder::build)
-        BlockToken.link(sequenceOf(host) + blocks)
-
         return CodeBlock(host, factory.fromAntlrToken(marker), definition, blocks)
     }
 
