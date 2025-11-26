@@ -8,6 +8,7 @@ import dev.kikugie.stonecutter.build.ext.DependencyContainer
 import dev.kikugie.stonecutter.build.ext.ReplacementContainer
 import dev.kikugie.stonecutter.build.ext.SwapContainer
 import dev.kikugie.stonecutter.build.task.StonecutterBuildTasks
+import dev.kikugie.stonecutter.build.task.StonecutterPatternFilterable
 import dev.kikugie.stonecutter.controller.ext.FlagContainer
 import dev.kikugie.stonecutter.data.StonecutterProject
 import dev.kikugie.stonecutter.data.dsl.VersionOperations
@@ -17,7 +18,6 @@ import dev.kikugie.stonecutter.data.tree.struct.ProjectNode
 import dev.kikugie.stonecutter.data.tree.struct.ProjectTree
 import dev.kikugie.stonecutter.util.configure
 import groovy.lang.Closure
-import org.gradle.api.tasks.util.PatternFilterable
 
 @DslMarker @Retention(AnnotationRetention.BINARY)
 private annotation class BuildDsl
@@ -60,7 +60,7 @@ public interface StonecutterBuildExtension : VersionOperations<Version> {
     public val swaps: SwapContainer
     public val dependencies: DependencyContainer
     public val replacements: ReplacementContainer
-    public val filters: PatternFilterable
+    public val filters: StonecutterPatternFilterable
     public val flags: FlagContainer
     public val tasks: StonecutterBuildTasks
 
