@@ -105,7 +105,7 @@ dokka {
 
 java {
     withSourcesJar()
-    withJavadocJar()
+//    withJavadocJar()
 }
 
 kotlin {
@@ -140,9 +140,9 @@ tasks {
         exclude("com/ibm/**", "org/jetbrains/**", "**/*.knm", "**/*.pro", "commonMain/**", "nativeMain/**")
     }
 
-    named<Jar>("javadocJar") {
-        from(named("dokkaGeneratePublicationJavadoc"))
-    }
+//    named<Jar>("javadocJar") {
+//        from(named("dokkaGeneratePublicationJavadoc"))
+//    }
 
     register<ShadowJar>("slimJar") {
         group = "build"

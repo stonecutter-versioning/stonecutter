@@ -8,7 +8,6 @@ import dev.kikugie.stonecutter.build.ext.ReplacementContainer
 import dev.kikugie.stonecutter.build.ext.SwapContainer
 import dev.kikugie.stonecutter.build.task.StonecutterBuildTasks
 import dev.kikugie.stonecutter.build.task.StonecutterPatternFilterable
-import dev.kikugie.stonecutter.build.util.RestrictedPatternFilterable
 import dev.kikugie.stonecutter.controller.StonecutterControllerExtension
 import dev.kikugie.stonecutter.controller.ext.FlagContainer
 import dev.kikugie.stonecutter.data.dsl.VersionOperations
@@ -32,7 +31,7 @@ internal abstract class StonecutterBuildProperties @Inject internal constructor(
     override val swaps: SwapContainer = SwapContainer(factory, params.swaps)
     override val dependencies: DependencyContainer = DependencyContainer(factory, params.dummyDependencies)
     override val replacements: ReplacementContainer = ReplacementContainer(objects, params::addString, params::addRegex)
-    override val filters: StonecutterPatternFilterable = RestrictedPatternFilterable()
+    override val filters: StonecutterPatternFilterable = StonecutterPatternFilterable()
     override val flags: FlagContainer = controller.flags
     override val tasks: StonecutterBuildTasks
         get() = throw UnsupportedOperationException("Build tasks are not available in the controller")

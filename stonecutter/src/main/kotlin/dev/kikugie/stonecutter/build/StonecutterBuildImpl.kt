@@ -4,16 +4,14 @@ import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.build.param.StonecutterBuildParameters
 import dev.kikugie.stonecutter.build.param.StonecutterBuildProperties
 import dev.kikugie.stonecutter.build.task.StonecutterBuildTasksImpl
-import dev.kikugie.stonecutter.controller.file.StonecutterExperimentalFilesAPI
+import dev.kikugie.stonecutter.controller.file.FileHandlerService
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlag
 import dev.kikugie.stonecutter.data.ProjectHierarchy.Companion.hierarchy
 import dev.kikugie.stonecutter.data.container.BuildPropertiesContainer
 import dev.kikugie.stonecutter.data.container.ProjectNodeContainer
-import dev.kikugie.stonecutter.data.container.TaskCacheContainer
 import dev.kikugie.stonecutter.data.container.getContainer
 import dev.kikugie.stonecutter.data.tree.struct.ProjectNode
 import dev.kikugie.stonecutter.util.isIdeaSync
-import dev.kikugie.stonecutter.util.projectDirectory
 import dev.kikugie.stonecutter.util.requestTasks
 import dev.kikugie.stonecutter.util.service
 import dev.kikugie.stonecutter.util.sourceSets
@@ -28,7 +26,7 @@ private fun Project.findNode(): ProjectNode = checkNotNull(gradle.getContainer<P
 private fun Project.findProperties(): StonecutterBuildProperties =
     gradle.getContainer<BuildPropertiesContainer>()[findNode()]
 
-@OptIn(StonecutterInternalAPI::class, StonecutterExperimentalFilesAPI::class)
+@OptIn(StonecutterInternalAPI::class)
 internal abstract class StonecutterBuildImpl(val project: Project, private val properties: StonecutterBuildProperties) :
     StonecutterBuildExtension by properties {
     constructor(project: Project) : this(project, project.findProperties())
@@ -40,16 +38,16 @@ internal abstract class StonecutterBuildImpl(val project: Project, private val p
         configureProject()
     }
 
+    @Suppress("DEPRECATION")
     private fun configureProject() {
-        val service = project.gradle.service<TaskCacheContainer>("stonecutter-cache")
-        val handlers = service.handlers
+        val handlers = project.gradle.service<FileHandlerService>(FileHandlerService.NAME).parameters.fileHandlers
         project.plugins.apply("java")
         project.sourceSets.all {
             createProcessingTasks(this)
             tasks.configureSource(this)
         }
         filters.include {
-            it.isDirectory || handlers[it.file.extension] != null
+            it.isDirectory || it.file.extension.lowercase() in handlers.names
         }
         tasks.registerNodeModelTask()
         configureTaskDependencies()

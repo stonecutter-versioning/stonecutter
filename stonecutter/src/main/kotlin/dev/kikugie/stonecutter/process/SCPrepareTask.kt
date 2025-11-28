@@ -9,8 +9,8 @@ import dev.kikugie.stitcher.transform.TransformParameters
 import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.build.param.StonecutterBuildData
 import dev.kikugie.stonecutter.build.param.StonecutterBuildParameters
-import dev.kikugie.stonecutter.controller.file.StonecutterExperimentalFilesAPI
-import dev.kikugie.stonecutter.data.container.TaskCacheContainer
+import dev.kikugie.stonecutter.controller.file.FileHandlerBuilder
+import dev.kikugie.stonecutter.controller.file.FileHandlerService
 import dev.kikugie.stonecutter.util.clearIfNotIncremental
 import dev.kikugie.stonecutter.util.execute
 import dev.kikugie.stonecutter.util.invoke
@@ -23,6 +23,7 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.services.ServiceReference
 import org.gradle.api.tasks.*
@@ -42,7 +43,7 @@ import java.nio.file.StandardOpenOption
 import javax.inject.Inject
 import kotlin.io.path.*
 
-@OptIn(StonecutterInternalAPI::class, StonecutterExperimentalFilesAPI::class)
+@OptIn(StonecutterInternalAPI::class)
 public abstract class SCPrepareTask : DefaultTask() {
     @get:Nested
     public abstract val params: Property<StonecutterBuildParameters>
@@ -62,8 +63,8 @@ public abstract class SCPrepareTask : DefaultTask() {
     @get:Inject
     public abstract val executor: WorkerExecutor
 
-    @get:ServiceReference("stonecutter-cache")
-    internal abstract val cache: Property<TaskCacheContainer>
+    @get:ServiceReference(FileHandlerService.NAME)
+    internal abstract val handlers: Property<FileHandlerService>
 
     @TaskAction
     public fun run(inputs: InputChanges) {
@@ -80,25 +81,26 @@ public abstract class SCPrepareTask : DefaultTask() {
         data.set(params)
         source.set(change.file)
         output.set(change.file.cacheFile())
-        cache.set(this@SCPrepareTask.cache)
+        formats.set(handlers().parameters.fileHandlers.asMap)
     }
 
     private fun File.cacheFile(): File = destination.asFile().resolve(relativeTo(root()))
 }
 
-@OptIn(StonecutterInternalAPI::class, StonecutterExperimentalFilesAPI::class)
+@OptIn(StonecutterInternalAPI::class)
 private interface SCPrepareAction : WorkAction<SCPrepareAction.Parameters> {
     private val source: Path get() = parameters.source.asFile().toPath()
     private val output: Path get() = parameters.output.asFile().toPath()
     private val reporter: GradleProblemReporter
-        get() = GradleProblemReporter(Logging.getLogger(SCPrepareTask::class.simpleName), parameters.cache())
+        get() = GradleProblemReporter(Logging.getLogger(SCPrepareTask::class.simpleName))
     private val transform: TransformParameters?
-        get() = parameters.data().forFile(source, parameters.cache().handlers)
+        get() = parameters.data().forFile(source, parameters.formats)
 
     override fun execute() {
         val transform = this.transform
         val reporter = this.reporter
 
+        if (transform == null) reporter.logger.warn("No file handler registered for ${source.extension}")
         if (!source.exists() || transform == null) { output.deleteIfExists(); return }
         val contents = source.readText()
         val modified = reporter.handle { process(source, contents, transform, reporter) }
@@ -109,15 +111,14 @@ private interface SCPrepareAction : WorkAction<SCPrepareAction.Parameters> {
     }
 
     interface Parameters : WorkParameters {
-        val cache: Property<TaskCacheContainer>
         val data: Property<StonecutterBuildData>
         val source: RegularFileProperty
         val output: RegularFileProperty
+        val formats: MapProperty<String, FileHandlerBuilder>
     }
 }
 
-@OptIn(StonecutterExperimentalFilesAPI::class)
-private class GradleProblemReporter(val logger: Logger, val collector: TaskCacheContainer) : ProblemConsumer {
+private class GradleProblemReporter(val logger: Logger) : ProblemConsumer {
     val errors: MutableList<String> = mutableListOf()
 
     inline fun <T> handle(action: () -> T) = try {
@@ -129,7 +130,7 @@ private class GradleProblemReporter(val logger: Logger, val collector: TaskCache
 
     override fun accept(file: Path, location: ProblemLocation, cause: ProblemCause) {
         val message = file.format(location, cause).also { errors += it }
-        if (!collector.hasSeen(message)) logger.error(SC_ERROR, "e: $message", cause.exception)
+        logger.error(SC_ERROR, "e: $message", cause.exception)
     }
 
     private fun Path.format(location: ProblemLocation, cause: ProblemCause): String = buildString {

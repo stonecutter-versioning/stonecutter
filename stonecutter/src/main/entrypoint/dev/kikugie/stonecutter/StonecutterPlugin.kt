@@ -1,13 +1,15 @@
 package dev.kikugie.stonecutter
 
+import dev.kikugie.stitcher.antlr.scanner.HashStyleScanner
+import dev.kikugie.stitcher.antlr.scanner.SlashStyleScanner
+import dev.kikugie.stitcher.transform.impl.LineCommentStrategy
+import dev.kikugie.stitcher.transform.impl.StarCommentStrategy
 import dev.kikugie.stonecutter.build.StonecutterBuildExtension
 import dev.kikugie.stonecutter.build.StonecutterBuildImpl
 import dev.kikugie.stonecutter.controller.StonecutterControllerExtension
 import dev.kikugie.stonecutter.controller.StonecutterControllerImpl
 import dev.kikugie.stonecutter.controller.StonecutterControllerManager.Companion.getController
-import dev.kikugie.stonecutter.controller.file.FileHandlerContainer
-import dev.kikugie.stonecutter.controller.file.StonecutterExperimentalFilesAPI
-import dev.kikugie.stonecutter.data.container.TaskCacheContainer
+import dev.kikugie.stonecutter.controller.file.FileHandlerService
 import dev.kikugie.stonecutter.settings.StonecutterSettingsExtension
 import dev.kikugie.stonecutter.settings.StonecutterSettingsImpl
 import org.gradle.api.Plugin
@@ -18,7 +20,6 @@ import org.gradle.api.plugins.ExtensionAware
 import org.gradle.build.event.BuildEventsListenerRegistry
 import org.gradle.kotlin.dsl.add
 import org.gradle.kotlin.dsl.create
-import org.gradle.kotlin.dsl.newInstance
 import org.gradle.kotlin.dsl.registerIfAbsent
 import javax.inject.Inject
 
@@ -28,19 +29,21 @@ public open class StonecutterPlugin @Inject constructor(
 ) : Plugin<ExtensionAware> {
     public companion object {
         /**Current Stonecutter version.*/ // Updated by ':updateVersion' task during build
-        public const val VERSION: String = "0.8-alpha.13"
+        public const val VERSION: String = "0.8-alpha.14"
     }
 
     /**
      * Applies the plugin either to [Settings] or [Project].
      * Applying the plugin to an incorrect target will throw an exception.
      */
-    @OptIn(StonecutterInternalAPI::class, StonecutterExperimentalFilesAPI::class)
+    @OptIn(StonecutterInternalAPI::class)
     override fun apply(target: ExtensionAware): Unit = when (target) {
         is Settings -> {
-            target.gradle.sharedServices.registerIfAbsent("stonecutter-cache", TaskCacheContainer::class) {
-                parameters.handlers.set(objects.newInstance<FileHandlerContainer>())
-            }.let(registry::onTaskCompletion)
+            registry.onTaskCompletion(target.gradle.sharedServices.registerIfAbsent(FileHandlerService.NAME, FileHandlerService::class) {
+                parameters.fileHandlers.apply {
+
+                }
+            })
             target.stonecutter<StonecutterSettingsExtension, StonecutterSettingsImpl>()
         }
 

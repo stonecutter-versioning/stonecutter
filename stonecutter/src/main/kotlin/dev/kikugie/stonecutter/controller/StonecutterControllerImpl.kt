@@ -5,9 +5,8 @@ import dev.kikugie.stonecutter.StonecutterPlugin
 import dev.kikugie.stonecutter.build.StonecutterBuildExtension
 import dev.kikugie.stonecutter.controller.StonecutterControllerManager.Companion.getController
 import dev.kikugie.stonecutter.controller.ext.MutableFlagContainer
-import dev.kikugie.stonecutter.controller.file.FileHandlerContainer
-import dev.kikugie.stonecutter.controller.file.Presets
-import dev.kikugie.stonecutter.controller.file.StonecutterExperimentalFilesAPI
+import dev.kikugie.stonecutter.controller.file.FileHandlerBuilder
+import dev.kikugie.stonecutter.controller.file.FileHandlerService
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlag
 import dev.kikugie.stonecutter.controller.flag.StonecutterFlags
 import dev.kikugie.stonecutter.controller.tasks.StonecutterControllerTasksImpl
@@ -16,7 +15,6 @@ import dev.kikugie.stonecutter.data.ProjectHierarchy.Companion.hierarchy
 import dev.kikugie.stonecutter.data.StonecutterProject
 import dev.kikugie.stonecutter.data.container.BuildPropertiesContainer
 import dev.kikugie.stonecutter.data.container.ProjectNodeContainer
-import dev.kikugie.stonecutter.data.container.TaskCacheContainer
 import dev.kikugie.stonecutter.data.container.TreeBuilderContainer
 import dev.kikugie.stonecutter.data.container.getContainer
 import dev.kikugie.stonecutter.data.dsl.VersionOperations
@@ -28,17 +26,14 @@ import dev.kikugie.stonecutter.data.tree.struct.ProjectBranchImpl
 import dev.kikugie.stonecutter.data.tree.struct.ProjectNodeImpl
 import dev.kikugie.stonecutter.data.tree.struct.ProjectTreeImpl
 import dev.kikugie.stonecutter.process.SCIdeaConfigTask
-import dev.kikugie.stonecutter.util.ActiveProvider
-import dev.kikugie.stonecutter.util.isIdeaSync
-import dev.kikugie.stonecutter.util.requestTasks
-import dev.kikugie.stonecutter.util.service
-import dev.kikugie.stonecutter.util.set
+import dev.kikugie.stonecutter.util.*
+import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.named
 import dev.kikugie.semver.data.Version as ParsedVersion
 
-@OptIn(StonecutterInternalAPI::class, StonecutterExperimentalFilesAPI::class)
+@OptIn(StonecutterInternalAPI::class)
 internal abstract class StonecutterControllerImpl(val root: Project) :
     StonecutterControllerExtension, VersionOperations<ParsedVersion> by LenientOperations {
     private val nodes by lazy { root.gradle.getContainer<ProjectNodeContainer>() }
@@ -53,15 +48,14 @@ internal abstract class StonecutterControllerImpl(val root: Project) :
         StonecutterControllerTasksImpl(this)
     override val flags: MutableFlagContainer =
         MutableFlagContainer(StonecutterFlags { root.findProperty("dev.kikugie.stonecutter.${it.key}")?.toString() })
-    override val handlers: FileHandlerContainer =
-        root.gradle.service<TaskCacheContainer>("stonecutter-cache").handlers
+//    override val handlers: NamedDomainObjectContainer<FileHandlerBuilder> =
+//        root.gradle.service<FileHandlerService>(FileHandlerService.NAME).parameters.fileHandlers
 
     init {
         nodes += tree
         configureProject()
         configureSyncTask()
         configureModelTasks()
-        configureFileHandlers()
     }
 
     override fun active(provider: Any?) = initializePluginConfiguration(provider)
@@ -133,26 +127,6 @@ internal abstract class StonecutterControllerImpl(val root: Project) :
         registerModelGroupingTask()
         registerTreeModelTask()
         for (branch in tree.branches) registerBranchModelTask(branch)
-    }
-
-    private fun configureFileHandlers() {
-        handlers.configureIfAbsent("java", "scala", "json5", "fsh", "vsh") {
-            comment(Presets.Commenter.JavaStar)
-            uncomment(Presets.Uncommenter.Java)
-            scanner { from(Presets.Scanner.Java) }
-        }
-
-        handlers.configureIfAbsent("kt", "kts") {
-            comment(Presets.Commenter.KotlinStar)
-            uncomment(Presets.Uncommenter.Java)
-            scanner { from(Presets.Scanner.Kotlin) }
-        }
-
-        handlers.configureIfAbsent("cft", "aw", "accesswidener", "accessWidener") {
-            comment(Presets.Commenter.Hash)
-            uncomment(Presets.Uncommenter.Basic)
-            scanner { from(Presets.Scanner.Hash) }
-        }
     }
 
     private fun constructTree(): ProjectTreeImpl {
