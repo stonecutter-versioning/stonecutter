@@ -1,0 +1,4 @@
+tasks.register("hello") {
+    def version = sc.current.version
+    doLast { println("${version}!") }
+}

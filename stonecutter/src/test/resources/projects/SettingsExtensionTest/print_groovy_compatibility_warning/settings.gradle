@@ -1,0 +1,12 @@
+plugins {
+    id "dev.kikugie.stonecutter"
+}
+
+stonecutter {
+    centralScript = "build.gradle"
+    kotlinController = false
+
+    create(rootProject) {
+        versions("1", "2")
+    }
+}

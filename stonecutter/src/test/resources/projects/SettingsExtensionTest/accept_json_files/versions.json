@@ -1,0 +1,4 @@
+{
+  "$schema": "https://codeberg.org/stonecutter/stonecutter/raw/branch/0.7/tools/settings-schema.json",
+  "versions": [ "1", "2" ]
+}

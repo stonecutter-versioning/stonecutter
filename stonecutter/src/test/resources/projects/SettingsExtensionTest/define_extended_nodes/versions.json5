@@ -1,0 +1,18 @@
+{
+  $schema: "https://codeberg.org/stonecutter/stonecutter/raw/branch/0.7/tools/settings-schema.json",
+  versions: [
+    {
+      project: "1",
+    },
+    {
+      project: "2",
+      version: "2.0"
+    },
+    {
+      project: "3",
+      buildscript: "three.gradle.kts"
+    },
+    "4:4.0:four.gradle.kts",
+    "5::five.gradle.kts"
+  ]
+}
