@@ -51,6 +51,8 @@ dependencies {
     testImplementation(common.ktor.client.java)
     testImplementation(common.ktor.client.negotiation)
 
+    testImplementation(common.misc.mordant)
+
     dokkaHtmlPlugin(libs.dokka.versioning)
 }
 

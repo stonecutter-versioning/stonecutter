@@ -1,10 +1,13 @@
 package gradle
 
+import com.github.ajalt.mordant.rendering.TextColors
 import dev.kikugie.commons.takeAs
 import io.kotest.core.TestConfiguration
 import io.kotest.core.spec.style.FreeSpec
+import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.core.spec.style.scopes.FreeSpecContainerScope
 import io.kotest.core.spec.style.scopes.FreeSpecContextConfigBuilder
+import io.kotest.core.spec.style.scopes.ShouldSpecContainerScope
 import io.kotest.core.test.TestScope
 import io.kotest.datatest.withData
 import io.kotest.engine.spec.tempdir
@@ -25,9 +28,14 @@ import kotlin.io.path.writeText
 private fun TestConfiguration.prepareParameters(name: String, gradle: GradleVersions.GradleDistribution?): Pair<Path, GradleTest.Runner> {
     val project = "${this::class.simpleName}/$name"
     val version = gradle?.run { "-$version" } ?: ""
+    val source = Path("src/test/resources/projects/$project")
     val dir = tempdir(suffix = project.replace('/', '-') + version, keepOnFailure = true)
-    println("Running $project in file://$dir")
-    copyResources(project, dir.toPath())
+    println(buildString {
+        appendLine(TextColors.cyan("### Running test '$project' ###"))
+        appendLine(TextColors.cyan("- Source: file://${source.absolutePathString()}"))
+        appendLine(TextColors.cyan("- Build: file://${dir.absolutePath}"))
+    })
+    copyResources(source, dir.toPath())
 
     val defaultArgs = mutableListOf<String>()
     defaultArgs += "--stacktrace"
@@ -38,7 +46,8 @@ private fun TestConfiguration.prepareParameters(name: String, gradle: GradleVers
     val build = GradleRunner.create()
         .withProjectDir(dir)
         .withPluginClasspath()
-        .forwardOutput()
+        .forwardStdOutput(StyledPrintWriter(TextColors.white))
+        .forwardStdError(StyledPrintWriter(TextColors.red))
     gradle?.apply(build)
 
     val runner = GradleTest.Runner {
@@ -49,10 +58,8 @@ private fun TestConfiguration.prepareParameters(name: String, gradle: GradleVers
 }
 
 @OptIn(ExperimentalPathApi::class)
-private fun copyResources(project: String, destination: Path) {
-    val source = Path("src/test/resources/projects/$project")
+private fun copyResources(source: Path, destination: Path) {
     if (source.notExists()) throw FileNotFoundException(source.absolutePathString())
-
     source.copyToRecursively(destination, followLinks = false, overwrite = true)
 }
 
@@ -61,6 +68,34 @@ private fun Set<GradleVersions.GradleDistribution>.toDataMap(): Map<String, Grad
 
 @DslMarker @Retention(AnnotationRetention.SOURCE)
 private annotation class GradleTestDsl
+
+@GradleTestDsl
+context(spec: ShouldSpec)
+fun should(name: String, action: suspend TestScope.(directory: Path, build: GradleTest.Runner) -> Unit) = spec.should(name) {
+    val (dir, runner) = spec.prepareParameters(name.sanitize(), null)
+    action(dir, runner)
+}
+
+@GradleTestDsl
+context(spec: ShouldSpec)
+fun xshould(name: String, action: suspend TestScope.(directory: Path, build: GradleTest.Runner) -> Unit) = spec.xshould(name) {
+    val (dir, runner) = spec.prepareParameters(name.sanitize(), null)
+    action(dir, runner)
+}
+
+@GradleTestDsl
+context(spec: ShouldSpec)
+suspend fun ShouldSpecContainerScope.should(name: String, action: suspend TestScope.(directory: Path, build: GradleTest.Runner) -> Unit) = should(name) {
+    val (dir, runner) = spec.prepareParameters(name.sanitize(), null)
+    action(dir, runner)
+}
+
+@GradleTestDsl
+context(spec: ShouldSpec)
+suspend fun ShouldSpecContainerScope.xshould(name: String, action: suspend TestScope.(directory: Path, build: GradleTest.Runner) -> Unit) = xshould(name) {
+    val (dir, runner) = spec.prepareParameters(name.sanitize(), null)
+    action(dir, runner)
+}
 
 @GradleTestDsl
 context(spec: FreeSpec)
@@ -85,16 +120,16 @@ suspend fun FreeSpecContainerScope.build(name: String, action: suspend TestScope
 }
 
 @GradleTestDsl
-context(_: FreeSpec)
 infix fun Path.write(text: CharSequence) {
     createParentDirectories()
     writeText(text, Charsets.UTF_8, StandardOpenOption.CREATE_NEW)
 }
 
 @GradleTestDsl
-context(_: FreeSpec)
 infix fun Path.read(file: String): String =
     resolve(file).readText()
+
+private fun String.sanitize() = replace(' ', '_').replace('-', '_')
 
 @GradleTestDsl
 interface GradleTest {
