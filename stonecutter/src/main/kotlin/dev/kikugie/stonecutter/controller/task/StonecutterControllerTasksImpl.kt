@@ -12,6 +12,8 @@ import dev.kikugie.stonecutter.data.whatever.TaskProviderMap
 import dev.kikugie.stonecutter.util.SCJSON
 import dev.kikugie.stonecutter.util.buildDirectory
 import dev.kikugie.commons.takeAs
+import dev.kikugie.stonecutter.build.StonecutterBuildExtension
+import dev.kikugie.stonecutter.data.tree.ProjectTree
 import dev.kikugie.stonecutter.util.set
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
@@ -20,6 +22,7 @@ import org.gradle.api.provider.MapProperty
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.mapProperty
 import org.gradle.kotlin.dsl.register
+import org.gradle.kotlin.dsl.the
 import java.io.File
 import javax.inject.Inject
 
@@ -49,18 +52,24 @@ internal abstract class StonecutterControllerTasksImpl @Inject constructor(val c
         }
     }
 
-    fun registerScriptSwitchTask(id: Identifier, manager: StonecutterControllerManager): TaskProvider<out StonecutterSwitchTask> =
-        controller.root.registerDefault<StonecutterScriptSwitchTask>(switch.taskName(id), { switch.identifiers += id }) {
+    fun registerScriptSwitchTask(id: Identifier, manager: StonecutterControllerManager): TaskProvider<out StonecutterSwitchTask> {
+        val delegates = controller.tree.collectMergeTasks(controller.root, id)
+        return controller.root.registerDefault<StonecutterScriptSwitchTask>(switch.taskName(id), { switch.identifiers += id }) {
             version.set(id)
             writer.set(manager::update)
             file.set(controller.root.buildFile)
+            dependsOn(delegates)
         }
+    }
 
-    fun registerExternalSwitchTask(id: Identifier, provider: File): TaskProvider<out StonecutterSwitchTask> =
-        controller.root.registerDefault<StonecutterExternalSwitchTask>(switch.taskName(id), { switch.identifiers += id }) {
+    fun registerExternalSwitchTask(id: Identifier, provider: File): TaskProvider<out StonecutterSwitchTask> {
+        val delegates = controller.tree.collectMergeTasks(controller.root, id)
+        return controller.root.registerDefault<StonecutterExternalSwitchTask>(switch.taskName(id), { switch.identifiers += id }) {
             version.set(id)
             file.set(provider)
+            dependsOn(delegates)
         }
+    }
 
     fun registerModelGroupingTask() =
         controller.root.registerDefault<DefaultTask>("stonecutterSaveModels")
@@ -88,6 +97,10 @@ internal abstract class StonecutterControllerTasksImpl @Inject constructor(val c
         fun get(node: ProjectNode): TaskProvider<*>
     }
 }
+
+private fun ProjectTree.collectMergeTasks(root: Project, project: Identifier) = nodes
+    .filter { it.metadata.project == project }
+    .map { root.provider { it.project.the<StonecutterBuildExtension>().tasks.merge.values } }
 
 internal inline fun <reified T : Task> Project.registerDefault(
     name: String,
