@@ -1,9 +1,11 @@
 package dev.kikugie.stitcher.transform.strategy
 
+import java.io.Serializable
+
 /**
  * Defines a strategy for adding comments to a given scope of text.
  */
-public fun interface CommentingStrategy : java.io.Serializable {
+public fun interface CommentingStrategy : Serializable {
     /**
      * Adds comments to the specified [scope].
      *

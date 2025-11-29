@@ -2,9 +2,9 @@
 
 package unit
 
-import dev.kikugie.stonecutter.data.tree.json.SerializedTree
-import dev.kikugie.stonecutter.data.tree.json.SerializedVersion
-import dev.kikugie.stonecutter.data.tree.json.TreeScheme
+import dev.kikugie.stonecutter.settings.tree.SerializedTree
+import dev.kikugie.stonecutter.settings.tree.SerializedVersion
+import dev.kikugie.stonecutter.settings.tree.TreeScheme
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf

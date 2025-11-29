@@ -1,75 +1,100 @@
 package dev.kikugie.stonecutter.build.task
 
-import dev.kikugie.stonecutter.Identifier
-import dev.kikugie.stonecutter.MutableTaskProviderMap
 import dev.kikugie.stonecutter.StonecutterInternalAPI
 import dev.kikugie.stonecutter.build.StonecutterBuildImpl
-import dev.kikugie.stonecutter.data.tree.model.BranchInfo
-import dev.kikugie.stonecutter.data.tree.model.NodeModel
-import dev.kikugie.stonecutter.process.SCPrepareTask
-import dev.kikugie.stonecutter.process.SCModelTask
-import dev.kikugie.stonecutter.util.*
-import kotlinx.serialization.json.Json
-import org.gradle.api.Task
+import dev.kikugie.stonecutter.controller.task.StonecutterModelTask
+import dev.kikugie.stonecutter.controller.task.registerDefault
+import dev.kikugie.stonecutter.controller.tree.NodeModel
+import dev.kikugie.stonecutter.data.whatever.TaskProviderMap
+import dev.kikugie.stonecutter.util.SCJSON
+import dev.kikugie.stonecutter.util.allSources
+import dev.kikugie.stonecutter.util.buildDirectory
+import dev.kikugie.stonecutter.util.set
 import org.gradle.api.file.SourceDirectorySet
+import org.gradle.api.logging.Logger
+import org.gradle.api.logging.Logging
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.Sync
 import org.gradle.api.tasks.TaskProvider
-import org.gradle.kotlin.dsl.register
 import java.io.File
+import javax.inject.Inject
 
 @OptIn(StonecutterInternalAPI::class)
-internal open class StonecutterBuildTasksImpl(private val ext: StonecutterBuildImpl) : StonecutterBuildTasks {
-    override val prepare: MutableTaskProviderMap<Identifier, SCPrepareTask> = mutableMapOf()
-    override val generate: MutableTaskProviderMap<Identifier, Sync> = mutableMapOf()
-    override val merge: MutableTaskProviderMap<Identifier, Copy> = mutableMapOf()
-    override val processedCacheDir: File get() = ext.project.buildDirectory.resolve("stonecutter-cache/sources")
-    override val generatedSourcesDir: File get() = ext.project.buildDirectory.resolve("generated/stonecutter")
+internal abstract class StonecutterBuildTasksImpl @Inject constructor(val build: StonecutterBuildImpl) : StonecutterBuildTasks {
+    override val prepare: TaskProviderMap<StonecutterPrepareTask> = TaskProviderMap(build.project) {
+        "stonecutterPrepare${it.sourceSetSuffix}"
+    }
+    override val generate: TaskProviderMap<Sync> = TaskProviderMap(build.project) {
+        "stonecutterGenerate${it.sourceSetSuffix}"
+    }
+    override val merge: TaskProviderMap<Copy> = TaskProviderMap(build.project) {
+        "stonecutterMerge${it.sourceSetSuffix}"
+    }
+
     private val registeredSources: MutableSet<File> = mutableSetOf()
-    private val encoder = Json { prettyPrint = true }
+    private val logger: Logger = Logging.getLogger("StonecutterBuild")
 
-    internal inline fun registerPrepareTask(src: SourceSet, crossinline config: SCPrepareTask.() -> Unit): TaskProvider<SCPrepareTask> =
-        registerDefaultTask(prepareTaskName(src), config).apply { prepare[name] = this }
-
-    internal inline fun registerGenerateTask(src: SourceSet, crossinline config: Sync.() -> Unit): TaskProvider<Sync> =
-        registerDefaultTask(generateTaskName(src), config).apply { generate[name] = this }
-
-    internal inline fun registerMergeTask(src: SourceSet, crossinline config: Copy.() -> Unit): TaskProvider<Copy> =
-        registerDefaultTask(mergeTaskName(src), config).apply { merge[name] = this }
-
-    internal fun registerNodeModelTask(): TaskProvider<SCModelTask> = registerDefaultTask<SCModelTask>("stonecutterSaveNodeModel") {
-        output.set(ext.project.layout.buildDirectory.file("stonecutter-cache/node.json"))
-        json.set(ext.project.providers) {
-            val branch = ext.branch.let { BranchInfo(it.id, it.location) }
-            NodeModel(ext.current, branch, ext.tree.location, ext.params.toBuildData()).let(encoder::encodeToString)
-        }
-    }.also { ext.tree.project.tasks.named("stonecutterSaveModels") { dependsOn(it) } }
-
-    private inline fun <reified T : Task> registerDefaultTask(name: String, crossinline config: T.() -> Unit): TaskProvider<T> =
-        ext.project.tasks.register<T>(name) {
-            group = "stonecutter-impl"
-            description = "Internal Stonecutter task. Do not call manually."
-            config()
-        }
+    init {
+        val buildDir = build.project.layout.buildDirectory
+        processedCacheDir.value(buildDir.dir("stonecutter-cache/sources")).finalizeValue()
+        generatedSourcesDir.value(buildDir.dir("generated/stonecutter")).finalizeValue()
+    }
 
     override fun configureSource(src: SourceSet) {
-        val branchSrc: File = ext.project.parent!!.projectDirectory.resolve("src")
-        val versionSrc: File = ext.project.projectDirectory.resolve("src")
-        for (set in src.allSources()) {
-            val matchingDirs = set.sourceDirectories
+        val branchSrc: File = build.branch.location.resolve("src").toFile()
+        val versionSrc: File = build.node.location.resolve("src").toFile()
+        val generatedSrc: File = generatedSourcesDir.asFile.get()
+        val taskName: String = generate.taskName(src.name)
+
+        for (entry in src.allSources()) {
+            val matching = entry.sourceDirectories
                 .map { it.relativeTo(versionSrc) }
                 .filterNot { it.startsWith("..") }
 
-            if (ext.current.isActive) applyDirectories(set, matchingDirs, branchSrc, null, true)
-            applyDirectories(set, matchingDirs, generatedSourcesDir, generateTaskName(src), !ext.current.isActive)
+            if (build.current.isActive) entry.extend(matching, branchSrc, null, true)
+            entry.extend(matching, generatedSrc, taskName, !build.current.isActive)
         }
     }
 
-    private fun applyDirectories(set: SourceDirectorySet, matching: Iterable<File>, root: File, task: String?, apply: Boolean): List<File> {
-        val dirs = matching.map(root::resolve).filterNot(registeredSources::contains).ifEmpty { return emptyList() }
-        if (apply) set.srcDir(ext.project.files(dirs).apply { if (task != null) builtBy("${ext.project.path}:$task") })
-        registeredSources += dirs
-        return dirs
+    inline fun registerPrepareTask(src: SourceSet, crossinline config: StonecutterPrepareTask.() -> Unit): TaskProvider<StonecutterPrepareTask> =
+        build.project.registerDefault(prepare.taskName(src.name), { prepare.identifiers += src.name }, config)
+
+    inline fun registerGenerateTask(src: SourceSet, crossinline config: Sync.() -> Unit): TaskProvider<Sync> =
+        build.project.registerDefault(generate.taskName(src.name), { generate.identifiers += src.name }, config)
+
+    inline fun registerMergeTask(src: SourceSet, crossinline config: Copy.() -> Unit): TaskProvider<Copy> =
+        build.project.registerDefault(merge.taskName(src.name), { merge.identifiers += src.name }, config)
+
+    fun registerNodeModelTask(): TaskProvider<StonecutterModelTask> = build.project.registerDefault(
+        "stonecutterSaveNodeModel",
+        { build.tree.project.afterEvaluate { tasks.named("stonecutterSaveModels") { dependsOn(it) } } }
+    ) {
+        val node = build.node
+
+        output.set(build.project.layout.buildDirectory.file("stonecutter-cache/node.json"))
+        model.set(build.project.providers) {
+            NodeModel(node, build.config.data).let(SCJSON::encodeToString)
+        }
+    }
+
+    private fun SourceDirectorySet.extend(matching: Iterable<File>, root: File, task: String?, apply: Boolean) {
+        val filtered = matching.map(root::resolve).filterNot(registeredSources::contains)
+            .ifEmpty { return }
+
+        if (apply) {
+            val collection = build.project.files(filtered)
+            if (task != null) collection.builtBy("${build.node.hierarchy}:$task")
+            srcDir(collection)
+        }
+
+        registeredSources += filtered
+        if (logger.isDebugEnabled) for (dir in filtered) logger.debug(buildString {
+            append("Registered source directory ${dir.absolutePath}")
+            if (task != null) append(" << $task")
+        })
     }
 }
+
+private val String.sourceSetSuffix: String
+    get() = if (this == "main") "" else replaceFirstChar(Char::uppercase)

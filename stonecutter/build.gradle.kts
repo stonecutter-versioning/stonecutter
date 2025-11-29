@@ -56,9 +56,6 @@ dependencies {
 
 apiValidation {
     apiDumpDirectory = "src/api"
-    ignoredPackages += "stonecutter_samples"
-    publicMarkers += "dev.kikugie.stonecutter.StonecutterAPI"
-    nonPublicMarkers += "dev.kikugie.stonecutter.StonecutterInternalAPI"
 }
 
 dokka {

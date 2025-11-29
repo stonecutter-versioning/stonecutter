@@ -15,10 +15,16 @@ import kotlin.reflect.KClass
 private annotation class ScannerDsl
 
 @ScannerDsl
-public abstract class ScannerBuilder @Inject constructor(objects: ObjectFactory) : Serializable {
+public abstract class ScannerBuilder @Inject constructor(objects: ObjectFactory) {
     public abstract val openers: SetProperty<Int>
     public abstract val closers: SetProperty<Int>
     public abstract val lexer: Property<LexerFactory>
+
+    public fun copy(other: ScannerBuilder) {
+        openers(other.openers.get())
+        closers(other.closers.get())
+        lexer.set(other.lexer.get())
+    }
 
     public fun openers(vararg types: Int): Unit = openers(types.asIterable())
     public fun openers(types: Iterable<Int>) {
@@ -35,7 +41,7 @@ public abstract class ScannerBuilder @Inject constructor(objects: ObjectFactory)
     public fun reflected(cls: KClass<out Lexer>): LexerFactory = reflected(cls.java)
     public inline fun <reified T : Lexer> reflected(): LexerFactory = reflected(T::class.java)
 
-    public fun interface LexerFactory {
+    public fun interface LexerFactory : Serializable {
         public fun create(input: CharStream): Lexer
     }
 }

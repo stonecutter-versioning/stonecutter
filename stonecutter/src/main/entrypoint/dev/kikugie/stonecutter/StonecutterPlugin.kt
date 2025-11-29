@@ -1,15 +1,10 @@
 package dev.kikugie.stonecutter
 
-import dev.kikugie.stitcher.antlr.scanner.HashStyleScanner
-import dev.kikugie.stitcher.antlr.scanner.SlashStyleScanner
-import dev.kikugie.stitcher.transform.impl.LineCommentStrategy
-import dev.kikugie.stitcher.transform.impl.StarCommentStrategy
 import dev.kikugie.stonecutter.build.StonecutterBuildExtension
 import dev.kikugie.stonecutter.build.StonecutterBuildImpl
 import dev.kikugie.stonecutter.controller.StonecutterControllerExtension
 import dev.kikugie.stonecutter.controller.StonecutterControllerImpl
 import dev.kikugie.stonecutter.controller.StonecutterControllerManager.Companion.getController
-import dev.kikugie.stonecutter.controller.file.FileHandlerService
 import dev.kikugie.stonecutter.settings.StonecutterSettingsExtension
 import dev.kikugie.stonecutter.settings.StonecutterSettingsImpl
 import org.gradle.api.Plugin
@@ -20,10 +15,9 @@ import org.gradle.api.plugins.ExtensionAware
 import org.gradle.build.event.BuildEventsListenerRegistry
 import org.gradle.kotlin.dsl.add
 import org.gradle.kotlin.dsl.create
-import org.gradle.kotlin.dsl.registerIfAbsent
 import javax.inject.Inject
 
-public open class StonecutterPlugin @Inject constructor(
+public abstract class StonecutterPlugin @Inject constructor(
     private val objects: ObjectFactory,
     private val registry: BuildEventsListenerRegistry
 ) : Plugin<ExtensionAware> {
@@ -39,12 +33,7 @@ public open class StonecutterPlugin @Inject constructor(
     @OptIn(StonecutterInternalAPI::class)
     override fun apply(target: ExtensionAware): Unit = when (target) {
         is Settings -> {
-            registry.onTaskCompletion(target.gradle.sharedServices.registerIfAbsent(FileHandlerService.NAME, FileHandlerService::class) {
-                parameters.fileHandlers.apply {
-
-                }
-            })
-            target.stonecutter<StonecutterSettingsExtension, StonecutterSettingsImpl>()
+            target.stonecutter<StonecutterSettingsExtension, StonecutterSettingsImpl>(registry)
         }
 
         is Project ->
@@ -55,8 +44,8 @@ public open class StonecutterPlugin @Inject constructor(
             error("The plugin may only be applied to settings and projects")
     }
 
-    private inline fun <reified P : Any, reified R : P> ExtensionAware.stonecutter() {
-        val it = extensions.create(P::class, "stonecutter", R::class, this)
+    private inline fun <reified P : Any, reified R : P> ExtensionAware.stonecutter(vararg args: Any) {
+        val it = extensions.create(P::class, "stonecutter", R::class, this, *args)
         if (!extensions.extraProperties.has("dev.kikugie.stonecutter.no_short_extension"))
             extensions.add(P::class, "sc", it)
     }

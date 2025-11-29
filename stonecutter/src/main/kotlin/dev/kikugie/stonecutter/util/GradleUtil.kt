@@ -1,58 +1,32 @@
-@file:Suppress("NOTHING_TO_INLINE", "UNCHECKED_CAST")
-
 package dev.kikugie.stonecutter.util
 
-import groovy.lang.Closure
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.model.ObjectFactory
-import org.gradle.api.provider.ListProperty
-import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
-import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ProviderFactory
-import org.gradle.api.services.BuildService
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.internal.DefaultTaskExecutionRequest
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.newInstance
 import org.gradle.kotlin.dsl.the
-import org.gradle.util.internal.ConfigureUtil
 import org.gradle.work.InputChanges
 import org.gradle.workers.WorkQueue
 import org.gradle.workers.WorkerExecutor
 import java.io.File
+import kotlin.io.deleteRecursively
 
 internal val Project.sourceSets: SourceSetContainer
     get() = project.the<SourceSetContainer>()
 
-internal inline operator fun <T: Any> Provider<T>.invoke(): T = get()
-internal inline operator fun <T: Any> ListProperty<T>.invoke(): List<T> = get()
-internal inline operator fun <K : Any, V: Any> MapProperty<K, V>.invoke(): Map<K, V> = get()
-internal inline operator fun <K : Any, V: Any> MapProperty<K, V>.get(key: K): Provider<V> = getting(key)
+internal inline fun <reified T : Any> ObjectFactory.newInstance(vararg parameters: Any, build: T.() -> Unit) =
+    newInstance<T>(*parameters).apply(build)
 
-internal inline operator fun <T: Any> Property<T>.invoke(value: T?): Unit = set(value)
-internal inline operator fun <T: Any> ListProperty<T>.invoke(elements: Iterable<T>?): Unit = set(elements)
-internal inline operator fun <T: Any> ListProperty<T>.invoke(vararg elements: T): Unit = set(elements.asIterable())
-internal inline operator fun <K : Any, V: Any> MapProperty<K, V>.invoke(map: Map<K, V>?): Unit = set(map)
-internal inline operator fun <K : Any, V: Any> MapProperty<K, V>.invoke(pairs: Iterable<Pair<K, V>>): Unit = set(pairs.toMap())
-internal inline operator fun <K : Any, V: Any> MapProperty<K, V>.invoke(vararg pairs: Pair<K, V>): Unit = set(mapOf(*pairs))
-internal inline operator fun <K : Any, V : Any> MapProperty<K, V>.set(key: K, value: V): Unit = put(key, value)
-internal inline operator fun <K : Any, V : Any> MapProperty<K, V>.set(key: K, value: Provider<V>): Unit = put(key, value)
-
-
-internal fun <E> Provider<Set<E>>.orEmpty(): Set<E> = orNull ?: emptySet()
-internal fun <E> Provider<List<E>>.orEmpty(): List<E> = orNull ?: emptyList()
-internal fun <K, V> Provider<Map<K, V>>.orEmpty(): Map<K, V> = orNull ?: emptyMap()
-
-internal inline fun <reified T : Any> ObjectFactory.newInstance(vararg parameters: Any, build: T.() -> Unit)
-    = newInstance<T>(*parameters).apply(build)
-
-internal inline fun <reified T : Any> ObjectFactory.newInstance(build: Action<T>, vararg parameters: Any)
-    = newInstance<T>(*parameters).apply(build::execute)
+internal inline fun <reified T : Any> ObjectFactory.newInstance(build: Action<T>, vararg parameters: Any) =
+    newInstance<T>(*parameters).apply(build::execute)
 
 internal fun SourceSet.allSources() = sequence {
     yield(java)
@@ -77,18 +51,11 @@ internal fun Gradle.requestTasks(tasks: Iterable<String>, path: String, dir: Fil
 }
 
 internal val Project.projectDirectory get() = layout.projectDirectory.asFile
-internal val Project.buildDirectory get() = layout.buildDirectory.asFile()
-
-internal inline fun WorkerExecutor.execute(action: (queue: WorkQueue) -> Unit) =
-    noIsolation().apply(action).await()
-
-internal fun Closure<*>.configure(any: Any) {
-    ConfigureUtil.configure(this, any)
-}
+internal val Project.buildDirectory get() = layout.buildDirectory.asFile.get()
 
 internal fun <T : Any> Property<T>.set(factory: ProviderFactory, provider: () -> T) {
     set(factory.provider(provider))
 }
 
-internal inline fun <reified T : BuildService<*>> Gradle.service(name: String) =
-    sharedServices.registrations[name].service.get() as T
+internal inline fun WorkerExecutor.execute(action: (queue: WorkQueue) -> Unit) =
+    noIsolation().apply(action).await()

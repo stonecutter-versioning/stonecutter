@@ -1,9 +1,11 @@
 package dev.kikugie.stitcher.transform.strategy
 
+import java.io.Serializable
+
 /**
  * Represents a strategy for replacing a specific scope of text with a new value.
  */
-public fun interface SwappingStrategy : java.io.Serializable {
+public fun interface SwappingStrategy : Serializable {
     /**
      * Replaces provided [scope] with the new [value].
      *

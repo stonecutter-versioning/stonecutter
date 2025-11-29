@@ -1,9 +1,10 @@
 package dev.kikugie.stonecutter.controller.flag
 
-import dev.kikugie.stonecutter.StonecutterAPI
-
-@StonecutterAPI
-public data class StonecutterFlag<T : Any>(public val key: String, public val default: T) {
+/**
+ * A primitive configuration option for Stonecutter.
+ */
+@ConsistentCopyVisibility
+public data class StonecutterFlag<T : Any> private constructor(public val key: String, public val default: T) {
     init {
         require(key.isNotBlank()) { "Flag key cannot be blank" }
         require(key.all { it in 'a'..'z' || it == '_' }) { "Flag key must be written in snake case" }
@@ -29,7 +30,8 @@ public data class StonecutterFlag<T : Any>(public val key: String, public val de
             else -> false
         }
 
-        @JvmStatic public fun named(name: String): StonecutterFlag<*> =
+        @JvmStatic
+        public fun named(name: String): StonecutterFlag<*> =
             checkNotNull(REGISTRY[name]) { "Flag '$name' is not registered" }
 
         /**
