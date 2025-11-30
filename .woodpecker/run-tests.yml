@@ -1,3 +1,6 @@
+labels:
+  agent: homeserver
+
 when:
   event: push
   branch: 0.*
@@ -11,5 +14,4 @@ steps:
   run-tests:
     image: gradle:jdk21-corretto
     commands:
-      - chmod u+x gradlew
-      - ./gradlew test --no-daemon -Dorg.gradle.configuration-cache.read-only=true
+      - gradle test --no-daemon -Dorg.gradle.configuration-cache.read-only=true

@@ -100,6 +100,12 @@ tasks.test {
     useJUnitPlatform()
 }
 
+java {
+    toolchain {
+        vendor = JvmVendorSpec.ADOPTIUM
+    }
+}
+
 kotlin {
     jvmToolchain(17)
     explicitApiWarning()
