@@ -10,7 +10,7 @@ import io.kotest.matchers.string.*
 import kotlin.io.path.useLines
 
 @Deprecated("Should be migrated to dedicated tests")
-class SyntaxTest : GradleTest, FreeSpec({
+class OldRandomTest : GradleTest, FreeSpec({
     "simple version" - { _, build ->
         build.run(":1:run").output shouldContain "Hello world!"
         build.run(":2:run").output shouldNotContain "Hello world!"
