@@ -1,0 +1,16 @@
+plugins {
+    id "dev.kikugie.stonecutter"
+}
+
+stonecutter {
+    centralScript = "build.gradle"
+    kotlinController = false
+
+    shared {
+        versions("1", "2")
+    }
+
+    create(rootProject) {
+        shared.execute(it)
+    }
+}
