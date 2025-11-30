@@ -2,10 +2,14 @@ when:
   event: push
   branch: 0.*
   path:
-    include: [ "stitcher/**", "stonecutter/**" ]
+    include:
+      - "stitcher/**"
+      - "stonecutter/**"
+      - ".woodpecker/run-tests.yml"
 
 steps:
   run-tests:
     image: gradle:jdk21-corretto
     commands:
-      - gradle test
+      - chmod u+x gradlew
+      - ./gradlew test --no-daemon -Dorg.gradle.configuration-cache.read-only=true
