@@ -19,7 +19,7 @@ class ControllerExtensionTest : GradleTest, ShouldSpec({
 
     context("plugin initialization") {
         should("fail without active call") { _, build -> build.fail() }
-        should("fail with base plugin") { _, build -> build.fail() }
+        should("warn with base plugin") { _, build -> build.run().output shouldContain "Stonecutter branch root" }
         should("validate active parameter") { _, build -> build.fail() }
         should("accept file active") { _, build -> build.run() }
     }

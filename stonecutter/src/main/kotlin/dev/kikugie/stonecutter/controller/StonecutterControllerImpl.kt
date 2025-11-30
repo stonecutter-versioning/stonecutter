@@ -51,6 +51,16 @@ internal abstract class StonecutterControllerImpl @Inject constructor(val root: 
     private val configContainer: BuildConfigurationContainer = root.gradle.getContainer()
     private var hasInitialized: Boolean = false
 
+    init {
+        root.afterEvaluate {
+            if (!hasInitialized)
+                error("Stonecutter branch root $hierarchy has not been initialized. Use `stonecutter.init()` or `stonecutter.active()` to initialize it.")
+
+            if (plugins.hasPlugin("base"))
+                logger.warn("Stonecutter branch root $hierarchy should not be a buildable project. Remove the `base` or `java` plugin to fix the issue.")
+        }
+    }
+
     override fun active(provider: Any?) {
         check(!hasInitialized) { "Stonecutter has already been initialized!" }
         tree.assignActive(root, tasks, provider.resolveActive())
