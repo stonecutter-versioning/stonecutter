@@ -66,8 +66,9 @@ internal abstract class TreeBuilderImpl @Inject constructor(val objects: ObjectF
             it.createWith(ext, project)
     }
 
-    private fun getOrCreateBranch(name: String): BranchBuilderImpl =
-        branchBuilders.getOrPut(name) { objects.newInstance<BranchBuilderImpl>(name, this) }
+    private fun getOrCreateBranch(name: String): BranchBuilderImpl = branchBuilders.getOrPut(name) {
+        objects.newInstance<BranchBuilderImpl>(name, this)
+    }
 
     private fun resolveVcs(): String = vcsVersion.orNull
         ?.also { check(it in knownVersions.keys) { "VCS version '$it' doesn't match any registered subproject" } }
@@ -91,6 +92,7 @@ internal abstract class BranchBuilderImpl @Inject constructor(
     internal val nodeBuilders: MutableList<NodeBuilderImpl> = mutableListOf()
 
     override fun inherit() {
+        if (name.isEmpty()) throw UnsupportedOperationException("Root branch has no parent to inherit from")
         nodeBuilders += tree.getRootNodes()
     }
 
