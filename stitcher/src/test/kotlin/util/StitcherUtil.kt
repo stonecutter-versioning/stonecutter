@@ -70,7 +70,7 @@ class TransformParametersBuilder {
     val replacements: ReplacementBuilder<Replacement> = ReplacementBuilder()
 
     fun ReplacementBuilder<Replacement>.string(from: String, to: String, id: String? = null) =
-        add(StringReplacement(to, setOf(from), identifier = id)).getOrThrow()
+        add(StringReplacement(to, setOf(from), identifier = id))
 
     fun build() = TransformParameters(adapter, commenter, uncommenter, swapper, swaps, constants, dependencies, replacements.build())
 
