@@ -1,6 +1,3 @@
-labels:
-  agent: homeserver
-
 when:
   event: push
   branch: 0.*
