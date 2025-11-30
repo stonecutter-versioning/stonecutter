@@ -1,0 +1,11 @@
+when:
+  event: push
+  branch: 0.*
+  path:
+    include: [ "stitcher/**", "stonecutter/**" ]
+
+steps:
+  run-tests:
+    image: gradle:jdk21-corretto
+    commands:
+      - gradle test

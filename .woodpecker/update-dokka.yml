@@ -6,7 +6,7 @@ when:
 
 steps:
   run-dokka:
-    image: gradle:jdk17-corretto
+    image: gradle:jdk21-corretto
     commands:
       - gradle dokkaGeneratePublicationHtml --no-daemon -Dorg.gradle.configuration-cache.read-only=true
   clone-pages:
