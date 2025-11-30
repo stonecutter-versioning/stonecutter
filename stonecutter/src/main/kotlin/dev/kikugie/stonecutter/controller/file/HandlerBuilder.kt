@@ -1,5 +1,6 @@
 package dev.kikugie.stonecutter.controller.file
 
+import dev.kikugie.stitcher.transform.impl.LineCommentStrategy
 import dev.kikugie.stitcher.transform.impl.StandardSwapStrategy
 import dev.kikugie.stitcher.transform.strategy.CommentingStrategy
 import dev.kikugie.stitcher.transform.strategy.SwappingStrategy
@@ -37,6 +38,9 @@ public abstract class HandlerBuilder @Inject constructor(objects: ObjectFactory)
     public fun scanner(action: Action<ScannerBuilder>) {
         action.execute(scanner.get())
     }
+
+    public fun line(prefix: String): CommentingStrategy =
+        LineCommentStrategy(prefix)
 
     private companion object {
         val BASIC_UNCOMMENTER: UncommentingStrategy = UncommentingStrategy { it, _, cl ->

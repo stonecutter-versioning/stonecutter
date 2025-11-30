@@ -9,15 +9,15 @@ import javax.inject.Inject
 public abstract class FileHandlerContainer @Inject constructor(objects: ObjectFactory) {
     internal abstract val handlers: NamedDomainObjectContainer<HandlerBuilder>
 
-    public operator fun get(extension: String): NamedDomainObjectProvider<HandlerBuilder> =
+    public fun named(extension: String): NamedDomainObjectProvider<HandlerBuilder> =
         handlers.named(extension)
 
-    public fun inherit(primary: String, vararg extensions: String) {
-        val parent = get(primary).get()
+    public fun inherit(from: String, vararg extensions: String) {
+        val parent = named(from).get()
         for (it in extensions) handlers.make(it) { copy(parent) }
     }
 
-    public fun register(vararg extensions: String, configuration: Action<HandlerBuilder>) {
+    public fun configure(vararg extensions: String, configuration: Action<HandlerBuilder>) {
         for (it in extensions) handlers.make(it, configuration)
     }
 

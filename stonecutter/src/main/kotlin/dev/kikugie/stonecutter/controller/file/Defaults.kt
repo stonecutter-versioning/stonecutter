@@ -11,7 +11,7 @@ internal fun FileHandlerContainer.configureDefaults() {
     configureHash()
 }
 
-private fun FileHandlerContainer.configureJava() = register("java", "scala", "fsh", "vsh", "json5") {
+private fun FileHandlerContainer.configureJava() = configure("java", "scala", "fsh", "vsh", "json5") {
     scanner {
         lexer.set(::SlashStyleScanner)
         openers(SlashStyleScanner.SLASH_COMMENT_START, SlashStyleScanner.STAR_COMMENT_START)
@@ -22,7 +22,7 @@ private fun FileHandlerContainer.configureJava() = register("java", "scala", "fs
     uncommenter.set(StarCommentStrategy(true))
 }
 
-private fun FileHandlerContainer.configureKotlin() = register("kt", "kts") {
+private fun FileHandlerContainer.configureKotlin() = configure("kt", "kts") {
     scanner {
         lexer.set { SlashStyleScanner(it).apply { nestMultiLineComments = true } }
         openers(SlashStyleScanner.SLASH_COMMENT_START, SlashStyleScanner.STAR_COMMENT_START)
@@ -33,7 +33,7 @@ private fun FileHandlerContainer.configureKotlin() = register("kt", "kts") {
     uncommenter.set(StarCommentStrategy(true))
 }
 
-private fun FileHandlerContainer.configureHash() = register("cfg", "aw", "accesswidener", "yml", "yaml") {
+private fun FileHandlerContainer.configureHash() = configure("cfg", "aw", "accesswidener", "yml", "yaml") {
     scanner {
         lexer.set(::HashStyleScanner)
         openers(HashStyleScanner.HASH_COMMENT_START)

@@ -7,7 +7,7 @@ plugins {
 stonecutter active "1"
 
 stonecutter handlers {
-    register("java") {
+    configure("java") {
         commenter = LineCommentStrategy("//")
     }
 }
