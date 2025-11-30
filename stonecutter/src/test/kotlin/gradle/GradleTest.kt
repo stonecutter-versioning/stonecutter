@@ -1,35 +1,47 @@
 package gradle
 
 import com.github.ajalt.mordant.rendering.TextColors
-import dev.kikugie.commons.takeAs
 import io.kotest.core.TestConfiguration
-import io.kotest.core.spec.style.FreeSpec
-import io.kotest.core.spec.style.ShouldSpec
-import io.kotest.core.spec.style.scopes.FreeSpecContainerScope
-import io.kotest.core.spec.style.scopes.FreeSpecContextConfigBuilder
-import io.kotest.core.spec.style.scopes.ShouldSpecContainerScope
 import io.kotest.core.test.TestScope
-import io.kotest.datatest.withData
 import io.kotest.engine.spec.tempdir
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import java.io.FileNotFoundException
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.Path
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.copyToRecursively
-import kotlin.io.path.createParentDirectories
-import kotlin.io.path.notExists
-import kotlin.io.path.readText
-import kotlin.io.path.writeText
+import kotlin.io.path.*
 
-private fun TestConfiguration.prepareParameters(name: String, gradle: GradleVersions.GradleDistribution?): Pair<Path, GradleTest.Runner> {
+@DslMarker @Retention(AnnotationRetention.SOURCE)
+annotation class GradleTestDsl
+
+@GradleTestDsl
+interface GradleTest {
+    fun interface Runner {
+        fun run(vararg args: String): BuildResult
+    }
+}
+
+infix fun Path.read(file: String): String =
+    resolve(file).readText()
+
+infix fun Path.write(text: CharSequence) {
+    createParentDirectories()
+    writeText(text, Charsets.UTF_8, StandardOpenOption.CREATE_NEW)
+}
+
+suspend inline fun TestConfiguration.run(
+    name: String,
+    scope: TestScope,
+    crossinline action: suspend TestScope.(directory: Path, build: GradleTest.Runner) -> Unit
+) {
+    val (dir, runner) = prepareParameters(name.replace(' ', '_').replace('-', '_'))
+    scope.action(dir, runner)
+}
+
+fun TestConfiguration.prepareParameters(name: String): Pair<Path, GradleTest.Runner> {
     val project = "${this::class.simpleName}/$name"
-    val version = gradle?.run { "-$version" } ?: ""
     val source = Path("src/test/resources/projects/$project")
-    val dir = tempdir(suffix = project.replace('/', '-') + version, keepOnFailure = true)
+    val dir = tempdir(suffix = project.replace('/', '-'), keepOnFailure = true)
     println(buildString {
         appendLine(TextColors.cyan("### Running test '$project' ###"))
         appendLine(TextColors.cyan("- Source: file://${source.absolutePathString()}"))
@@ -48,7 +60,6 @@ private fun TestConfiguration.prepareParameters(name: String, gradle: GradleVers
         .withPluginClasspath()
         .forwardStdOutput(StyledPrintWriter(TextColors.white))
         .forwardStdError(StyledPrintWriter(TextColors.red))
-    gradle?.apply(build)
 
     val runner = GradleTest.Runner {
         build.withArguments(defaultArgs + it).build()
@@ -61,86 +72,4 @@ private fun TestConfiguration.prepareParameters(name: String, gradle: GradleVers
 private fun copyResources(source: Path, destination: Path) {
     if (source.notExists()) throw FileNotFoundException(source.absolutePathString())
     source.copyToRecursively(destination, followLinks = false, overwrite = true)
-}
-
-private fun Set<GradleVersions.GradleDistribution>.toDataMap(): Map<String, GradleVersions.GradleDistribution?> =
-    if (isEmpty()) mapOf("Default Gradle" to null) else associateBy { it.version.replace('.', '_') }
-
-@DslMarker @Retention(AnnotationRetention.SOURCE)
-private annotation class GradleTestDsl
-
-@GradleTestDsl
-context(spec: ShouldSpec)
-fun should(name: String, action: suspend TestScope.(directory: Path, build: GradleTest.Runner) -> Unit) = spec.should(name) {
-    val (dir, runner) = spec.prepareParameters(name.sanitize(), null)
-    action(dir, runner)
-}
-
-@GradleTestDsl
-context(spec: ShouldSpec)
-fun xshould(name: String, action: suspend TestScope.(directory: Path, build: GradleTest.Runner) -> Unit) = spec.xshould(name) {
-    val (dir, runner) = spec.prepareParameters(name.sanitize(), null)
-    action(dir, runner)
-}
-
-@GradleTestDsl
-context(spec: ShouldSpec)
-suspend fun ShouldSpecContainerScope.should(name: String, action: suspend TestScope.(directory: Path, build: GradleTest.Runner) -> Unit) = should(name) {
-    val (dir, runner) = spec.prepareParameters(name.sanitize(), null)
-    action(dir, runner)
-}
-
-@GradleTestDsl
-context(spec: ShouldSpec)
-suspend fun ShouldSpecContainerScope.xshould(name: String, action: suspend TestScope.(directory: Path, build: GradleTest.Runner) -> Unit) = xshould(name) {
-    val (dir, runner) = spec.prepareParameters(name.sanitize(), null)
-    action(dir, runner)
-}
-
-@GradleTestDsl
-context(spec: FreeSpec)
-operator fun String.minus(action: suspend TestScope.(directory: Path, build: GradleTest.Runner) -> Unit) = with(spec) {
-    this@minus - { build(this@minus.replace(' ', '_').replace('-', '_'), action) }
-}
-
-@GradleTestDsl
-context(spec: FreeSpec)
-operator fun FreeSpecContextConfigBuilder.minus(action: suspend TestScope.(directory: Path, build: GradleTest.Runner) -> Unit) = with(spec) {
-    this@minus - { build(name.replace(' ', '_').replace('-', '_'), action) }
-}
-
-@GradleTestDsl
-context(spec: FreeSpec)
-suspend fun FreeSpecContainerScope.build(name: String, action: suspend TestScope.(directory: Path, build: GradleTest.Runner) -> Unit) {
-    val data = spec.takeAs<GradleTest>().gradle.toDataMap()
-    withData(data) {
-        val (dir, runner) = spec.prepareParameters(name, it)
-        action(dir, runner)
-    }
-}
-
-@GradleTestDsl
-infix fun Path.write(text: CharSequence) {
-    createParentDirectories()
-    writeText(text, Charsets.UTF_8, StandardOpenOption.CREATE_NEW)
-}
-
-@GradleTestDsl
-infix fun Path.read(file: String): String =
-    resolve(file).readText()
-
-private fun String.sanitize() = replace(' ', '_').replace('-', '_')
-
-@GradleTestDsl
-interface GradleTest {
-    val gradle: Set<GradleVersions.GradleDistribution>
-        get() = if (isFull) GradleVersions.ALL else emptySet()
-
-    fun interface Runner {
-        fun run(vararg args: String): BuildResult
-    }
-
-    private companion object {
-        val isFull = System.getProperty("dev.kikugie.stonecutter.full-test", "false").toBoolean()
-    }
 }
