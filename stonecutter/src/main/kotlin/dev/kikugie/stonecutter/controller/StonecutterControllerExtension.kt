@@ -36,4 +36,5 @@ public interface StonecutterControllerExtension : VersionOperations<Version> {
 
     public infix fun flags(action: Action<StonecutterFlags>): Unit = action.execute(flags)
     public infix fun tasks(action: Action<StonecutterControllerTasks>): Unit = action.execute(tasks)
+    public infix fun handlers(action: Action<FileHandlerContainer>): Unit = action.execute(handlers)
 }
