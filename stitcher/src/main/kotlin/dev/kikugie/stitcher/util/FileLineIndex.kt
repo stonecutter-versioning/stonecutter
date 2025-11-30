@@ -4,14 +4,18 @@ import dev.kikugie.stitcher.antlr.Lines
 import dev.kikugie.stitcher.issue.ProblemLocation
 import org.antlr.v4.runtime.CharStream
 
-private fun buildLineIndexes(stream: CharStream): IntArray = try {
-    val lexer = Lines(stream)
-    val indexes = ArrayList<Int>()
-    for (token in lexer.asSequence())
-        indexes += token.startIndex
-    indexes.toIntArray()
-} finally {
-    stream.seek(0)
+private fun buildLineIndexes(stream: CharStream): IntArray {
+    val index = stream.index()
+    return try {
+        stream.seek(0)
+        val lexer = Lines(stream)
+        val indexes = ArrayList<Int>()
+        for (token in lexer.asSequence())
+            indexes += token.startIndex
+        indexes.toIntArray()
+    } finally {
+        stream.seek(index)
+    }
 }
 
 public class FileLineIndex private constructor(private val lines: IntArray) {
@@ -31,8 +35,11 @@ public class FileLineIndex private constructor(private val lines: IntArray) {
     }
 
     @Throws(IndexOutOfBoundsException::class)
-    public fun indexOf(line: Int, offset: Int): Int =
+    public fun indexOf(line: Int, offset: Int): Int = try {
         lines[line - 1] + offset
+    } catch (_: IndexOutOfBoundsException) {
+        throw IndexOutOfBoundsException("Position $line:$offset is not in [${lines.joinToString()}]")
+    }
 
     private tailrec fun findLineIndex(index: Int, min: Int = 0, max: Int = this.max): Int {
         if (min == max) return min // Converged onto one position

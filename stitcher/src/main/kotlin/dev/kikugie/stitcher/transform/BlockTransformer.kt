@@ -140,7 +140,7 @@ private class BlockUncommenter(
             val content: CharStream = parameters.uncommenter.uncomment(block.body.text, block.opener?.text.orEmpty(), block.closer?.text.orEmpty())
                 .toStream(runtime.input.sourceName)
             val scanner: ScannerAdapter = parameters.adapter.create(content, runtime.problems).apply {
-                scanner.errorListener(InlineErrorListener(runtime.problems, FileLineIndex(content), start))
+                scanner.errorListener(InlineErrorListener(runtime.problems, runtime.problems.at(start)))
             }
 
             var next: AntlrToken

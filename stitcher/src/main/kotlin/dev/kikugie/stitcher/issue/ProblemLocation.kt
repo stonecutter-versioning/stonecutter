@@ -14,6 +14,16 @@ public value class ProblemLocation private constructor(private val packed: Long)
     public val column: Int get() = (packed ushr 32 and 0xFFFFFFFFL).toInt()
     public val isUndefined: Boolean get() = packed == -1L
 
+    public fun resolve(relative: ProblemLocation): ProblemLocation {
+        val newLine = if (isUndefined) -1 else line + relative.line - 1
+        val newColumn = when {
+            isUndefined -> -1
+            relative.line > 1 -> relative.column
+            else -> column + relative.column - 2
+        }
+        return ProblemLocation(newLine, newColumn)
+    }
+
     public companion object {
         public val UNDEFINED: ProblemLocation = ProblemLocation(-1L)
     }

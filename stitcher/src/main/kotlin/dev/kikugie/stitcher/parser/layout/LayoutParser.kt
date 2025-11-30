@@ -139,7 +139,7 @@ internal class LayoutParser private constructor(
             else -> return null
         }
 
-        val listener = InlineErrorListener(problems, FileLineIndex(input), body.startIndex)
+        val listener = InlineErrorListener(problems, at(body.startIndex))
         val scanner = StitcherLexer(input).errorListener(listener)
         val stream = InlineTokenStream(scanner, source, body.startIndex, at(body.startIndex))
         val parser = StitcherParser(stream).errorListener(listener)
