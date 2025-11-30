@@ -1,0 +1,3 @@
+stonecutter {
+    swaps["!!!"] = "..."
+}
