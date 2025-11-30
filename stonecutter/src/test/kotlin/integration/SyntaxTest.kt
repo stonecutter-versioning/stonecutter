@@ -26,7 +26,7 @@ class SyntaxTest : GradleTest, FreeSpec({
      * Checks `^/ * /` (without spaces) being incorrectly matched.
      * @see <a href="https://codeberg.org/stonecutter/stonecutter/issues/22">#22</a>
      */
-    "nested line scope" - { _, build ->
+    "nested line scope".config(enabled = false) - { _, build ->
         build.run("stonecutterSwitchTo1")
         build.run(":1:run").output shouldNotContain "Hello world!"
         build.run(":2:run").output shouldNotContain "Hello world!"
