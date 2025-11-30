@@ -39,4 +39,16 @@ class ControllerExtensionTest : GradleTest, ShouldSpec({
             }
         }
     }
+
+    context("file handlers") {
+        should("inherit custom handler") { dir, build ->
+            build.run("stonecutterSwitchTo2")
+            dir read "src/main/example.custom" shouldContain "#comment"
+        }
+
+        should("override existing handler") { dir, build ->
+            build.run("stonecutterSwitchTo2")
+            dir read "src/main/java/Example.java" shouldContain "//int one = 1;"
+        }
+    }
 })
