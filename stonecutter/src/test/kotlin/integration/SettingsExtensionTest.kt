@@ -1,4 +1,4 @@
-package newintegration
+package integration
 
 import gradle.GradleTest
 import gradle.fail
