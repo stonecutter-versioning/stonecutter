@@ -15,6 +15,7 @@ import kotlin.collections.forEach
 @DslMarker @Retention(AnnotationRetention.BINARY)
 private annotation class DependencyDsl
 
+/**[Stonecutter dependency](https://stonecutter.kikugie.dev/wiki/config/params#condition-dependencies) configuration extension.*/
 @DependencyDsl
 public abstract class DependencyContainer @Inject constructor(private val delegate: MapProperty<Identifier, AnyVersion>) :
     ExtendedMapProperty<Identifier, AnyVersion>, MapProperty<Identifier, AnyVersion> by delegate {

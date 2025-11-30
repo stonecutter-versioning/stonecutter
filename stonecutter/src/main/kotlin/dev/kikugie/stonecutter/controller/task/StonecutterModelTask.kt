@@ -12,10 +12,18 @@ import org.gradle.api.tasks.TaskAction
 import java.io.IOException
 import kotlin.io.path.absolutePathString
 
+/**
+ * Saves [ProjectTree][dev.kikugie.stonecutter.data.tree.ProjectTree],
+ * [ProjectBranch][dev.kikugie.stonecutter.data.tree.ProjectBranch] and
+ * [ProjectNode][dev.kikugie.stonecutter.data.tree.ProjectNode]
+ * data to `build/stonecutter-cache/<>.json` for third-party access.
+ */
 public abstract class StonecutterModelTask : DefaultTask() {
+    /**The saved JSON data.*/
     @get:Input
     public abstract val model: Property<String>
 
+    /**The save location.*/
     @get:OutputFile
     public abstract val output: RegularFileProperty
 

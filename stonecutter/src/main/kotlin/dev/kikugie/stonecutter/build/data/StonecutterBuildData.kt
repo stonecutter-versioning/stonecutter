@@ -23,8 +23,7 @@ import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.Optional
 import javax.inject.Inject
 
-@StonecutterInternalAPI
-public abstract class StonecutterBuildData @Inject constructor(
+internal abstract class StonecutterBuildData @Inject constructor(
     controller: StonecutterControllerExtension,
     current: Identifier,
     providers: ProviderFactory

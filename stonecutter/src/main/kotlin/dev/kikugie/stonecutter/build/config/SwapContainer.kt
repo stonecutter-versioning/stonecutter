@@ -13,6 +13,7 @@ import javax.inject.Inject
 @DslMarker @Retention(AnnotationRetention.BINARY)
 private annotation class SwapDsl
 
+/**[Stonecutter swap](https://stonecutter.kikugie.dev/wiki/config/params#string-swaps) configuration extension.*/
 @SwapDsl
 public abstract class SwapContainer @Inject constructor(private val delegate: MapProperty<Identifier, String>) :
     ExtendedMapProperty<Identifier, String>, MapProperty<Identifier, String> by delegate {

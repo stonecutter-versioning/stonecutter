@@ -39,25 +39,25 @@ import java.nio.file.Path
 import javax.inject.Inject
 import kotlin.io.path.*
 
-@OptIn(StonecutterInternalAPI::class)
+/**The task responsible for processing Stonecutter comments in files.*/
 public abstract class StonecutterPrepareTask : DefaultTask() {
     @get:Nested
-    public abstract val params: Property<StonecutterBuildData>
+    internal abstract val params: Property<StonecutterBuildData>
 
+    /**The task base directory at `src/` used for resolving relative paths.*/
     @get:Input
     public abstract val root: Property<File>
 
+    /**The filtered source set files.*/
     @get:InputFiles @get:Incremental @get:IgnoreEmptyDirectories
     public abstract val source: ConfigurableFileCollection
 
+    /**The output directory at `build/stonecutter-cache/`.*/
     @get:OutputDirectory
     public abstract val destination: DirectoryProperty
 
     @get:Inject
-    public abstract val objects: ObjectFactory
-
-    @get:Inject
-    public abstract val executor: WorkerExecutor
+    internal abstract val executor: WorkerExecutor
 
     @get:ServiceReference(FileHandlerService.NAME)
     internal abstract val handlers: Property<FileHandlerService>

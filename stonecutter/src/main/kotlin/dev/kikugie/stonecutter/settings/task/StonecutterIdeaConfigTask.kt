@@ -11,10 +11,13 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFiles
 import org.gradle.api.tasks.TaskAction
 
+/**Creates IntelliJ IDEA run configurations for version switch tasks.*/
 public abstract class StonecutterIdeaConfigTask : DefaultTask() {
+    /**Registered project trees and their nodes.*/
     @get:Input
     public abstract val projects: MapProperty<ProjectHierarchy, List<Identifier>>
 
+    /**Run configuration files.*/
     @get:OutputFiles
     public abstract val configurations: ConfigurableFileTree
 

@@ -7,15 +7,17 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import java.nio.file.Path
 
 /**Implementation class for `stonecutterSwitchTo...` tasks.*/
 public sealed class StonecutterSwitchTask : DefaultTask() {
-    @get:InputFile
+    /**The modified file.*/
+    @get:OutputFile
     public abstract val file: RegularFileProperty
 
+    /**The applied version.*/
     @get:Input
     public abstract val version: Property<Identifier>
 }

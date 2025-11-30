@@ -8,13 +8,27 @@ import dev.kikugie.semver.data.Version
 import dev.kikugie.semver.data.VersionPredicate
 import java.util.concurrent.ConcurrentHashMap
 
+/**Marker interface for extensions supporting version-based conditional evaluation.*/
 public interface VersionOperations<T : Version> {
+    /**Parses the provided [version] string as the [T] version.*/
     public fun parse(version: AnyVersion): T
+
+    /**
+     * Checks is the provided [version] satisfies the [predicates].
+     *
+     * Each predicate string may contain multiple space-separated entries.
+     */
     public fun eval(version: Version, vararg predicates: String): Boolean
 
+    /**
+     * Checks is the provided [version] satisfies the [predicates].
+     *
+     * Each predicate string may contain multiple space-separated entries.
+     */
     public fun eval(version: String, vararg predicates: String): Boolean =
         eval(parse(version), *predicates)
 
+    /**Parses both version strings and compares them.*/
     public fun compare(version: String, other: String): Int =
         parse(version) compareTo parse(other)
 }

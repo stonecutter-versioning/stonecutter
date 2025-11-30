@@ -2,6 +2,12 @@ package dev.kikugie.stonecutter.controller.flag
 
 /**
  * A primitive configuration option for Stonecutter.
+ *
+ * Flags can be assigned via [stonecutter.flags { }][dev.kikugie.stonecutter.controller.StonecutterControllerExtension.flags],
+ * or with a `dev.kikugie.stonecutter.`[key] property.
+ *
+ * @property key The flag key, used in [named] and Gradle property accessors
+ * @property default The default value of the flag
  */
 @ConsistentCopyVisibility
 public data class StonecutterFlag<T : Any> private constructor(public val key: String, public val default: T) {
@@ -12,6 +18,7 @@ public data class StonecutterFlag<T : Any> private constructor(public val key: S
         check(REGISTRY.putIfAbsent(key, this) == null) { "Flag '$key' is already registered" }
     }
 
+    /**Converts the provided [value] to the flag's type.*/
     @Suppress("UNCHECKED_CAST")
     public fun fromString(value: String): T = when (default) {
         is String -> value
@@ -30,6 +37,7 @@ public data class StonecutterFlag<T : Any> private constructor(public val key: S
             else -> false
         }
 
+        /**Returns a flag by its [key][StonecutterFlag.key].*/
         @JvmStatic
         public fun named(name: String): StonecutterFlag<*> =
             checkNotNull(REGISTRY[name]) { "Flag '$name' is not registered" }

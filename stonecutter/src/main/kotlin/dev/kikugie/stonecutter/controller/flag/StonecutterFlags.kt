@@ -5,6 +5,7 @@ import kotlin.annotation.AnnotationRetention.BINARY
 @DslMarker @Retention(BINARY)
 private annotation class FlagDsl
 
+/**Extension interface to provide read-only access to [StonecutterFlag]s.*/
 @FlagDsl
 public sealed interface StonecutterFlagsView {
     public operator fun get(key: String): Any = get(StonecutterFlag.named(key))
@@ -12,6 +13,7 @@ public sealed interface StonecutterFlagsView {
     public operator fun <T : Any> StonecutterFlag<T>.invoke(): T = get(this)
 }
 
+/**Extension interface to provide read-write access to [StonecutterFlag]s.*/
 @FlagDsl
 public sealed interface StonecutterFlags : StonecutterFlagsView {
     public operator fun set(key: String, value: Any): Unit = StonecutterFlag.named(key).let {

@@ -15,7 +15,7 @@ import org.gradle.api.invocation.Gradle
  * The value obtained from [ProjectHierarchy.toString] is equal to [Project.getPath],
  * and can be obtained using [ProjectHierarchy.Companion.hierarchy] extension.
  */
-@JvmInline @Serializable
+@JvmInline @Serializable @JvmExposeBoxed @OptIn(ExperimentalStdlibApi::class)
 public value class ProjectHierarchy(private val path: String) : Collection<String>, java.io.Serializable {
     init {
         require(path.startsWith(':')) { "Path '$path' must be absolute" }
@@ -47,10 +47,13 @@ public value class ProjectHierarchy(private val path: String) : Collection<Strin
     }
 
     public companion object {
+        /**The root project*/
         public val ROOT: ProjectHierarchy = ProjectHierarchy(":")
 
         /**Converts the project path to [ProjectHierarchy].*/
         public val Project.hierarchy: ProjectHierarchy get() = ProjectHierarchy(path)
+
+        /**Converts the project path to [ProjectHierarchy].*/
         public val ProjectDescriptor.hierarchy: ProjectHierarchy get() = ProjectHierarchy(path)
 
         /**Locates the project with the given [hierarchy] in the build.*/
@@ -61,7 +64,11 @@ public value class ProjectHierarchy(private val path: String) : Collection<Strin
 
         /**Creates a new [ProjectHierarchy], prepending `:` if necessary.*/
         public fun of(path: String): ProjectHierarchy = ProjectHierarchy(":${path.trimStart(':')}")
+
+        /**Creates a new [ProjectHierarchy] from the provided [components].*/
         public fun of(components: Iterable<String>): ProjectHierarchy = ProjectHierarchy(components.joinToString(":", ":"))
+
+        /**Creates a new [ProjectHierarchy] from the provided [components].*/
         public fun of(vararg components: String): ProjectHierarchy = of(components.asIterable())
     }
 }

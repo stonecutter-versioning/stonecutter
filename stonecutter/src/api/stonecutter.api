@@ -192,31 +192,6 @@ public abstract class dev/kikugie/stonecutter/build/config/SwapContainer : dev/k
 	public fun zip (Lorg/gradle/api/provider/Provider;Ljava/util/function/BiFunction;)Lorg/gradle/api/provider/Provider;
 }
 
-public abstract class dev/kikugie/stonecutter/build/data/StonecutterBuildData {
-	public fun <init> (Ldev/kikugie/stonecutter/controller/StonecutterControllerExtension;Ljava/lang/String;Lorg/gradle/api/provider/ProviderFactory;)V
-	public abstract fun getConstants ()Lorg/gradle/api/provider/MapProperty;
-	public abstract fun getDependencies ()Lorg/gradle/api/provider/MapProperty;
-	protected abstract fun getObjects ()Lorg/gradle/api/model/ObjectFactory;
-	public abstract fun getRegexReplacements ()Lorg/gradle/api/provider/ListProperty;
-	public abstract fun getStringReplacements ()Lorg/gradle/api/provider/ListProperty;
-	public abstract fun getSwaps ()Lorg/gradle/api/provider/MapProperty;
-}
-
-public abstract interface class dev/kikugie/stonecutter/build/data/StonecutterBuildData$RegexReplacementSpec {
-	public fun build ()Ldev/kikugie/stitcher/transform/replacement/RegexReplacement;
-	public abstract fun getFlags ()Lorg/gradle/api/provider/SetProperty;
-	public abstract fun getIdentifier ()Lorg/gradle/api/provider/Property;
-	public abstract fun getPattern ()Lorg/gradle/api/provider/Property;
-	public abstract fun getTarget ()Lorg/gradle/api/provider/Property;
-}
-
-public abstract interface class dev/kikugie/stonecutter/build/data/StonecutterBuildData$StringReplacementSpec {
-	public fun build ()Ldev/kikugie/stitcher/transform/replacement/StringReplacement;
-	public abstract fun getIdentifier ()Lorg/gradle/api/provider/Property;
-	public abstract fun getSources ()Lorg/gradle/api/provider/SetProperty;
-	public abstract fun getTarget ()Lorg/gradle/api/provider/Property;
-}
-
 public abstract interface class dev/kikugie/stonecutter/build/task/StonecutterBuildTasks {
 	public abstract fun configureSource (Lorg/gradle/api/tasks/SourceSet;)V
 	public abstract fun getGenerate ()Ldev/kikugie/stonecutter/data/whatever/TaskProviderMap;
@@ -229,9 +204,6 @@ public abstract interface class dev/kikugie/stonecutter/build/task/StonecutterBu
 public abstract class dev/kikugie/stonecutter/build/task/StonecutterPrepareTask : org/gradle/api/DefaultTask {
 	public fun <init> ()V
 	public abstract fun getDestination ()Lorg/gradle/api/file/DirectoryProperty;
-	public abstract fun getExecutor ()Lorg/gradle/workers/WorkerExecutor;
-	public abstract fun getObjects ()Lorg/gradle/api/model/ObjectFactory;
-	public abstract fun getParams ()Lorg/gradle/api/provider/Property;
 	public abstract fun getRoot ()Lorg/gradle/api/provider/Property;
 	public abstract fun getSource ()Lorg/gradle/api/file/ConfigurableFileCollection;
 }
@@ -247,15 +219,16 @@ public abstract interface class dev/kikugie/stonecutter/controller/StonecutterCo
 	public abstract fun getTree ()Ldev/kikugie/stonecutter/data/tree/ProjectTree;
 	public fun getVcsVersion ()Ldev/kikugie/stonecutter/data/StonecutterProject;
 	public fun getVersions ()Ljava/util/Set;
+	public fun handlers (Lorg/gradle/api/Action;)V
 	public abstract fun parameters (Lorg/gradle/api/Action;)V
 	public fun tasks (Lorg/gradle/api/Action;)V
 }
 
 public abstract class dev/kikugie/stonecutter/controller/file/FileHandlerContainer {
 	public fun <init> (Lorg/gradle/api/model/ObjectFactory;)V
-	public final fun get (Ljava/lang/String;)Lorg/gradle/api/NamedDomainObjectProvider;
+	public final fun configure ([Ljava/lang/String;Lorg/gradle/api/Action;)V
 	public final fun inherit (Ljava/lang/String;[Ljava/lang/String;)V
-	public final fun register ([Ljava/lang/String;Lorg/gradle/api/Action;)V
+	public final fun named (Ljava/lang/String;)Lorg/gradle/api/NamedDomainObjectProvider;
 }
 
 public abstract class dev/kikugie/stonecutter/controller/file/HandlerBuilder : org/gradle/api/Named {
@@ -265,6 +238,7 @@ public abstract class dev/kikugie/stonecutter/controller/file/HandlerBuilder : o
 	public abstract fun getScanner ()Lorg/gradle/api/provider/Property;
 	public abstract fun getSwapper ()Lorg/gradle/api/provider/Property;
 	public abstract fun getUncommenter ()Lorg/gradle/api/provider/Property;
+	public final fun line (Ljava/lang/String;)Ldev/kikugie/stitcher/transform/strategy/CommentingStrategy;
 	public final fun scanner (Lorg/gradle/api/Action;)V
 }
 
@@ -565,11 +539,13 @@ public final class dev/kikugie/stonecutter/controller/tree/TreeModel$Companion {
 }
 
 public final class dev/kikugie/stonecutter/data/ParsedVersion : java/lang/Comparable {
+	public fun <init> (Ldev/kikugie/semver/data/Version;)V
 	public static final synthetic fun box-impl (Ldev/kikugie/semver/data/Version;)Ldev/kikugie/stonecutter/data/ParsedVersion;
 	public fun compareTo (Ljava/lang/Object;)I
 	public static fun compareTo-impl (Ldev/kikugie/semver/data/Version;Ljava/lang/Object;)I
 	public static fun constructor-impl (Ldev/kikugie/semver/data/Version;)Ldev/kikugie/semver/data/Version;
 	public static fun constructor-impl (Ljava/lang/String;)Ldev/kikugie/semver/data/Version;
+	public final fun eq (Ljava/lang/Object;)Z
 	public static final fun eq-impl (Ldev/kikugie/semver/data/Version;Ljava/lang/Object;)Z
 	public fun equals (Ljava/lang/Object;)Z
 	public static fun equals-impl (Ldev/kikugie/semver/data/Version;Ljava/lang/Object;)Z
@@ -577,6 +553,7 @@ public final class dev/kikugie/stonecutter/data/ParsedVersion : java/lang/Compar
 	public final fun getValue ()Ldev/kikugie/semver/data/Version;
 	public fun hashCode ()I
 	public static fun hashCode-impl (Ldev/kikugie/semver/data/Version;)I
+	public final fun matches (Ljava/lang/String;)Z
 	public static final fun matches-impl (Ldev/kikugie/semver/data/Version;Ljava/lang/String;)Z
 	public fun toString ()Ljava/lang/String;
 	public static fun toString-impl (Ldev/kikugie/semver/data/Version;)Ljava/lang/String;
@@ -585,6 +562,7 @@ public final class dev/kikugie/stonecutter/data/ParsedVersion : java/lang/Compar
 
 public final class dev/kikugie/stonecutter/data/ProjectHierarchy : java/io/Serializable, java/util/Collection, kotlin/jvm/internal/markers/KMappedMarker {
 	public static final field Companion Ldev/kikugie/stonecutter/data/ProjectHierarchy$Companion;
+	public fun <init> (Ljava/lang/String;)V
 	public synthetic fun add (Ljava/lang/Object;)Z
 	public fun add (Ljava/lang/String;)Z
 	public fun addAll (Ljava/util/Collection;)Z
@@ -607,15 +585,18 @@ public final class dev/kikugie/stonecutter/data/ProjectHierarchy : java/io/Seria
 	public static fun isEmpty-impl (Ljava/lang/String;)Z
 	public fun iterator ()Ljava/util/Iterator;
 	public static fun iterator-impl (Ljava/lang/String;)Ljava/util/Iterator;
+	public final fun minus (Ljava/lang/String;)Ldev/kikugie/stonecutter/data/ProjectHierarchy;
 	public static final fun minus-3NqLo2s (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public final fun orBlank ()Ljava/lang/String;
 	public static final fun orBlank-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final fun plus (Ljava/lang/String;)Ldev/kikugie/stonecutter/data/ProjectHierarchy;
 	public static final fun plus-3NqLo2s (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public final fun relativize (Ldev/kikugie/stonecutter/data/ProjectHierarchy;)Ljava/lang/String;
 	public static final fun relativize-qHRS2DI (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 	public fun remove (Ljava/lang/Object;)Z
 	public fun removeAll (Ljava/util/Collection;)Z
 	public fun removeIf (Ljava/util/function/Predicate;)Z
 	public fun retainAll (Ljava/util/Collection;)Z
-	public synthetic fun size ()I
 	public fun toArray ()[Ljava/lang/Object;
 	public fun toArray ([Ljava/lang/Object;)[Ljava/lang/Object;
 	public fun toString ()Ljava/lang/String;

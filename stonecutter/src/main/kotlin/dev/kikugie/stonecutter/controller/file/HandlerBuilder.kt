@@ -15,11 +15,37 @@ import javax.inject.Inject
 @DslMarker @Retention(AnnotationRetention.BINARY)
 private annotation class FileHandlerDsl
 
+/**
+ * Extension class for configuring how Stonecutter should process the associated file format.
+ * @see FileHandlerContainer
+ */
 @FileHandlerDsl
 public abstract class HandlerBuilder @Inject constructor(objects: ObjectFactory) : Named {
+    /**Comment lexer configuration. Not reassignable - configure instead.*/
     public abstract val scanner: Property<ScannerBuilder>
+
+    /**
+     * Text commenting function.
+     *
+     * The function receives a text block and should return a new string,
+     * commented according to the associated file format.
+     */
     public abstract val commenter: Property<CommentingStrategy>
+
+    /**
+     * Text uncommenting function.
+     *
+     * The function receives a comment body and should reformat it if needed.
+     * *In most cases the default value works well enough*.
+     */
     public abstract val uncommenter: Property<UncommentingStrategy>
+
+    /**
+     * Swap formatting function.
+     *
+     * The function receives a text block and the value that it should be replaced with,
+     * and output a formatted string. *In most cases the default value works well enough*.
+     */
     public abstract val swapper: Property<SwappingStrategy>
 
     init {
@@ -28,6 +54,7 @@ public abstract class HandlerBuilder @Inject constructor(objects: ObjectFactory)
         scanner.value(objects.newInstance<ScannerBuilder>()).disallowChanges()
     }
 
+    /**Copies all configurations of the [other] builder.*/
     public fun copy(other: HandlerBuilder) {
         scanner.get().copy(other.scanner.get())
         commenter.set(other.commenter.get())
@@ -35,10 +62,12 @@ public abstract class HandlerBuilder @Inject constructor(objects: ObjectFactory)
         swapper.set(other.swapper.get())
     }
 
+    /**Configures the [scanner] property.*/
     public fun scanner(action: Action<ScannerBuilder>) {
         action.execute(scanner.get())
     }
 
+    /**Creates a [commenter] that prepends the given [prefix] on each line.*/
     public fun line(prefix: String): CommentingStrategy =
         LineCommentStrategy(prefix)
 

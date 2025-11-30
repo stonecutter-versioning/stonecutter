@@ -20,6 +20,15 @@ import java.io.File
 @DslMarker @Retention(AnnotationRetention.BINARY)
 private annotation class SettingsDsl
 
+/**
+ * Extension interface applied to `settings.gradle(.kts)`.
+ *
+ * The extension provides Stonecutter project registration functions
+ * and buildscript DSL configuration.
+ *
+ * @see <a href="https://stonecutter.kikugie.dev/wiki/config/params">Wiki #1</a>
+ * @see <a href="https://stonecutter.kikugie.dev/wiki/config/settings">Wiki #2</a>
+ */
 @SettingsDsl
 public abstract class StonecutterSettingsExtension(protected val objects: ObjectFactory) : VersionOperations<Version> {
     /**
@@ -36,8 +45,8 @@ public abstract class StonecutterSettingsExtension(protected val objects: Object
      * It cannot be set to `stonecutter.gradle[.kts]`.
      * When unset, prefers `build.gradle.kts`, but uses `build.gradle` if it already exists.
      *
-     * This value applies to all registered trees, and can be overridden with
-     * [TreeBuilder.centralScript], [TreeBuilder.mapBuilds] or [NodeBuilder.buildscript][dev.kikugie.stonecutter.data.tree.builder.NodeBuilder.buildscript].
+     * This value applies to all registered trees, and can be overridden with [TreeBuilder.centralScript], [TreeBuilder.mapBuilds]
+     * or [NodeBuilder.buildscript][dev.kikugie.stonecutter.settings.tree.NodeBuilder.buildscript].
      */
     public abstract val centralScript: Property<String>
 
@@ -50,6 +59,7 @@ public abstract class StonecutterSettingsExtension(protected val objects: Object
      */
     public abstract val kotlinController: Property<Boolean>
 
+    /**Utility extension for strictly parsing and comparing semantic versions.*/
     public val semantics: VersionOperations<SemanticVersion> get() = SemanticOperations
 
     /* Shared configuration */

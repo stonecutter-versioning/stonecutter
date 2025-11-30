@@ -13,6 +13,7 @@ import javax.inject.Inject
 @DslMarker @Retention(AnnotationRetention.BINARY)
 private annotation class ConstantDsl
 
+/**[Stonecutter constant](https://stonecutter.kikugie.dev/wiki/config/params#condition-constants) configuration extension.*/
 @ConstantDsl
 public abstract class ConstantContainer @Inject constructor(private val delegate: MapProperty<Identifier, Boolean>) :
     ExtendedMapProperty<Identifier, Boolean>, MapProperty<Identifier, Boolean> by delegate {
