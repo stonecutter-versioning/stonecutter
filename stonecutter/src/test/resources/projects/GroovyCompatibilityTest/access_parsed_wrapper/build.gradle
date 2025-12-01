@@ -1,0 +1,1 @@
+print("${stonecutter.current.parsed.matches("1")}")

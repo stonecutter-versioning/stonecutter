@@ -21,4 +21,10 @@ class GroovyCompatibilityTest : GradleTest, ShouldSpec({
             }
         }
     }
+
+    context("build") {
+        should("access parsed wrapper") { _, build ->
+            build.run()
+        }
+    }
 })

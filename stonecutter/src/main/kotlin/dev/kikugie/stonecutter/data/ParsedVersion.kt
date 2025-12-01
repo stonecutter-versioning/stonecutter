@@ -10,8 +10,7 @@ import kotlin.compareTo
  *
  * @property value The underlying parsed version
  */
-@JvmInline @JvmExposeBoxed @OptIn(ExperimentalStdlibApi::class)
-public value class ParsedVersion(public val value: Version) : Comparable<Any> {
+public class ParsedVersion(public val value: Version) : Comparable<Any> {
     /**Creates a parsed version from a string [value]. Throws if the version is invalid.*/
     public constructor(value: AnyVersion) : this(Version.parse(value).getOrThrow())
 
