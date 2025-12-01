@@ -3,10 +3,11 @@ package dev.kikugie.stonecutter.controller
 import dev.kikugie.stonecutter.Identifier
 import dev.kikugie.stonecutter.util.overwriteText
 import org.gradle.api.Project
+import java.io.Serializable
 import java.nio.file.Path
 import kotlin.io.path.readText
 
-internal interface StonecutterControllerManager {
+internal interface StonecutterControllerManager : Serializable {
     val filename: String
     val pattern: Regex
 
