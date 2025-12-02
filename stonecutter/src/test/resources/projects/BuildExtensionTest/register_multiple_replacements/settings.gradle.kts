@@ -4,6 +4,6 @@ plugins {
 
 stonecutter {
     create(rootProject) {
-        versions("example")
+        versions("1", "2")
     }
 }

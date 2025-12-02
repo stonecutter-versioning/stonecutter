@@ -14,8 +14,8 @@ class BuildExtensionTest : GradleTest, ShouldSpec({
         should("validate swap names") { _, build -> build.fail() }
         should("validate dependency names") { _, build -> build.fail() }
 
-        should("allow shared ids") { _, build -> build.run() }
-        should("require replacement ids") { _, build -> build.fail() }
+        should("allow shared replacement ids") { _, build -> build.run() }
+        should("validate replacement ids") { _, build -> build.fail() }
         should("require replacement direction") { _, build -> build.fail() }
         should("register_multiple_replacements") { dir, build ->
             build.run("stonecutterSwitchTo2")
