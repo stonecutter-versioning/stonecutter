@@ -50,5 +50,7 @@ class ControllerExtensionTest : GradleTest, ShouldSpec({
             build.run("stonecutterSwitchTo2")
             dir read "src/main/java/Example.java" shouldContain "//int one = 1;"
         }
+
+        should("throw on invalid handler") { _, build -> build.fail() }
     }
 })
