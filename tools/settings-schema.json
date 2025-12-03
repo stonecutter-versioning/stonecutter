@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://codeberg.org/stonecutter/stonecutter/src/branch/0.7/tools/settings-schema.json",
+  "$id": "https://codeberg.org/stonecutter/stonecutter/src/branch/0.8/tools/settings-schema.json",
   "title": "Stonecutter Versions",
   "description": "Defines version set used by Stonecutter",
   "type": "object",
