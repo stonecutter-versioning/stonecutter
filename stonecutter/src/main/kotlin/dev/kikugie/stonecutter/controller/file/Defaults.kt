@@ -11,7 +11,7 @@ internal fun FileHandlerContainer.configureDefaults() {
     configureHash()
 }
 
-private fun FileHandlerContainer.configureJava() = configure("java", "scala", "fsh", "vsh", "json5") {
+private fun FileHandlerContainer.configureJava() = configure("java", "scala", "sc", "groovy", "gradle", "fsh", "vsh", "json5") {
     scanner {
         lexer.set(::SlashStyleScanner)
         openers(SlashStyleScanner.SLASH_COMMENT_START, SlashStyleScanner.STAR_COMMENT_START)
