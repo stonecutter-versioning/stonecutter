@@ -5,6 +5,7 @@ import gradle.fail
 import gradle.read
 import gradle.should
 import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContainOnlyOnce
 
 class BuildExtensionTest : GradleTest, ShouldSpec({
@@ -23,6 +24,16 @@ class BuildExtensionTest : GradleTest, ShouldSpec({
                 shouldContainOnlyOnce("a.d.c")
                 shouldContainOnlyOnce("1.3.4")
             }
+        }
+    }
+
+    context("file processing") {
+        should("use project version") { dir, build ->
+            build.run("stonecutterSwitchTo1.0-example")
+            dir read "src/main/java/Example.java" shouldBe """
+                //? if <1.0
+                //class Example {}
+            """.trimIndent()
         }
     }
 })

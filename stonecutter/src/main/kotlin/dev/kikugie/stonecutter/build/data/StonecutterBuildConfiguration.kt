@@ -29,7 +29,7 @@ internal abstract class StonecutterBuildConfiguration @Inject constructor(
     objects: ObjectFactory
 ) : StonecutterBuildExtension, Named, VersionOperations<Version> by LenientOperations {
     internal val controller: StonecutterControllerExtension = node.tree.project.the()
-    internal val data: StonecutterBuildData = objects.newInstance(controller, current.project, factory)
+    internal val data: StonecutterBuildData = objects.newInstance(controller, current.version, factory)
 
     override val swaps: SwapContainer = objects.newInstance(data.swaps)
     override val constants: ConstantContainer = objects.newInstance(data.constants)
