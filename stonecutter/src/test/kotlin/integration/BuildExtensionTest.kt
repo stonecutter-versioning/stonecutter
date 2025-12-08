@@ -9,6 +9,9 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContainOnlyOnce
 
 class BuildExtensionTest : GradleTest, ShouldSpec({
+    should("create extension alias") { _, build -> build.run() }
+    should("fail with disabled alias") { _, build -> build.fail() }
+
     context("process parameters") {
         should("allow regular values") { _, build -> build.run() }
         should("validate constant names") { _, build -> build.fail() }

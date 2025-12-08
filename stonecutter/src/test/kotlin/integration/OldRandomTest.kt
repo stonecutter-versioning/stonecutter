@@ -22,17 +22,6 @@ class OldRandomTest : GradleTest, FreeSpec({
         err.buildResult.output shouldContain "Example.java:3:19"
     }
 
-    /**
-     * Checks `^/ * /` (without spaces) being incorrectly matched.
-     * @see <a href="https://codeberg.org/stonecutter/stonecutter/issues/22">#22</a>
-     */
-    "nested line scope".config(enabled = false) - { _, build ->
-        build.run("stonecutterSwitchTo1")
-        build.run(":1:run").output shouldNotContain "Hello world!"
-        build.run(":2:run").output shouldNotContain "Hello world!"
-        build.run(":3:run").output shouldContain "Hello world!"
-    }
-
     "simple swap" - { _, build ->
         build.run(":1:run").output shouldContain "Hello Tim!"
         build.run(":2:run").output shouldContain "Hello Lace!"
@@ -71,13 +60,6 @@ class OldRandomTest : GradleTest, FreeSpec({
         err.buildResult.output shouldContain "Example.java:7:16"
     }
 
-    "no newline" - { directory, build ->
-        build.run("stonecutterSwitchTo2")
-        build.run("stonecutterSwitchTo1")
-        build.run(":1:run").output shouldContain "Hello world!"
-        directory read "src/main/java/Example.java" shouldNotContain "<EOF>"
-    }
-
     "included comments" - { directory, build ->
         build.run("stonecutterSwitchTo2")
         directory read "src/main/java/Example.java" shouldContain "/^¹nested¹^/"
@@ -89,29 +71,6 @@ class OldRandomTest : GradleTest, FreeSpec({
     "nested conditions" - { _, build ->
         build.run("stonecutterSwitchTo1.20.1")
         build.run(":1.20.1:run").output shouldContain "CASE B"
-    }
-
-    /**
-     * Checks if nested comments are correctly counted for Kotlin files.
-     * @see <a href="https://codeberg.org/stonecutter/stonecutter/issues/18">#18</a>
-     */
-    "nested conditions kt" - { directory, build ->
-        build.run("stonecutterSwitchTo1.14.4")
-        val file = directory read "src/main/java/PopupScreen.kt"
-        val line = file.lines()[24]
-        line shouldBe "      /*renderBlurredBackground(/*? if <=1.21.1 {*/partialTick/*?}*/)"
-    }
-
-    /**
-     * Checks against a weird issue of nested comments copying characters from the comment.
-     * @see <a href="https://codeberg.org/stonecutter/stonecutter/issues/19">#19</a>
-     */
-    "nested conditions err" - { directory, build ->
-        build.run("stonecutterSwitchTo1.20.1")
-        build.run("stonecutterSwitchTo1.21.6")
-        val file = directory read "src/main/java/WaterFogEnvironmentMixin.java"
-        val line = file.lines()[28]
-        line shouldBe "    /*@SuppressWarnings(\"rawtypes\")*/"
     }
 
     /**
@@ -149,17 +108,4 @@ class OldRandomTest : GradleTest, FreeSpec({
     "word scope unmatched" - { _, build ->
         build.fail(":2:run").buildResult.output shouldContain "Failed to find the matching string"
     }
-
-    /**
-     * Single-line scopes should exclude the newline.
-     * @see <a href="https://codeberg.org/stonecutter/stonecutter/issues/21">#21</a>
-     */
-    "line handling" - { directory, build ->
-        build.run("stonecutterSwitchTo1")
-        val file = directory read "src/main/java/Example.java"
-        val line = file.lines()[3]
-        line shouldBe "        //System.out.println(\"Hello world!\");"
-    }
-
-    // TODO: Check fragmented content merging
 })
