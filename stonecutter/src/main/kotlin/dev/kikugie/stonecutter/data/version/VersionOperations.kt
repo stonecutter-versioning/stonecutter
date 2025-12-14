@@ -52,7 +52,7 @@ internal object SemanticOperations : VersionOperations<SemanticVersion> {
 }
 
 private fun MutableMap<AnyVersion, Version>.getOrParse(version: AnyVersion, ops: Version.Operations): Version =
-    computeIfAbsent(version) { ops.parse(it).getOrThrow() }
+    computeIfAbsent(version, ops::parse)
 
 private fun Array<out String>.unpack(ops: VersionPredicate.Operations) = buildList {
     for (it in this@unpack) unpackPredicates(it, ops)
