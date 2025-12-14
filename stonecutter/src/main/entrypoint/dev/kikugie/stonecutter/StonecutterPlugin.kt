@@ -1,5 +1,6 @@
 package dev.kikugie.stonecutter
 
+import dev.kikugie.semver.data.SemanticVersion
 import dev.kikugie.stonecutter.build.StonecutterBuildExtension
 import dev.kikugie.stonecutter.build.StonecutterBuildImpl
 import dev.kikugie.stonecutter.controller.StonecutterControllerExtension
@@ -24,6 +25,9 @@ public abstract class StonecutterPlugin @Inject constructor(
     public companion object {
         /**Current Stonecutter version.*/ // Updated by ':updateVersion' task during build
         public const val VERSION: String = "0.8-beta.1"
+
+        /**The minimum required Gradle version for Stonecutter to function properly.*/
+        @JvmField public val GRADLE_COMPAT: SemanticVersion = SemanticVersion(9)
     }
 
     /**
@@ -33,6 +37,9 @@ public abstract class StonecutterPlugin @Inject constructor(
     @OptIn(StonecutterInternalAPI::class)
     override fun apply(target: ExtensionAware): Unit = when (target) {
         is Settings -> {
+            check(SemanticVersion.parse(target.gradle.gradleVersion) >= GRADLE_COMPAT) {
+                "Stonecutter requires at least Gradle ${GRADLE_COMPAT.value}. See https://gradle.org/releases/"
+            }
             target.stonecutter<StonecutterSettingsExtension, StonecutterSettingsImpl>(registry)
         }
 

@@ -1,5 +1,6 @@
 public abstract class dev/kikugie/stonecutter/StonecutterPlugin : org/gradle/api/Plugin {
 	public static final field Companion Ldev/kikugie/stonecutter/StonecutterPlugin$Companion;
+	public static final field GRADLE_COMPAT Ldev/kikugie/semver/data/SemanticVersion;
 	public static final field VERSION Ljava/lang/String;
 	public fun <init> (Lorg/gradle/api/model/ObjectFactory;Lorg/gradle/build/event/BuildEventsListenerRegistry;)V
 	public synthetic fun apply (Ljava/lang/Object;)V
