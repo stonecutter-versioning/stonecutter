@@ -53,8 +53,12 @@ internal abstract class StonecutterControllerImpl @Inject constructor(val root: 
 
     init {
         root.afterEvaluate {
-            if (!hasInitialized)
-                error("Stonecutter branch root $hierarchy has not been initialized. Use `stonecutter.init()` or `stonecutter.active()` to initialize it.")
+            if (!hasInitialized) {
+                val function =
+                    if (buildFile.name.endsWith("kts")) "stonecutter active \"<version>\"/stonecutter active file(\"<path>\")"
+                    else "stonecutter.active '<version>'/stonecutter.active file('<path>')"
+                error("Stonecutter has not been initialized. Use `$function` to initialize it.")
+            }
 
             if (plugins.hasPlugin("base"))
                 logger.warn("Stonecutter branch root $hierarchy should not be a buildable project. Remove the `base` or `java` plugin to fix the issue.")
