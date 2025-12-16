@@ -89,7 +89,7 @@ private fun SourceSet.createProcessingTasks(
 
     impls.registerMergeTask(this) {
         duplicatesStrategy = DuplicatesStrategy.INCLUDE
-        from(prepareTask.map { it.destination }, localSource)
+        from(prepareTask.map { it.destination })
         into(sharedSource)
     }
 }
