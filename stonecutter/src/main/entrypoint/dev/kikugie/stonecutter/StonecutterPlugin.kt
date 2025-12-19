@@ -24,7 +24,7 @@ public abstract class StonecutterPlugin @Inject constructor(
 ) : Plugin<ExtensionAware> {
     public companion object {
         /**Current Stonecutter version.*/ // Updated by ':updateVersion' task during build
-        public const val VERSION: String = "0.8-beta.3"
+        public const val VERSION: String = "0.8"
 
         /**The minimum required Gradle version for Stonecutter to function properly.*/
         @JvmField public val GRADLE_COMPAT: SemanticVersion = SemanticVersion(9)

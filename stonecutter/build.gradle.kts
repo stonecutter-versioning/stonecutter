@@ -104,7 +104,7 @@ dokka {
 
 java {
     withSourcesJar()
-//    withJavadocJar()
+    withJavadocJar()
     toolchain {
         vendor = JvmVendorSpec.ADOPTIUM
     }
