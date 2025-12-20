@@ -14,9 +14,10 @@ import dev.kikugie.stonecutter.data.version.SemanticOperations
 import dev.kikugie.stonecutter.data.version.VersionOperations
 import dev.kikugie.semver.data.SemanticVersion
 import dev.kikugie.semver.data.Version
-import dev.kikugie.stonecutter.data.version.FileOperations
+import dev.kikugie.stonecutter.StonecutterExperimentalAPI
 import org.gradle.api.Action
 import org.gradle.api.tasks.util.PatternFilterable
+import java.io.File
 
 @DslMarker @Retention(AnnotationRetention.BINARY)
 private annotation class BuildDsl
@@ -31,7 +32,7 @@ private annotation class BuildDsl
  * @see <a href="https://stonecutter.kikugie.dev/wiki/config/settings">Wiki #2</a>
  */
 @BuildDsl
-public interface StonecutterBuildExtension : VersionOperations<Version>, FileOperations {
+public interface StonecutterBuildExtension : VersionOperations<Version> {
     /**The associated Stonecutter project node.*/
     public val node: ProjectNode
 
@@ -91,4 +92,12 @@ public interface StonecutterBuildExtension : VersionOperations<Version>, FileOpe
 
     /**Configures the [tasks] extension.*/
     public infix fun tasks(action: Action<StonecutterBuildTasks>): Unit = action.execute(tasks)
+
+    /**
+     * Processes the [file] using existing handlers and configuration,
+     * writing the result to [destination] relative to the project directory.
+     * @return The processed file
+     */
+    @StonecutterExperimentalAPI
+    public fun process(file: File, destination: String): File
 }
