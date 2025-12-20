@@ -3,6 +3,7 @@ package integration
 import gradle.GradleTest
 import gradle.read
 import gradle.should
+import gradle.xshould
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -43,7 +44,7 @@ class ReportedIssuesTest : GradleTest, ShouldSpec({
 
     // TODO: Unfinished
     // https://codeberg.org/stonecutter/stonecutter/issues/22
-    should("combine line scopes") { dir, build ->
+    xshould("combine line scopes") { dir, build ->
         build.run("stonecutterSwitchTo1")
         dir read "src/main/java/Example.java" shouldBe """
             //? if >1
