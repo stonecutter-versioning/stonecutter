@@ -1,6 +1,5 @@
 package dev.kikugie.stitcher.transform
 
-import dev.kikugie.commons.then
 import dev.kikugie.stitcher.antlr.InlineErrorListener
 import dev.kikugie.stitcher.antlr.InlineTokenStream
 import dev.kikugie.stitcher.antlr.StitcherLexer
@@ -29,7 +28,6 @@ internal data class BlockTransformer(
 ) : BlockToken.Visitor<BlockToken>, ProblemSource by runtime.problems {
     private val evaluator: ExpressionEvaluator by lazy { ExpressionEvaluator(params, runtime.problems) }
     private var visitedEnabledBlock: Boolean = false
-    private var shouldApplyReplacements: Boolean = true
 
     override fun visitRoot(root: RootBlock) = root.copy(scope = root.scope.map { it.accept(this) })
     override fun visitCode(code: CodeBlock) = code.copy(scope = code.definition.accept(ScopeTransformer(code)))
@@ -40,19 +38,19 @@ internal data class BlockTransformer(
         val closer = comment.closer?.text.orEmpty()
         var content = params.commenter.comment(comment.body.text, false)
         if (closer.hasLineBreak()) content += closer
+        if (runtime.replacer.isFinalized)
+            content = runtime.replacer.replace(content) ?: content
 
         // TODO: Check if reparsing the comment is needed
         return factory.create(LeafType(LayoutParser.CONTENT), comment.range(), content).let(::ContentBlock)
     }
 
-    override fun visitContent(content: ContentBlock): BlockToken = when {
-        content.isBlank() -> content
-        !shouldApplyReplacements -> runtime.replacer.finalize() then content
-        else -> runtime.replacer.replace(content.join())?.let { ContentBlock(content.leaf.copy(text = it)) } ?: content
-    }
+    override fun visitContent(content: ContentBlock): BlockToken =
+        if (content.isBlank()) content else runtime.replacer.replace(content.join())
+            ?.let { ContentBlock(content.leaf.copy(text = it)) } ?: content
 
-    private fun visitScope(tokens: Iterable<BlockToken>, runReplacements: Boolean): List<BlockToken> {
-        val copy = this@BlockTransformer.copy().apply { shouldApplyReplacements = runReplacements }
+    private fun visitScope(tokens: Iterable<BlockToken>): List<BlockToken> {
+        val copy = this@BlockTransformer.copy()
         return tokens.map { it.accept(copy) }
     }
 
@@ -89,7 +87,7 @@ internal data class BlockTransformer(
             visitedEnabledBlock = shouldEnable || visitedEnabledBlock
 
             return when {
-                shouldEnable -> if (host.scope.isCommented()) uncommentScope() else visitScope(host.scope, true)
+                shouldEnable -> if (host.scope.isCommented()) uncommentScope() else visitScope(host.scope)
                 else -> if (!host.scope.isCommented()) commentScope() else host.scope
             }
         }
@@ -100,14 +98,14 @@ internal data class BlockTransformer(
             val stream: TokenStream = BlockUncommenter(host.scope, params, runtime).let(::CommonTokenStream)
             val factory: StitcherTokenFactory = StitcherTokenFactory.Inline(host.start())
             val tokens: List<BlockToken> = LayoutParser.parse(stream, runtime.input, runtime.problems, factory).scope
-            return if (tokens.isEmpty()) emptyList() else visitScope(tokens, true)
+            return if (tokens.isEmpty()) emptyList() else visitScope(tokens)
         }
 
         private fun commentScope(): List<BlockToken> {
             if (host.scope.isEmpty()) return emptyList()
 
             val start: Int = host.start()
-            val reprocessed: List<BlockToken> = visitScope(host.scope, false)
+            val reprocessed: List<BlockToken> = visitScope(host.scope)
             val content: String = params.commenter.comment(reprocessed.join(), host.definition.opener == null)
             return factory.create(LeafType(LayoutParser.CONTENT), host.range(), content).let { listOf(ContentBlock(it)) }
 

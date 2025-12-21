@@ -12,6 +12,9 @@ internal class ReplacementProcessor(val replacements: List<Replacement>, problem
     private val entries: List<Replacement> by lazy { builder.build() }
     private lateinit var executor: ReplacementExecutor
 
+    val isFinalized: Boolean
+        get() = ::executor.isInitialized
+
     operator fun plusAssign(host: CodeBlock) {
         if (::executor.isInitialized)
             at(host.marker) report "Late replacement token"
@@ -29,7 +32,7 @@ internal class ReplacementProcessor(val replacements: List<Replacement>, problem
     }
 
     fun finalize() {
-        if (!::executor.isInitialized)
+        if (!isFinalized)
             executor = ReplacementExecutor(entries)
     }
 
