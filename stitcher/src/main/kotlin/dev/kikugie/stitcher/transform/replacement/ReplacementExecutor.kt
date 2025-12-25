@@ -55,7 +55,7 @@ private class StringReplacementExecutor(replacements: List<StringReplacement>) :
 
 private class RegexReplacementExecutor(val replacements: List<RegexReplacement>) : ReplacementExecutor {
     override fun replace(builder: StringBuilder) {
-        for (repl in replacements) for (match in repl.regex.findAll(builder).toList().reversed())
-            builder.replaceRange(match.range, repl.target)
+        for (repl in replacements) repl.regex.replace(builder, repl.target)
+            .let { builder.replace(0, builder.length, it) }
     }
 }

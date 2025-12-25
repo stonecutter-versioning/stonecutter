@@ -178,8 +178,8 @@ internal abstract class RegexSpecImpl @Inject constructor(val consumer: (RegexRe
     override fun replace(direct: Pair<String, String>, reverse: Pair<String, String>) {
         require(!id.isPresent || id.get().isValidIdentifier()) { "Invalid identifier: '${id.get()}'" }
         val replacement =
-            if (direction.get()) RegexReplacement(direct.first, direct.second, identifier = id.orNull)
-            else RegexReplacement(reverse.first, reverse.second, identifier = id.orNull)
+            if (direction.get()) RegexReplacement(direct.second, direct.first, identifier = id.orNull)
+            else RegexReplacement(reverse.second, reverse.first, identifier = id.orNull)
         consumer(replacement)
     }
 

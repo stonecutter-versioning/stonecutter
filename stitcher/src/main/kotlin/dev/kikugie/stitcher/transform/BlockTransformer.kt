@@ -32,7 +32,15 @@ internal data class BlockTransformer(
     override fun visitRoot(root: RootBlock) = root.copy(scope = root.scope.map { it.accept(this) })
     override fun visitCode(code: CodeBlock) = code.copy(scope = code.definition.accept(ScopeTransformer(code)))
     override fun visitComment(comment: CommentBlock): BlockToken {
-        if (comment.opener != null && comment.closer != null) return comment
+        if (comment.opener != null && comment.closer != null) {
+            if (!runtime.replacer.isFinalized) return comment
+            val content = buildString {
+                append(comment.opener.text)
+                append(comment.body.text.let { runtime.replacer.replace(it) ?: it })
+                append(comment.closer.text)
+            }
+            return factory.create(LeafType(LayoutParser.CONTENT), comment.range(), content).let(::ContentBlock)
+        }
 
         val start = comment.start()
         val closer = comment.closer?.text.orEmpty()
@@ -88,7 +96,7 @@ internal data class BlockTransformer(
 
             return when {
                 shouldEnable -> if (host.scope.isCommented()) uncommentScope() else visitScope(host.scope)
-                else -> if (!host.scope.isCommented()) commentScope() else host.scope
+                else -> if (!host.scope.isCommented()) commentScope() else visitScope(host.scope)
             }
         }
 
