@@ -13,6 +13,7 @@ import dev.kikugie.stitcher.issue.ProblemConsumer
 import dev.kikugie.stitcher.issue.ProblemLocation
 import dev.kikugie.stitcher.process
 import dev.kikugie.stitcher.transform.TransformParameters
+import dev.kikugie.stonecutter.controller.file.HandlerModel
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.ConfigurableFileCollection
@@ -95,8 +96,8 @@ private interface PrepareAction : WorkAction<PrepareAction.Parameters> {
     private val output: Path get() = parameters.output.asFile.get().toPath()
 
     override fun execute() {
-        val reporter = GradleProblemReporter(Logging.getLogger("StonecutterPrepareTask"), parameters.errors.get())
-        val transform = parameters.model.get().forFile(source, parameters.handlers.get())
+        val reporter = GradleProblemReporter(Logging.getLogger("StonecutterPrepareTask"), parameters.errors.get()::isNew)
+        val transform = parameters.model.get().forFile(source, parameters.handlers.get().parameters.handlers.get())
 
         if (transform == null) reporter
             .accept("No file handler registered for ${source.extension}", level = LogLevel.WARN, aggregate = false)
@@ -116,7 +117,7 @@ private interface PrepareAction : WorkAction<PrepareAction.Parameters> {
     }
 }
 
-private class GradleProblemReporter(val logger: Logger, val checker: TaskErrorsService) : ProblemConsumer {
+internal class GradleProblemReporter(val logger: Logger, val checker: (String) -> Boolean) : ProblemConsumer {
     private val myErrors: MutableList<String> = mutableListOf()
 
     override fun accept(file: Path, location: ProblemLocation, cause: ProblemCause) =
@@ -124,7 +125,7 @@ private class GradleProblemReporter(val logger: Logger, val checker: TaskErrorsS
 
     fun accept(message: String, cause: Throwable? = null, level: LogLevel = LogLevel.ERROR, aggregate: Boolean = true) {
         if (aggregate) myErrors += message
-        if (checker.isNew(message)) {
+        if (checker(message)) {
             val prefix = level.name.first().lowercaseChar()
             logger.log(level, "$prefix: $message", cause)
         }
@@ -147,8 +148,7 @@ private class GradleProblemReporter(val logger: Logger, val checker: TaskErrorsS
     }
 }
 
-private fun ParametersModel.forFile(file: Path, handlers: FileHandlerService): TransformParameters? {
-    val handler = handlers.parameters.handlers.getting(file.extension.lowercase()).orNull
-        ?: return null
+internal fun ParametersModel.forFile(file: Path, handlers: Map<String, HandlerModel>): TransformParameters? {
+    val handler = handlers[file.extension.lowercase()] ?: return null
     return TransformParameters(handler.scanner, handler.commenter, handler.uncommenter, handler.swapper, swaps, constants, dependencies, replacements)
 }
